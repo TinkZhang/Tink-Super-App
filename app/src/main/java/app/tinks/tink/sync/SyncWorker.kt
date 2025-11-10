@@ -1,0 +1,26 @@
+package app.tinks.tink.sync
+
+import android.content.Context
+import androidx.hilt.work.HiltWorker
+import androidx.work.CoroutineWorker
+import androidx.work.WorkerParameters
+import app.tinks.tink.weight.WeightRepository
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+
+@HiltWorker
+class WeightSyncWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted workerParams: WorkerParameters,
+    private val repository: WeightRepository
+) : CoroutineWorker(context, workerParams) {
+    override suspend fun doWork(): Result {
+        return try {
+            repository.syncPending()
+            Result.success()
+        } catch (e: Exception) {
+            Result.retry()
+        }
+    }
+}
+
