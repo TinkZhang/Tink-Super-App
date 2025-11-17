@@ -1,13 +1,10 @@
 package app.tinks.tink.weight
 
+import app.tinks.tink.weight.data.WeightRecord
+import app.tinks.tink.weight.data.toEntity
+import app.tinks.tink.weight.data.toRecord
 import app.tinks.tink.weight.db.WeightDao
 import app.tinks.tink.weight.db.WeightEntity
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-
-package app.tinks.tink.weight
-
-import app.tinks.tink.weight.data.*
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
@@ -86,13 +83,3 @@ class WeightRepository @Inject constructor(
         } catch (_: Exception) { }
     }
 }
-
-
-
-@Serializable
-data class WeightRecord(
-    val id: Int? = null,
-    @SerialName("created_at")
-    val createdAt: String? = null,
-    val weight: Double
-)

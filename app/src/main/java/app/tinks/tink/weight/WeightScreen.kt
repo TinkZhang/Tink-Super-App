@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tinks.tink.weight.data.Weight
 
 @Composable
 fun WeightScreen(viewModel: WeightViewModel = hiltViewModel(),
@@ -33,8 +34,8 @@ fun WeightScreen(viewModel: WeightViewModel = hiltViewModel(),
 
 @Composable
 fun WeightScreen(
-    weightOfToday: WeightRecord?,
-    allWeights: List<WeightRecord>,
+    weightOfToday: Weight?,
+    allWeights: List<Weight>,
     isLoading: Boolean = false,
     onEvent: (WeightEvent) -> Unit = {},
 ) {
@@ -44,6 +45,8 @@ fun WeightScreen(
     }
 
     Column {
+
+
         Button(onClick = { onEvent(WeightEvent.AddWeight(123.0)) }) {
             Text("添加 70.5kg")
         }
@@ -55,9 +58,9 @@ fun WeightScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(record.weight.toString())
-                    Text(record.createdAt ?: "")
+                    Text(record.createdAtText)
                     IconButton(onClick = {
-                        record.id?.let { onEvent(WeightEvent.DeleteWeight(it)) }
+                        record.id.let { onEvent(WeightEvent.DeleteWeight(it)) }
                     }) {
                         Icon(Icons.Default.Delete, contentDescription = "删除")
                     }

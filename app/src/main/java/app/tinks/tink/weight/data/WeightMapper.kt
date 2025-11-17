@@ -1,12 +1,10 @@
 package app.tinks.tink.weight.data
 
-import app.tinks.tink.weight.WeightRecord
 import app.tinks.tink.weight.db.WeightEntity
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.toInstant
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 // Entity → UI
 @OptIn(ExperimentalTime::class)

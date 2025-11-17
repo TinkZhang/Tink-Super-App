@@ -4,11 +4,13 @@ package app.tinks.tink.weight.db
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "weights")
+@Entity(tableName = "weight")
 data class WeightEntity(
-    @PrimaryKey(autoGenerate = true) val localId: Int = 0,
-    val id: Int?, // Supabase ID
-    val createdAt: String?,
+    @PrimaryKey(autoGenerate = true)
+    val localId: Int = 0,
+    val remoteId: Int? = null,
     val weight: Double,
-    val isSynced: Boolean = false // 是否已同步到 Supabase
+    val createdAt: Long,
+    val isSynced: Boolean = false,
+    val isDeleted: Boolean = false
 )
