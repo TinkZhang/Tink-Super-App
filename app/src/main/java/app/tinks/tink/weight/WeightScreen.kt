@@ -21,8 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tinks.tink.weight.data.Weight
 
 @Composable
-fun WeightScreen(viewModel: WeightViewModel = hiltViewModel(),
-                 modifier: Modifier = Modifier) {
+fun WeightScreen(viewModel: WeightViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     WeightScreen(
         weightOfToday = uiState.weightOfToday,
@@ -33,7 +32,7 @@ fun WeightScreen(viewModel: WeightViewModel = hiltViewModel(),
 }
 
 @Composable
-fun WeightScreen(
+private fun WeightScreen(
     weightOfToday: Weight?,
     allWeights: List<Weight>,
     isLoading: Boolean = false,
