@@ -9,14 +9,10 @@ import kotlin.time.Instant
 // Entity → UI
 @OptIn(ExperimentalTime::class)
 fun WeightEntity.toWeight(): Weight {
-    val timeText = Instant.fromEpochMilliseconds(createdAt)
-        .toLocalDateTime(TimeZone.currentSystemDefault())
-        .run { "%04d-%02d-%02d %02d:%02d".format(year, monthNumber, dayOfMonth, hour, minute) }
-
     return Weight(
         id = localId,
         weight = weight,
-        createdAtText = timeText
+        createdTime = createdAt
     )
 }
 

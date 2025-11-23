@@ -15,33 +15,55 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 sealed interface WeightEvent {
-    data class AddWeight(val weight: Double) : WeightEvent
+    object AddWeight : WeightEvent
     data class DeleteWeight(val id: Int) : WeightEvent
     data class UpdateWeight(val id: Int, val weight: Double) : WeightEvent
     object RefreshWeightList : WeightEvent
+
+    data class AdjustNewWeight(val delta: Float) : WeightEvent
 }
 
 data class WeightUiState(
-    val weightOfToday: Weight?,
-    val lastWeight: Weight?,
     val isLoading: Boolean,
-    val weights: List<Weight>,
+    val weightControlCardUiState: WeightControlCardUiState,
+)
+
+data class WeightControlCardUiState(
+    val isTodayRecorded: Boolean,
+    val lastDateText: String,
+    val showConfirm: Boolean,
+    val newWeight: Double?,
 )
 
 data class WeightState(
-    val weightOfToday: Weight? = null,
     val lastWeight: Weight? = null,
+    val newWeight: Double? = null,
     val isLoading: Boolean = true,
-    val weights: List<Weight> = emptyList(),
+    val isWeightChanged: Boolean = false,
 ) {
     fun toUiState(): WeightUiState = WeightUiState(
-        weightOfToday = weightOfToday,
-        lastWeight = lastWeight,
         isLoading = isLoading,
-        weights = weights
+        weightControlCardUiState = WeightControlCardUiState(
+            isTodayRecorded = ZonedDateTime.ofInstant(
+                Instant.ofEpochMilli(lastWeight?.createdTime ?: 0), ZoneId.systemDefault()
+            ) == ZonedDateTime.now(),
+            lastDateText = lastWeight?.createdTime?.let {
+                Instant.ofEpochMilli(it).atZone(
+                    ZoneId.systemDefault()
+                ).toLocalDate().format(
+                    DateTimeFormatter.ISO_LOCAL_DATE
+                )
+            } ?: "",
+            showConfirm = isWeightChanged,
+            newWeight = newWeight,
+        )
     )
 }
 
@@ -68,9 +90,8 @@ class WeightViewModel @Inject constructor(
                 .collectLatest { weights ->
                     _state.update {
                         it.copy(
-                            weights = weights,
-                            weightOfToday = weights.firstOrNull(),
                             lastWeight = weights.getOrNull(1),
+                            newWeight = weights.getOrNull(1)?.weight,
                             isLoading = false
                         )
                     }
@@ -80,20 +101,21 @@ class WeightViewModel @Inject constructor(
 
     fun onEvent(event: WeightEvent) {
         when (event) {
-            is WeightEvent.AddWeight -> addWeight(event.weight)
+            is WeightEvent.AddWeight -> addWeight()
             is WeightEvent.DeleteWeight -> deleteWeight(event.id)
             is WeightEvent.UpdateWeight -> updateWeight(event.id, event.weight)
             WeightEvent.RefreshWeightList -> refreshWeights()
+            is WeightEvent.AdjustNewWeight -> adjustNewWeight(event.delta)
         }
     }
 
     /**
      * 添加体重：立即写入 Room（即使无网），标记为 isSynced = false。
      */
-    private fun addWeight(value: Double) {
+    private fun addWeight() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-            repository.addWeight(value)
+            _state.update { it.copy(isLoading = true, isWeightChanged = false) }
+            _state.value.newWeight?.let { repository.addWeight(it) }
             _state.update { it.copy(isLoading = false) }
         }
     }
@@ -122,6 +144,12 @@ class WeightViewModel @Inject constructor(
             _state.update { it.copy(isLoading = true) }
             repository.refreshFromRemote()
             _state.update { it.copy(isLoading = false) }
+        }
+    }
+
+    private fun adjustNewWeight(delta: Float) {
+        viewModelScope.launch {
+            _state.update { it.copy(newWeight = it.newWeight?.plus(delta), isWeightChanged = true) }
         }
     }
 }
