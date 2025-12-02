@@ -28,11 +28,19 @@ sealed interface WeightEvent {
     object RefreshWeightList : WeightEvent
 
     data class AdjustNewWeight(val delta: Float) : WeightEvent
+
+    data class ChangeSelectedTrendIndex(val index: Int) : WeightEvent
 }
 
 data class WeightUiState(
     val isLoading: Boolean,
     val weightControlCardUiState: WeightControlCardUiState,
+    val trendChartCardUiState: TrendChartCardUiState,
+)
+
+data class TrendChartCardUiState(
+    val selectedIndex: Int,
+    val weightList: List<Weight>,
 )
 
 data class WeightControlCardUiState(
@@ -63,7 +71,8 @@ data class WeightState(
             } ?: "",
             showConfirm = isWeightChanged,
             newWeight = newWeight,
-        )
+        ),
+        trendChartCardUiState = TrendChartCardUiState(selectedIndex = 0, weightList = emptyList())
     )
 }
 
@@ -106,6 +115,7 @@ class WeightViewModel @Inject constructor(
             is WeightEvent.UpdateWeight -> updateWeight(event.id, event.weight)
             WeightEvent.RefreshWeightList -> refreshWeights()
             is WeightEvent.AdjustNewWeight -> adjustNewWeight(event.delta)
+            is WeightEvent.ChangeSelectedTrendIndex -> updateChartData(event.index)
         }
     }
 
@@ -151,6 +161,10 @@ class WeightViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(newWeight = it.newWeight?.plus(delta), isWeightChanged = true) }
         }
+    }
+
+    private fun updateChartData(index: Int) {
+
     }
 }
 
