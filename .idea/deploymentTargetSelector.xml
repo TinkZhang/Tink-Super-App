@@ -4,14 +4,22 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-11-22T01:52:22.207640Z">
+        <DropdownSelection timestamp="2025-12-07T01:24:33.899581Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/tink/.android/avd/Pixel_9_36.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/tink/.android/avd/Pixel_9.avd" />
             </handle>
           </Target>
         </DropdownSelection>
-        <DialogSelection />
+        <DialogSelection>
+          <targets>
+            <Target type="DEFAULT_BOOT">
+              <handle>
+                <DeviceId pluginId="LocalEmulator" identifier="path=/Users/tink/.android/avd/Pixel_9_36.avd" />
+              </handle>
+            </Target>
+          </targets>
+        </DialogSelection>
       </SelectionState>
       <SelectionState runConfigName="ContentCardMorePreview">
         <option name="selectionMode" value="DROPDOWN" />

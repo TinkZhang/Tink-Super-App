@@ -1,6 +1,5 @@
 package app.tinks.tink.haircut
 
-import android.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tinks.tink.haircut.data.Haircut
@@ -13,12 +12,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.minus
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import javax.inject.Inject
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 sealed interface HaircutEvent {
     object AddHaircutFabClick : HaircutEvent
+    object DismissDialog : HaircutEvent
+    data class SubmitHaircut(val price: Int, val shopName: String, val date: LocalDate) :
+        HaircutEvent
+
     data class DeleteHaircut(val id: Int) : HaircutEvent
     object RefreshHaircutList : HaircutEvent
 
@@ -29,20 +35,20 @@ data class HaircutUiState(
     val isLoading: Boolean,
     val history: List<Haircut>,
     val days: Int,
+    val showDialog: Boolean = false,
 )
 
 data class HaircutState(
     val history: List<Haircut> = emptyList(),
     val days: Int = 0,
     val isLoading: Boolean = true,
-    val isHaircutChanged: Boolean = false,
-    val newHaircutPrice: Int? = null,
-    val newHaircutShopName: String? = null,
+    val showDialog: Boolean = false,
 ) {
     fun toUiState(): HaircutUiState = HaircutUiState(
         isLoading = isLoading,
         history = history,
         days = days,
+        showDialog = showDialog,
     )
 }
 
@@ -63,6 +69,7 @@ class HaircutViewModel @Inject constructor(
      * 监听本地 Room 数据变化，实时更新 UI。
      * 这样即使在离线时也能立刻看到最新数据。
      */
+    @OptIn(ExperimentalTime::class)
     private fun observeLocalHaircuts() {
         viewModelScope.launch {
             repository.getAllHaircutsFlow().map { it.map { e -> e.toHaircut() } }
@@ -73,9 +80,10 @@ class HaircutViewModel @Inject constructor(
                             days = (if (haircuts.isEmpty()) {
                                 -1
                             } else {
-                                val today = LocalDate.now()
+                                val today = Clock.System.now()
+                                    .toLocalDateTime(TimeZone.currentSystemDefault()).date
                                 val firstDay = haircuts.first().date
-                                today.toEpochDay() - firstDay.toEpochDays()
+                                today.toEpochDays() - firstDay.toEpochDays()
                             }).toInt(),
                             isLoading = false
                         )
@@ -86,7 +94,9 @@ class HaircutViewModel @Inject constructor(
 
     fun onEvent(event: HaircutEvent) {
         when (event) {
-            is HaircutEvent.AddHaircutFabClick -> addHaircut()
+            is HaircutEvent.AddHaircutFabClick -> _state.update { it.copy(showDialog = true) }
+            is HaircutEvent.DismissDialog -> _state.update { it.copy(showDialog = false) }
+            is HaircutEvent.SubmitHaircut -> submitHaircut(event.price, event.shopName, event.date)
             is HaircutEvent.DeleteHaircut -> deleteHaircut(event.id)
             HaircutEvent.RefreshHaircutList -> refreshHaircuts()
             is HaircutEvent.ChangeSelectedTrendIndex -> updateChartData(event.index)
@@ -94,17 +104,16 @@ class HaircutViewModel @Inject constructor(
     }
 
     /**
-     * 添加体重：立即写入 Room（即使无网），标记为 isSynced = false。
+     * 提交理发记录：立即写入 Room（即使无网），标记为 isSynced = false。
      */
-    private fun addHaircut() {
+    private fun submitHaircut(price: Int, shopName: String, date: LocalDate) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, isHaircutChanged = false) }
-            _state.value.newHaircutPrice?.let {
-                repository.addHaircut(
-                    price = it,
-                    shopName = _state.value.newHaircutShopName ?: ""
-                )
-            }
+            _state.update { it.copy(isLoading = true, showDialog = false) }
+            repository.addHaircut(
+                price = price,
+                shopName = shopName,
+                date = date
+            )
             _state.update { it.copy(isLoading = false) }
         }
     }

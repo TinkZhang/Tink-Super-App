@@ -4,8 +4,10 @@ package app.tinks.tink.haircut.db
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 
 @Entity(tableName = "haircut")
+@Serializable
 data class HaircutEntity(
     @PrimaryKey(autoGenerate = true)
     val localId: Int? = null,

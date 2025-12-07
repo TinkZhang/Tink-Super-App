@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class HairRecord(
-    val id: Int?,
+    val id: Int? = null,
     @SerialName("created_at")
     val date: LocalDate,
     @SerialName("ship_name")

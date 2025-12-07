@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
-import app.tinks.tink.haircutcut.HaircutScreen
+import app.tinks.tink.haircut.HaircutScreen
 import app.tinks.tink.navigation.MyNavKey
 import app.tinks.tink.navigation.ScreenA
 import app.tinks.tink.navigation.ScreenB
