@@ -4,10 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tinks.tink.weight.data.Weight
 import app.tinks.tink.weight.data.toWeight
-import app.tinks.tink.weight.db.WeightDao
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
@@ -16,6 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -53,8 +51,10 @@ data class WeightControlCardUiState(
 data class WeightState(
     val lastWeight: Weight? = null,
     val newWeight: Double? = null,
+    val allWeights: List<Weight> = emptyList(),
     val isLoading: Boolean = true,
     val isWeightChanged: Boolean = false,
+    val selectedIndex: Int = 0,
 ) {
     fun toUiState(): WeightUiState = WeightUiState(
         isLoading = isLoading,
@@ -72,8 +72,22 @@ data class WeightState(
             showConfirm = isWeightChanged,
             newWeight = newWeight,
         ),
-        trendChartCardUiState = TrendChartCardUiState(selectedIndex = 0, weightList = emptyList())
+        trendChartCardUiState = TrendChartCardUiState(
+            selectedIndex = selectedIndex,
+            weightList = if (selectedIndex == 0) filterWeightsByCurrentMonth(allWeights) else allWeights
+        )
     )
+
+    private fun filterWeightsByCurrentMonth(weights: List<Weight>): List<Weight> {
+        val currentMonth = YearMonth.now()
+        return weights.filter { weight ->
+            val weightDate = Instant.ofEpochMilli(weight.createdTime)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+            val weightMonth = YearMonth.from(weightDate)
+            weightMonth == currentMonth
+        }.sortedBy { it.createdTime }
+    }
 }
 
 @HiltViewModel
@@ -101,6 +115,7 @@ class WeightViewModel @Inject constructor(
                         it.copy(
                             lastWeight = weights.getOrNull(1),
                             newWeight = weights.getOrNull(1)?.weight,
+                            allWeights = weights,
                             isLoading = false
                         )
                     }
@@ -164,7 +179,7 @@ class WeightViewModel @Inject constructor(
     }
 
     private fun updateChartData(index: Int) {
-
+        _state.update { it.copy(selectedIndex = index) }
     }
 }
 

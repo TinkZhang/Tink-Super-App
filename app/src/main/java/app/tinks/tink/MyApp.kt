@@ -88,7 +88,7 @@ fun MyApp(
             modifier = modifier.fillMaxSize(),
             topBar = {
                 TopAppBar(
-                    title = { Text("响应式应用") },
+                    title = { Text(currentKey?.label ?: "响应式应用") },
                     // 左上角添加菜单按钮，点击打开抽屉
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {

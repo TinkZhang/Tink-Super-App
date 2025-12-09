@@ -40,7 +40,7 @@ fun ContentCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp)
+//            .padding(16.dp)
     ) {
         Column(
             modifier = Modifier

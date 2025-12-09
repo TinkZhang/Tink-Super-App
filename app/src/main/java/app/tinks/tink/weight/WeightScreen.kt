@@ -5,14 +5,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tinks.tink.weight.data.Weight
+import app.tinks.tink.weight.ui.TrendChartCard
 import app.tinks.tink.weight.ui.WeightControlCard
 
 @Composable
@@ -32,6 +38,7 @@ fun WeightScreen(viewModel: WeightViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     WeightScreen(
         weightControlCardUiState = uiState.weightControlCardUiState,
+        trendChartCardUiState = uiState.trendChartCardUiState,
         isLoading = uiState.isLoading,
         onEvent = viewModel::onEvent,
     )
@@ -40,6 +47,7 @@ fun WeightScreen(viewModel: WeightViewModel) {
 @Composable
 private fun WeightScreen(
     weightControlCardUiState: WeightControlCardUiState,
+    trendChartCardUiState: TrendChartCardUiState,
     isLoading: Boolean = false,
     onEvent: (WeightEvent) -> Unit = {},
 ) {
@@ -59,37 +67,44 @@ private fun WeightScreen(
         // 1. 核心操作卡片
         item { WeightControlCard(weightControlCardUiState, onEvent = onEvent) }
 
-//        // 2. 趋势分析卡片
-//        item { TrendChartCard(viewModel) }
-//
-//        // 3. BMI 概览卡片
-//        item { BmiInsightCard(viewModel) }
-//
-//        // 4. 底部历史入口
-//        item {
-//            Button(
-//                onClick = { /* TODO: Navigate to full history */ },
-//                modifier = Modifier.fillMaxWidth(),
-//                colors = ButtonDefaults.buttonColors(
-//                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-//                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-//                )
-//            ) {
-//                Icon(Icons.Filled.History, contentDescription = null)
-//                Spacer(Modifier.width(8.dp))
-//                Text("查看所有历史记录")
-//                Spacer(Modifier.weight(1f))
-//                Icon(Icons.Filled.ChevronRight, contentDescription = null)
-//            }
-//        }
+        // 2. 趋势分析卡片
+        item { TrendChartCard(trendChartCardUiState, onEvent = onEvent) }
+
+//        // 3. 底部历史入口
+        item {
+            Button(
+                onClick = { /* TODO: Navigate to full history */ },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            ) {
+                Icon(Icons.Filled.History, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("查看所有历史记录")
+                Spacer(Modifier.weight(1f))
+                Icon(Icons.Filled.ChevronRight, contentDescription = null)
+            }
+        }
     }
 }
-//
-//@Preview
-//@Composable
-//private fun WeightScreenPreview() {
-//    WeightScreen(
-//        weightOfToday = null,
-//        allWeights = listOf
-//    )
-//}
+
+@Preview
+@Composable
+private fun WeightScreenPreview() {
+    WeightScreen(
+        weightControlCardUiState = WeightControlCardUiState(
+            isTodayRecorded = false,
+            lastDateText = "2023-07-01",
+            showConfirm = false,
+            newWeight = null
+        ),
+        trendChartCardUiState = TrendChartCardUiState(
+            selectedIndex = 0,
+            weightList = listOf(
+                Weight(id = 1, weight = 80.0, createdTime = 1688342400000),
+            )
+        )
+    )
+}
