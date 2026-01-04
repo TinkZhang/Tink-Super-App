@@ -2,13 +2,15 @@ package app.tinks.tink.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Looks
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
 
-sealed interface MyNavKey: NavKey {
+sealed interface MyNavKey : NavKey {
     val label: String
     val icon: ImageVector
 }
@@ -34,4 +36,22 @@ data object ScreenHair : MyNavKey {
     override val icon = Icons.Filled.Looks
 }
 
-val allDestinations = listOf(ScreenA, ScreenB, ScreenWeight, ScreenHair)
+data object ScreenLeeter : MyNavKey {
+    override val label = "Leeter"
+    override val icon = Icons.Filled.Code
+}
+
+data object ScreenZi : MyNavKey {
+    override val label = "识字"
+    override val icon = Icons.Filled.Translate
+}
+
+data object ScreenLearntZi : MyNavKey {
+    override val label = "已学会的字"
+    override val icon = Icons.Filled.Translate
+}
+
+val allTopDestinations = listOf(
+    ScreenA, ScreenB, ScreenWeight, ScreenHair,
+    ScreenLeeter, ScreenZi,
+)

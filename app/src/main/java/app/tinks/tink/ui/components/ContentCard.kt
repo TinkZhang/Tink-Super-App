@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,7 +38,7 @@ fun ContentCard(
 ) {
     Card(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxWidth(),
 //            .padding(16.dp)
     ) {
         Column(
@@ -52,7 +51,12 @@ fun ContentCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(title, style = MaterialTheme.typography.headlineMedium, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
                 if (showNavigation) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowForward,
