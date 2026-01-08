@@ -136,11 +136,15 @@ class ZiViewModel @Inject constructor(
      */
     private fun refreshZis() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-            repository.refreshFromRemote()
-            _state.update { it.copy(isLoading = false) }
+            try {
+                _state.update { it.copy(isLoading = true) }
+                repository.refreshFromRemote()
+                _state.update { it.copy(isLoading = false) }
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false) }
+                e.printStackTrace()
+            }
         }
     }
 }
-
 

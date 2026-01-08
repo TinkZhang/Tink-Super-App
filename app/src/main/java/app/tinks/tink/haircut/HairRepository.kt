@@ -1,10 +1,10 @@
 package app.tinks.tink.haircut
 
 import android.util.Log
-import app.tinks.tink.haircut.db.HaircutDao
 import app.tinks.tink.haircut.data.HairRecord
 import app.tinks.tink.haircut.data.toEntity
 import app.tinks.tink.haircut.data.toRecord
+import app.tinks.tink.haircut.db.HaircutDao
 import app.tinks.tink.haircut.db.HaircutEntity
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -17,7 +17,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.log
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -55,13 +54,53 @@ class HaircutRepository @Inject constructor(
 
     suspend fun refreshFromRemote() {
         withContext(Dispatchers.IO) {
-            val remoteList = table.select {
-                order("created_at", order = Order.DESCENDING)
-            }.decodeList<HairRecord>()
+            try {
+                val remoteList = table.select {
+                    order("created_at", order = Order.DESCENDING)
+                }.decodeList<HairRecord>()
 
-            val entities = remoteList.map { it.toEntity() }
-            dao.clearAll()
-            entities.forEach { dao.insertHaircut(it) }
+                val remoteEntities = remoteList.map { it.toEntity() }
+                
+                // Get all local entities (including unsynced ones)
+                val localEntities = dao.getAllHaircuts()
+                
+                // Create a map of remote entities by their remote ID for quick lookup
+                val remoteEntityMap = remoteEntities.associateBy { it.remoteId }
+                
+                // Process each remote entity
+                for (remoteEntity in remoteEntities) {
+                    // Check if this remote entity exists locally
+                    val localEntity = localEntities.find { it.remoteId == remoteEntity.remoteId }
+                    
+                    if (localEntity != null) {
+                        // Remote entity exists locally, check if it's been modified locally
+                        if (!localEntity.isSynced) {
+                            // Local version exists and hasn't been synced yet, so keep the local version
+                            // This preserves local changes that haven't been synced
+                            continue
+                        } else {
+                            // Local version exists and is synced, update it with remote version
+                            dao.updateHaircut(remoteEntity)
+                        }
+                    } else {
+                        // Remote entity doesn't exist locally, insert it
+                        dao.insertHaircut(remoteEntity)
+                    }
+                }
+                
+                // Handle deletions - remove local records that exist in DB but not in remote data
+                // (but only if they were synced and not modified locally)
+                for (localEntity in localEntities) {
+                    if (localEntity.remoteId != null && !remoteEntityMap.containsKey(localEntity.remoteId)) {
+                        // This remote record doesn't exist anymore, but only delete if it wasn't modified locally
+                        if (localEntity.isSynced) {
+                            localEntity.localId?.let { dao.deleteById(it) }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
