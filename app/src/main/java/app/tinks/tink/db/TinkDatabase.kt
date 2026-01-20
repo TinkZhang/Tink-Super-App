@@ -6,15 +6,18 @@ import androidx.room.TypeConverters
 import app.tinks.tink.haircut.db.HaircutDao
 import app.tinks.tink.haircut.db.HaircutEntity
 import app.tinks.tink.haircut.db.LocalDateConverter
+import app.tinks.tink.review.db.ReviewDao
+import app.tinks.tink.review.db.ReviewEntity
 import app.tinks.tink.weight.db.WeightDao
 import app.tinks.tink.weight.db.WeightEntity
 import app.tinks.tink.zi.ZiDao
 import app.tinks.tink.zi.ZiEntity
 
-@Database(entities = [WeightEntity::class, HaircutEntity::class, ZiEntity::class], version = 1)
+@Database(entities = [WeightEntity::class, HaircutEntity::class, ZiEntity::class, ReviewEntity::class], version = 1)
 @TypeConverters(LocalDateConverter::class)
 abstract class TinkDatabase : RoomDatabase() {
     abstract fun weightDao(): WeightDao
     abstract fun haircutDao(): HaircutDao
     abstract fun ziDao(): ZiDao
+    abstract fun reviewDao(): ReviewDao
 }

@@ -31,4 +31,7 @@ object DatabaseModule {
 
     @Provides
     fun provideZiDao(db: TinkDatabase) = db.ziDao()
+    
+    @Provides
+    fun provideReviewDao(db: TinkDatabase) = db.reviewDao()
 }
