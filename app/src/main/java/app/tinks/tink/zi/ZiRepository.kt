@@ -1,68 +1,58 @@
-package app.tinks.tink.haircut
+package app.tinks.tink.zi
 
-import android.util.Log
-import app.tinks.tink.haircut.data.HairRecord
-import app.tinks.tink.haircut.data.toEntity
-import app.tinks.tink.haircut.data.toRecord
-import app.tinks.tink.haircut.db.HaircutDao
-import app.tinks.tink.haircut.db.HaircutEntity
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 @Singleton
-class HaircutRepository @Inject constructor(
-    private val dao: HaircutDao,
-    private val supabase: SupabaseClient
+class ZiRepository @Inject constructor(
+    private val dao: ZiDao,
+    supabase: SupabaseClient
 ) {
-    private val table = supabase.from("haircut")
+    private val table = supabase.from("zi")
 
-    fun getAllHaircutsFlow(): Flow<List<HaircutEntity>> = dao.getAllHaircutsFlow()
+    fun getAllZisFlow(): Flow<List<ZiEntity>> = dao.getAllZisFlow()
+    fun getAllLearntZisFlow(): Flow<List<ZiEntity>> = dao.getAllLearntZisFlow()
 
-    suspend fun addHaircut(
-        price: Int,
-        shopName: String,
-        date: LocalDate = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-            .date
-    ) {
-        val entity = HaircutEntity(
-            price = price,
-            shopName = shopName,
-            date = date,
-            isSynced = false
+    suspend fun addZi(zi: String, proficiency: Int, date: LocalDate) {
+        val entity = ZiEntity(
+            zi = zi,
+            lastDate = date,
+            isSynced = false,
+            proficiency = proficiency,
         )
-        dao.insertHaircut(entity)
+        dao.insertZi(entity)
         trySync(entity)
     }
 
-    suspend fun deleteHaircut(id: Int) {
+    suspend fun deleteZi(id: Int) {
         dao.markDeleted(id)
         trySyncDeleted(id)
+    }
+
+    suspend fun updateZi(id: Int, zi: String) {
+        val list = dao.getAllZis()
+        val target = list.find { it.localId == id } ?: return
+        val updated = target.copy(zi = zi, isSynced = false)
+        dao.updateZi(updated)
+        trySync(updated)
     }
 
     suspend fun refreshFromRemote() {
         withContext(Dispatchers.IO) {
             try {
                 val remoteList = table.select {
-                    order("created_at", order = Order.DESCENDING)
-                }.decodeList<HairRecord>()
+                }.decodeList<ZiRecord>()
 
                 val remoteEntities = remoteList.map { it.toEntity() }
                 
                 // Get all local entities (including unsynced ones)
-                val localEntities = dao.getAllHaircuts()
+                val localEntities = dao.getAllZis()
                 
                 // Create a map of remote entities by their remote ID for quick lookup
                 val remoteEntityMap = remoteEntities.associateBy { it.remoteId }
@@ -80,11 +70,11 @@ class HaircutRepository @Inject constructor(
                             continue
                         } else {
                             // Local version exists and is synced, update it with remote version
-                            dao.updateHaircut(remoteEntity)
+                            dao.updateZi(remoteEntity)
                         }
                     } else {
                         // Remote entity doesn't exist locally, insert it
-                        dao.insertHaircut(remoteEntity)
+                        dao.insertZi(remoteEntity)
                     }
                 }
                 
@@ -94,7 +84,7 @@ class HaircutRepository @Inject constructor(
                     if (localEntity.remoteId != null && !remoteEntityMap.containsKey(localEntity.remoteId)) {
                         // This remote record doesn't exist anymore, but only delete if it wasn't modified locally
                         if (localEntity.isSynced) {
-                            localEntity.localId?.let { dao.deleteById(it) }
+                            dao.deleteById(localEntity.localId)
                         }
                     }
                 }
@@ -105,22 +95,23 @@ class HaircutRepository @Inject constructor(
     }
 
     suspend fun syncPending() {
-        val unsynced = dao.getUnsyncedHaircuts()
+        val unsynced = dao.getUnsyncedZis()
         for (r in unsynced) trySync(r)
     }
 
-    private suspend fun trySync(entity: HaircutEntity) {
+    private suspend fun trySync(entity: ZiEntity) {
         try {
-            table.insert(entity.toRecord())
+            val record = entity.toRecord()
+            table.insert(record)
             dao.markSynced(entity.localId)
-        } catch (e: Exception) {
-            Log.d("Supabase", "$e")
+        } catch (_: Exception) {
+            // 离线时忽略
         }
     }
 
     private suspend fun trySyncDeleted(id: Int) {
         try {
-            val item = dao.getAllHaircuts().find { it.localId == id } ?: return
+            val item = dao.getAllZis().find { it.localId == id } ?: return
             item.remoteId?.let {
                 table.delete { filter { eq("id", it) } }
             }

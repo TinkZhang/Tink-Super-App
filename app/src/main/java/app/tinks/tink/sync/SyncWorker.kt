@@ -4,7 +4,10 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import app.tinks.tink.haircut.HaircutRepository
+import app.tinks.tink.review.ReviewRepository
 import app.tinks.tink.weight.WeightRepository
+import app.tinks.tink.zi.ZiRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -12,15 +15,20 @@ import dagger.assisted.AssistedInject
 class WeightSyncWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
-    private val repository: WeightRepository
+    private val weightRepository: WeightRepository,
+    private val ziRepository: ZiRepository,
+    private val haircutRepository: HaircutRepository,
+    private val reviewRepository: ReviewRepository,
 ) : CoroutineWorker(context, workerParams) {
     override suspend fun doWork(): Result {
         return try {
-            repository.syncPending()
+            weightRepository.syncPending()
+            ziRepository.syncPending()
+            haircutRepository.syncPending()
+            reviewRepository.syncPending()
             Result.success()
         } catch (e: Exception) {
             Result.retry()
         }
     }
 }
-

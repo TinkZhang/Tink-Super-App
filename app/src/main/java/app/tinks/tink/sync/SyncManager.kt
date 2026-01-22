@@ -1,6 +1,9 @@
 package app.tinks.tink.sync
 
+import app.tinks.tink.haircut.HaircutRepository
+import app.tinks.tink.review.ReviewRepository
 import app.tinks.tink.weight.WeightRepository
+import app.tinks.tink.zi.ZiRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -11,7 +14,10 @@ import javax.inject.Singleton
 @Singleton
 class SyncManager @Inject constructor(
     private val networkMonitor: NetworkMonitor,
-    private val weightRepository: WeightRepository
+    private val weightRepository: WeightRepository,
+    private val ziRepository: ZiRepository,
+    private val haircutRepository: HaircutRepository,
+    private val reviewRepository: ReviewRepository
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -21,7 +27,13 @@ class SyncManager @Inject constructor(
                 if (connected) {
                     try {
                         weightRepository.syncPending()
+                        ziRepository.syncPending()
+                        haircutRepository.syncPending()
+                        reviewRepository.syncPending()
                         weightRepository.refreshFromRemote()
+                        ziRepository.refreshFromRemote()
+                        haircutRepository.refreshFromRemote()
+                        reviewRepository.refreshFromRemote()
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -35,8 +47,18 @@ class SyncManager @Inject constructor(
      */
     fun initialSync() {
         scope.launch {
-            weightRepository.syncPending()
-            weightRepository.refreshFromRemote()
+            try {
+                weightRepository.syncPending()
+                ziRepository.syncPending()
+                haircutRepository.syncPending()
+                reviewRepository.syncPending()
+                weightRepository.refreshFromRemote()
+                ziRepository.refreshFromRemote()
+                haircutRepository.refreshFromRemote()
+                reviewRepository.refreshFromRemote()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

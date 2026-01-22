@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,9 +34,14 @@ import app.tinks.tink.navigation.MyNavKey
 import app.tinks.tink.navigation.ScreenA
 import app.tinks.tink.navigation.ScreenB
 import app.tinks.tink.navigation.ScreenHair
+import app.tinks.tink.navigation.ScreenLearntZi
+import app.tinks.tink.navigation.ScreenLeeter
 import app.tinks.tink.navigation.ScreenWeight
-import app.tinks.tink.navigation.allDestinations
+import app.tinks.tink.navigation.ScreenZi
+import app.tinks.tink.navigation.allTopDestinations
 import app.tinks.tink.weight.WeightScreen
+import app.tinks.tink.zi.ZiScreen
+import app.tinks.tink.zi.zilist.LearntZiListScreen
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +60,11 @@ fun MyApp(
             backStack.add(destination)
         }
     }
+
+    fun navigateBack() {
+        backStack.removeLast()
+    }
+
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     val scope = rememberCoroutineScope()
@@ -67,7 +78,7 @@ fun MyApp(
                     modifier = Modifier.padding(24.dp)
                 )
                 HorizontalDivider()
-                allDestinations.forEach { dest ->
+                allTopDestinations.forEach { dest ->
                     NavigationDrawerItem(
                         label = { Text(dest.label) },
                         icon = { Icon(dest.icon, dest.label) },
@@ -91,8 +102,17 @@ fun MyApp(
                     title = { Text(currentKey?.label ?: "响应式应用") },
                     // 左上角添加菜单按钮，点击打开抽屉
                     navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Filled.Menu, contentDescription = "打开抽屉")
+                        if (currentKey in allTopDestinations) {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Filled.Menu, contentDescription = "打开抽屉")
+                            }
+                        } else {
+                            IconButton(onClick = { navigateBack() }) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "返回上级"
+                                )
+                            }
                         }
                     }
                 )
@@ -106,10 +126,19 @@ fun MyApp(
             ) { key ->
                 NavEntry(key) {
                     when (key) {
-                        is ScreenA -> WeightScreen(hiltViewModel())
+                        is ScreenA -> ZiScreen(hiltViewModel(), onNavigationEvent = {
+                            backStack.add(ScreenLearntZi)
+                        })
+
                         is ScreenB -> WeightScreen(hiltViewModel())
                         is ScreenWeight -> WeightScreen(hiltViewModel())
                         is ScreenHair -> HaircutScreen(hiltViewModel())
+                        is ScreenLeeter -> HaircutScreen(hiltViewModel())
+                        is ScreenZi -> ZiScreen(hiltViewModel(), onNavigationEvent = {
+                            backStack.add(ScreenLearntZi)
+                        })
+
+                        is ScreenLearntZi -> LearntZiListScreen(hiltViewModel())
                     }
                 }
             }
