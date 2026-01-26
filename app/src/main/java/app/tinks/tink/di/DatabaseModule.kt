@@ -26,12 +26,13 @@ object DatabaseModule {
 
     @Provides
     fun provideWeightDao(db: TinkDatabase) = db.weightDao()
+
     @Provides
     fun provideHaircutDao(db: TinkDatabase) = db.haircutDao()
 
     @Provides
     fun provideZiDao(db: TinkDatabase) = db.ziDao()
-    
+
     @Provides
-    fun provideReviewDao(db: TinkDatabase) = db.reviewDao()
+    fun provideMerriamDao(db: TinkDatabase) = db.merriamDao()
 }

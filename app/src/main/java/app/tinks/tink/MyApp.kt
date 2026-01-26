@@ -30,12 +30,14 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import app.tinks.tink.haircut.HaircutScreen
+import app.tinks.tink.merriam.MerriamScreen
 import app.tinks.tink.navigation.MyNavKey
 import app.tinks.tink.navigation.ScreenA
 import app.tinks.tink.navigation.ScreenB
 import app.tinks.tink.navigation.ScreenHair
 import app.tinks.tink.navigation.ScreenLearntZi
 import app.tinks.tink.navigation.ScreenLeeter
+import app.tinks.tink.navigation.ScreenMerriam
 import app.tinks.tink.navigation.ScreenWeight
 import app.tinks.tink.navigation.ScreenZi
 import app.tinks.tink.navigation.allTopDestinations
@@ -137,8 +139,8 @@ fun MyApp(
                         is ScreenZi -> ZiScreen(hiltViewModel(), onNavigationEvent = {
                             backStack.add(ScreenLearntZi)
                         })
-
                         is ScreenLearntZi -> LearntZiListScreen(hiltViewModel())
+                        is ScreenMerriam -> MerriamScreen(hiltViewModel())
                     }
                 }
             }
