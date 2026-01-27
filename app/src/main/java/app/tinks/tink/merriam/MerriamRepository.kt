@@ -1,7 +1,9 @@
 package app.tinks.tink.merriam
 
 import app.tinks.tink.merriam.db.MerriamDao
+import app.tinks.tink.merriam.db.RootEntity
 import io.github.jan.supabase.SupabaseClient
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,7 +14,7 @@ class MerriamRepository @Inject constructor(
 ) {
 //    private val table = supabase.from("Zi")
 //
-//    fun getAllZisFlow(): Flow<List<ZiEntity>> = dao.getAllZisFlow()
+    fun getAllMerriamsFlow(): Flow<List<RootEntity>> = dao.getAllRootsFlow()
 //
 //    suspend fun addZi(Zi: Double) {
 //        val entity = ZiEntity(

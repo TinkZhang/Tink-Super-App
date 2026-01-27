@@ -21,7 +21,7 @@ object DatabaseModule {
             context,
             TinkDatabase::class.java,
             "tink.db"
-        ).build()
+        ).createFromAsset("database/tink.db").build()
     }
 
     @Provides

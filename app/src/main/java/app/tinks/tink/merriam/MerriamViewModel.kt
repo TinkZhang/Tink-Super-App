@@ -3,11 +3,15 @@ package app.tinks.tink.merriam
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tinks.tink.merriam.data.Unit
+import app.tinks.tink.merriam.db.toRoot
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface MerriamEvent {
@@ -38,28 +42,28 @@ class MerriamViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())
 
     init {
-//        observeLocalMerriams()
+        observeLocalMerriams()
     }
 
     /**
      * 监听本地 Room 数据变化，实时更新 UI。
      * 这样即使在离线时也能立刻看到最新数据。
      */
-//    private fun observeLocalMerriams() {
-//        viewModelScope.launch {
-//            repository.getAllMerriamsFlow().map { it.map { e -> e.toMerriam() } }
-//                .collectLatest { Merriams ->
-//                    _state.update {
-//                        it.copy(
-//                            lastMerriam = Merriams.getOrNull(1),
-//                            newMerriam = Merriams.getOrNull(1)?.Merriam,
-//                            allMerriams = Merriams,
-//                            isLoading = false
-//                        )
-//                    }
-//                }
-//        }
-//    }
+    private fun observeLocalMerriams() {
+        viewModelScope.launch {
+            repository.getAllMerriamsFlow().map { roots ->
+                roots.groupBy { it.unit }
+                    .map { (unitId, group) -> Unit(id = unitId, roots = group.map { it.toRoot() }) }
+            }
+                .collectLatest { units ->
+                    _state.update {
+                        it.copy(
+                            allUnits = units
+                        )
+                    }
+                }
+        }
+    }
 
     fun onEvent(event: MerriamEvent) {
         when (event) {

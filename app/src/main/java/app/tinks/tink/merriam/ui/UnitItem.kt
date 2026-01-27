@@ -41,7 +41,10 @@ import app.tinks.tink.ui.theme.TinkTheme
 import kotlinx.datetime.LocalDate
 
 @Composable
-fun UnitItem(unit: Unit) {
+fun UnitItem(
+    unit: Unit,
+    onRootComplete: (Int) -> kotlin.Unit = {},
+) {
     var isExpanded by remember { mutableStateOf(unit.isExpanded) }
     val rotation by animateFloatAsState(if (isExpanded) 0f else 180f)
 

@@ -35,10 +35,10 @@ import kotlinx.datetime.LocalDate
 @Composable
 fun RootCard(
     root: Root,
-    onToggleRoot: (Boolean) -> Unit = {},
+    onComplete: (Int) -> Unit = {},
 ) {
     var isCompleted by remember { mutableStateOf(root.isCompleted) }
-    ElevatedCard() {
+    ElevatedCard {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -93,7 +93,7 @@ fun RootCard(
                     )
                 } else {
                     Button(
-                        onClick = { onToggleRoot(true) },
+                        onClick = { onComplete(root.id) },
                     ) {
                         Text(text = "Done")
                     }
@@ -108,7 +108,7 @@ fun RootCard(
 private fun RootCardPreview(
     @PreviewParameter(RootRowPreviewParameterProvider::class) root: Root
 ) {
-    TinkTheme() {
+    TinkTheme {
         RootCard(root = root)
     }
 }
