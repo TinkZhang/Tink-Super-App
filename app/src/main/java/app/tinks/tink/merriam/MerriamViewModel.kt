@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tinks.tink.merriam.data.Unit
 import app.tinks.tink.merriam.db.toRoot
+import app.tinks.tink.ui.components.WeeklyRecordData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,10 +16,13 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface MerriamEvent {
+    data class CompleteRoot(val id: Int) : MerriamEvent
 }
 
 data class MerriamUiState(
     val isLoading: Boolean,
+    val units: List<Unit>,
+    val weeklyRecords: WeeklyRecordData,
 )
 
 data class MerriamState(
@@ -26,9 +30,12 @@ data class MerriamState(
     val isLoading: Boolean = true,
     val isMerriamChanged: Boolean = false,
     val selectedIndex: Int = 0,
+    val weeklyRecordData: WeeklyRecordData = WeeklyRecordData(null, emptyList())
 ) {
     fun toUiState(): MerriamUiState = MerriamUiState(
         isLoading = isLoading,
+        units = allUnits,
+        weeklyRecords = weeklyRecordData,
     )
 }
 
@@ -67,7 +74,9 @@ class MerriamViewModel @Inject constructor(
 
     fun onEvent(event: MerriamEvent) {
         when (event) {
-
+            is MerriamEvent.CompleteRoot -> {
+                repository.addMerriamRecord(event.id)
+            }
             else -> {}
         }
     }

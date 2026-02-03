@@ -2,17 +2,14 @@ package app.tinks.tink.merriam.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,7 +35,12 @@ fun RootCard(
     onComplete: (Int) -> Unit = {},
 ) {
     var isCompleted by remember { mutableStateOf(root.isCompleted) }
-    ElevatedCard {
+    ElevatedCard(
+        modifier = Modifier.combinedClickable(
+            onLongClick = { onComplete(root.id) },
+            onClick = {}
+        ),
+    ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -57,7 +59,7 @@ fun RootCard(
                     Icon(
                         Icons.Rounded.CheckCircle,
                         contentDescription = "Done",
-                        tint = MaterialTheme.colorScheme.secondary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -66,20 +68,28 @@ fun RootCard(
                     Text(
                         text = it,
                         style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
 
-            // Words List
-            LazyVerticalGrid(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                columns = GridCells.Adaptive(minSize = 128.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(items = root.words, key = { it }) {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                repeat((root.words.size + 1) / 2) { rowIndex ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        repeat(2) { columnIndex ->
+                            Text(
+                                text = root.words.getOrNull(rowIndex * 2 + columnIndex)
+                                    ?: "",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
                 }
             }
             AnimatedContent(
@@ -89,14 +99,8 @@ fun RootCard(
                 if (it) {
                     Text(
                         text = root.completeDate.toString(),
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelSmall,
                     )
-                } else {
-                    Button(
-                        onClick = { onComplete(root.id) },
-                    ) {
-                        Text(text = "Done")
-                    }
                 }
             }
         }
@@ -116,11 +120,15 @@ private fun RootCardPreview(
 private class RootRowPreviewParameterProvider : PreviewParameterProvider<Root> {
     private val rootList = listOf(
         Root(
+            id = 11,
+            unit = 1,
             text = "BENE",
             meaning = "Well",
-            words = listOf("benediction", "benefactor", "beneficiary", "benevolence")
+            words = listOf("benediction", "benefactor", "beneficiary", "benevolence"),
         ),
         Root(
+            id = 12,
+            unit = 1,
             text = "AM",
             meaning = "To love",
             words = listOf("amicable", "enamored", "amorous", "paramour"),

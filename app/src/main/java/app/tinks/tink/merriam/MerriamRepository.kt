@@ -2,6 +2,8 @@ package app.tinks.tink.merriam
 
 import app.tinks.tink.merriam.db.MerriamDao
 import app.tinks.tink.merriam.db.RootEntity
+import app.tinks.tink.zi.Zi
+import app.tinks.tink.zi.ZiEntity
 import io.github.jan.supabase.SupabaseClient
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -16,15 +18,15 @@ class MerriamRepository @Inject constructor(
 //
     fun getAllMerriamsFlow(): Flow<List<RootEntity>> = dao.getAllRootsFlow()
 //
-//    suspend fun addZi(Zi: Double) {
-//        val entity = ZiEntity(
-//            Zi = Zi,
-//            createdAt = System.currentTimeMillis(),
-//            isSynced = false
-//        )
-//        dao.insertZi(entity)
-//        trySync(entity)
-//    }
+    suspend fun addMerriamRecord(id: Int) {
+        val entity = ZiEntity(
+            Zi = Zi,
+            createdAt = System.currentTimeMillis(),
+            isSynced = false
+        )
+        dao.insertZi(entity)
+        trySync(entity)
+    }
 //
 //    suspend fun deleteZi(id: Int) {
 //        dao.markDeleted(id)

@@ -6,6 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MerriamDao {
-    @Query("SELECT * FROM merriam ORDER BY id DESC")
+    @Query("SELECT * FROM merriam ORDER BY id ASC")
     fun getAllRootsFlow(): Flow<List<RootEntity>>
 }
