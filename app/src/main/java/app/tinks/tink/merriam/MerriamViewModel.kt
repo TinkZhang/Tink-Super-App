@@ -75,8 +75,11 @@ class MerriamViewModel @Inject constructor(
     fun onEvent(event: MerriamEvent) {
         when (event) {
             is MerriamEvent.CompleteRoot -> {
-                repository.addMerriamRecord(event.id)
+                viewModelScope.launch {
+                    repository.addMerriamRecord(event.id)
+                }
             }
+
             else -> {}
         }
     }

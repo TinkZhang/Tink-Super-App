@@ -17,8 +17,6 @@ data class RootEntity(
     val root: String,
     val meaning: String,
     val words: List<String>,
-    @ColumnInfo(name = "complete_date")
-    val completedDate: LocalDate?,
 )
 
 @Entity(tableName = "merriam_record")
@@ -29,17 +27,25 @@ data class MerriamRecordEntity(
     @ColumnInfo(name = "root_id")
     val rootId: Int,
     @ColumnInfo(name = "complete_date")
-    val completedDate: LocalDate?,
+    val completedDate: LocalDate? = LocalDate.fromEpochDays(1),
 )
 
 // Backend数据类型
 @Serializable
-data class RootRecord(
+data class RootRecordPostDTO(
     val id: Int,
     val completedDate: LocalDate?,
     val words: String,
     val root: String,
     val round: Int,
+)
+
+@Serializable
+data class RootRecordGetDTO(
+    val id: Int,
+    val createDate: LocalDate?,
+    val round: Int,
+    val root_id: Int,
 )
 
 // Entity → UI
@@ -52,16 +58,5 @@ fun RootEntity.toRoot(): Root {
         text = root,
         meaning = meaning,
         words = words,
-        isCompleted = completedDate != null,
-        completeDate = completedDate,
-    )
-}
-
-// Entity → Record（上传至 Supabase）
-@OptIn(ExperimentalTime::class)
-fun RootEntity.toRecord(): RootRecord {
-    return RootRecord(
-        id = id,
-        completedDate = completedDate,
     )
 }
