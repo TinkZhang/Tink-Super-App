@@ -72,6 +72,11 @@ dependencies {
 //    Superbase
     implementation(libs.postgrest.kt)
     implementation(libs.ktor.client.android)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
+    implementation(libs.retrofit2.kotlinx.serialization.converter)
+
 
 //    Hilt
     implementation(libs.hilt.android)

@@ -61,16 +61,53 @@ data class DailyRecord(
 )
 
 data class WeeklyRecordData(
-    val hasWeekSummary: Boolean?,
+    val hasWeekSummary: Boolean? = null,
     val records: List<DailyRecord>,
-)
+) {
+    companion object {
+        fun fromWeeklyInt(list: List<Int?>) = WeeklyRecordData(records = mapToDailyRecords(list))
+    }
+}
+
+private fun mapToDailyRecords(values: List<Int?>): List<DailyRecord> {
+    require(values.size == 7)
+
+    val today = LocalDate.now()
+    val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+
+    return values.mapIndexed { index, value ->
+        val date = startOfWeek.plusDays(index.toLong())
+
+        val status = when {
+            value == null ->
+                RecordType.FUTURE
+
+            date.isEqual(today) && value > 0 ->
+                RecordType.DONE_TODAY
+
+            date.isEqual(today) && value == 0 ->
+                RecordType.TODO_TODAY
+
+            date.isBefore(today) && value > 0 ->
+                RecordType.DONE_PAST
+
+            date.isBefore(today) && value == 0 ->
+                RecordType.MISSED_PAST
+
+            else ->
+                RecordType.FUTURE
+        }
+
+        DailyRecord(date, status)
+    }
+}
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun WeeklyRecordMap(
     data: WeeklyRecordData,
-    swipeOnMap: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
+    swipeOnMap: (Int) -> Unit = {},
     locale: Locale = Locale.getDefault()
 ) {
     var weekOffset by remember { mutableIntStateOf(0) }
@@ -87,6 +124,7 @@ fun WeeklyRecordMap(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onDragEnd = {

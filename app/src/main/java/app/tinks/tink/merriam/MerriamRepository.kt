@@ -1,80 +1,42 @@
 package app.tinks.tink.merriam
 
+import app.tinks.tink.merriam.data.Stat
 import app.tinks.tink.merriam.db.MerriamDao
 import app.tinks.tink.merriam.db.RootEntity
-import app.tinks.tink.zi.Zi
-import app.tinks.tink.zi.ZiEntity
-import io.github.jan.supabase.SupabaseClient
+import app.tinks.tink.merriam.network.MerriamApi
+import app.tinks.tink.merriam.network.RootPostDto
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.network.safeApiCall
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class MerriamRepository @Inject constructor(
     private val dao: MerriamDao,
-    private val supabase: SupabaseClient
+    private val api: MerriamApi,
 ) {
-//    private val table = supabase.from("Zi")
-//
     fun getAllMerriamsFlow(): Flow<List<RootEntity>> = dao.getAllRootsFlow()
-//
-    suspend fun addMerriamRecord(id: Int) {
-        val entity = ZiEntity(
-            Zi = Zi,
-            createdAt = System.currentTimeMillis(),
-            isSynced = false
-        )
-        dao.insertZi(entity)
-        trySync(entity)
-    }
-//
-//    suspend fun deleteZi(id: Int) {
-//        dao.markDeleted(id)
-//        trySyncDeleted(id)
-//    }
-//
-//    suspend fun updateZi(id: Int, Zi: Double) {
-//        val list = dao.getAllZis()
-//        val target = list.find { it.localId == id } ?: return
-//        val updated = target.copy(Zi = Zi, isSynced = false)
-//        dao.updateZi(updated)
-//        trySync(updated)
-//    }
-//
-//    suspend fun refreshFromRemote() {
-//        withContext(Dispatchers.IO) {
-//            val remoteList = table.select {
-//                order("created_at", order = Order.DESCENDING)
-//            }.decodeList<ZiRecord>()
-//
-//            val entities = remoteList.map { it.toEntity() }
-//            dao.clearAll()
-//            entities.forEach { dao.insertZi(it) }
-//        }
-//    }
-//
-//    suspend fun syncPending() {
-//        val unsynced = dao.getUnsyncedZis()
-//        for (r in unsynced) trySync(r)
-//    }
-//
-//    private suspend fun trySync(entity: ZiEntity) {
-//        try {
-//            val record = entity.toRecord()
-//            table.insert(record)
-//            dao.markSynced(entity.localId)
-//        } catch (_: Exception) {
-//            // 离线时忽略
-//        }
-//    }
-//
-//    private suspend fun trySyncDeleted(id: Int) {
-//        try {
-//            val item = dao.getAllZis().find { it.localId == id } ?: return
-//            item.remoteId?.let {
-//                table.delete { filter { eq("id", it) } }
-//            }
-//            dao.deleteById(id)
-//        } catch (_: Exception) { }
-//    }
+    fun addMerriamRecord(id: Int, root: String): Flow<ApiResult<Unit>> = flow {
+        emit(ApiResult.Loading)
+        emit(safeApiCall { api.postMerriam(RootPostDto(rootId = id, root = root)) })
+    }.flowOn(Dispatchers.IO)
+
+    fun getMerriamStat(): Flow<ApiResult<Stat>> = flow {
+        emit(ApiResult.Loading)
+        emit(safeApiCall {
+            try {
+
+                val result = api.getStat()
+                result.toDomain()
+            } catch (e: Exception) {
+                println("API call failed with exception: ${e.message}")
+                println("Exception stack trace: $e")
+                throw e
+            }
+        })
+    }.flowOn(Dispatchers.IO)
 }

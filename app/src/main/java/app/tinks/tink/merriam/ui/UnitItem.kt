@@ -42,12 +42,12 @@ import androidx.compose.ui.unit.dp
 import app.tinks.tink.merriam.data.Root
 import app.tinks.tink.merriam.data.Unit
 import app.tinks.tink.ui.theme.TinkTheme
-import kotlinx.datetime.LocalDate
 
 @Composable
 fun UnitItem(
     unit: Unit,
-    onRootComplete: (Int) -> kotlin.Unit = {},
+    latest: Int,
+    onRootComplete: (Int, String) -> kotlin.Unit = {_, _ -> },
 ) {
     var isExpanded by remember { mutableStateOf(unit.isExpanded) }
     val rotation by animateFloatAsState(if (isExpanded) 0f else 180f)
@@ -56,7 +56,7 @@ fun UnitItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(if (unit.roots.any { !it.isCompleted }) 4.dp else 0.dp)
+        elevation = CardDefaults.cardElevation(if (unit.roots.any { it.id > latest }) 4.dp else 0.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -70,7 +70,7 @@ fun UnitItem(
                     text = "Unit ${unit.id}",
                     style = MaterialTheme.typography.titleLarge,
                 )
-                if (unit.roots.all { it.isCompleted }) {
+                if (unit.roots.all { it.id <= latest }) {
                     Icon(
                         Icons.Filled.Done,
                         contentDescription = "Unit Done",
@@ -79,7 +79,7 @@ fun UnitItem(
                 } else {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         unit.roots.map {
-                            AnimatedContent(it.isCompleted) { completed ->
+                            AnimatedContent(it.id <= latest) { completed ->
                                 if (completed) {
                                     Icon(
                                         Icons.Filled.Circle,
@@ -120,7 +120,7 @@ fun UnitItem(
                                     text = root?.text
                                         ?: "",
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = if (root?.isCompleted == true) {
+                                    color = if ((root?.id ?: 0) <= latest) {
                                         MaterialTheme.colorScheme.primary
                                     } else {
                                         Color.Unspecified
@@ -145,7 +145,11 @@ fun UnitItem(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Spacer(modifier = Modifier.height(8.dp))
                     repeat(unit.roots.size) { index ->
-                        RootCard(root = unit.roots[index], onComplete = onRootComplete)
+                        RootCard(
+                            root = unit.roots[index],
+                            latest = latest,
+                            onComplete = onRootComplete
+                        )
                     }
                 }
             }
@@ -159,7 +163,7 @@ private fun UnitItemPreview(
     @PreviewParameter(UnitPreviewParameterProvider::class) unit: Unit
 ) {
     TinkTheme {
-        UnitItem(unit)
+        UnitItem(unit, 12)
     }
 }
 
@@ -178,8 +182,6 @@ private class UnitPreviewParameterProvider : PreviewParameterProvider<Unit> {
             text = "AM",
             meaning = "To love",
             words = listOf("amicable", "enamored", "amorous", "paramour"),
-            isCompleted = true,
-            completeDate = LocalDate(year = 2026, month = 1, day = 26)
         ),
     )
 

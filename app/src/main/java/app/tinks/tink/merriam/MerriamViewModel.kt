@@ -4,37 +4,44 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tinks.tink.merriam.data.Unit
 import app.tinks.tink.merriam.db.toRoot
+import app.tinks.tink.network.ApiResult
 import app.tinks.tink.ui.components.WeeklyRecordData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface MerriamEvent {
-    data class CompleteRoot(val id: Int) : MerriamEvent
+    data class CompleteRoot(val id: Int, val root: String) : MerriamEvent
+    object Refresh : MerriamEvent
 }
 
 data class MerriamUiState(
     val isLoading: Boolean,
     val units: List<Unit>,
+    val latest: Int,
     val weeklyRecords: WeeklyRecordData,
 )
 
 data class MerriamState(
     val allUnits: List<Unit> = emptyList(),
     val isLoading: Boolean = true,
+    val isNetworkError: Boolean = false,
     val isMerriamChanged: Boolean = false,
-    val selectedIndex: Int = 0,
+    val latest: Int = 0,
     val weeklyRecordData: WeeklyRecordData = WeeklyRecordData(null, emptyList())
 ) {
     fun toUiState(): MerriamUiState = MerriamUiState(
         isLoading = isLoading,
         units = allUnits,
+        latest = latest,
         weeklyRecords = weeklyRecordData,
     )
 }
@@ -49,20 +56,16 @@ class MerriamViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())
 
     init {
+        loadStat()
         observeLocalMerriams()
     }
 
-    /**
-     * 监听本地 Room 数据变化，实时更新 UI。
-     * 这样即使在离线时也能立刻看到最新数据。
-     */
     private fun observeLocalMerriams() {
         viewModelScope.launch {
             repository.getAllMerriamsFlow().map { roots ->
                 roots.groupBy { it.unit }
                     .map { (unitId, group) -> Unit(id = unitId, roots = group.map { it.toRoot() }) }
-            }
-                .collectLatest { units ->
+            }.collectLatest { units ->
                     _state.update {
                         it.copy(
                             allUnits = units
@@ -72,15 +75,68 @@ class MerriamViewModel @Inject constructor(
         }
     }
 
+    private fun loadStat() {
+        repository.getMerriamStat().onEach { result ->
+            when (result) {
+                is ApiResult.Loading -> _state.update {
+                    it.copy(
+                        isLoading = true, isNetworkError = false
+                    )
+                }
+
+                is ApiResult.Success -> _state.update {
+                    it.copy(
+                        isLoading = false,
+                        isNetworkError = false,
+                        latest = result.data.latest,
+                        weeklyRecordData = WeeklyRecordData.fromWeeklyInt(result.data.weeeStats),
+                    )
+                }
+
+                is ApiResult.Error -> _state.update {
+                    it.copy(
+                        isLoading = false, isNetworkError = true
+                    )
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    private fun addRecord(id: Int, root: String) {
+        repository.addMerriamRecord(id, root).onEach { result ->
+            when (result) {
+                is ApiResult.Loading -> _state.update {
+                    it.copy(
+                        isLoading = true, isNetworkError = false
+                    )
+                }
+
+                is ApiResult.Success -> _state.update {
+                    it.copy(
+                        isLoading = false,
+                        isNetworkError = false,
+                    )
+                }
+
+                is ApiResult.Error -> _state.update {
+                    it.copy(
+                        isLoading = false, isNetworkError = true
+                    )
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
+
     fun onEvent(event: MerriamEvent) {
         when (event) {
             is MerriamEvent.CompleteRoot -> {
-                viewModelScope.launch {
-                    repository.addMerriamRecord(event.id)
+                addRecord(event.id, event.root)
+                if (event.id > _state.value.latest) {
+                    _state.update { it.copy(latest = event.id) }
                 }
             }
 
-            else -> {}
+            is MerriamEvent.Refresh -> loadStat()
         }
     }
 }

@@ -20,9 +20,9 @@ class WeightSyncWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, workerParams) {
     override suspend fun doWork(): Result {
         return try {
-            weightRepository.syncPending()
-            ziRepository.syncPending()
-            haircutRepository.syncPending()
+//            weightRepository.syncPending()
+//            ziRepository.syncPending()
+//            haircutRepository.syncPending()
             Result.success()
         } catch (e: Exception) {
             Result.retry()

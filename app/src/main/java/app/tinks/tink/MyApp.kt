@@ -128,10 +128,7 @@ fun MyApp(
             ) { key ->
                 NavEntry(key) {
                     when (key) {
-                        is ScreenA -> ZiScreen(hiltViewModel(), onNavigationEvent = {
-                            backStack.add(ScreenLearntZi)
-                        })
-
+                        is ScreenA -> MerriamScreen(hiltViewModel())
                         is ScreenB -> WeightScreen(hiltViewModel())
                         is ScreenWeight -> WeightScreen(hiltViewModel())
                         is ScreenHair -> HaircutScreen(hiltViewModel())

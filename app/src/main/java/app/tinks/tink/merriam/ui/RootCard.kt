@@ -1,6 +1,5 @@
 package app.tinks.tink.merriam.ui
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,17 +26,17 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import app.tinks.tink.merriam.data.Root
 import app.tinks.tink.ui.theme.TinkTheme
-import kotlinx.datetime.LocalDate
 
 @Composable
 fun RootCard(
     root: Root,
-    onComplete: (Int) -> Unit = {},
+    latest: Int,
+    onComplete: (Int, String) -> Unit = { _, _ -> },
 ) {
-    var isCompleted by remember { mutableStateOf(root.isCompleted) }
+    var isCompleted by remember(latest) { mutableStateOf(root.id <= latest) }
     ElevatedCard(
         modifier = Modifier.combinedClickable(
-            onLongClick = { onComplete(root.id) },
+            onLongClick = { onComplete(root.id, root.text) },
             onClick = {}
         ),
     ) {
@@ -92,17 +91,6 @@ fun RootCard(
                     }
                 }
             }
-            AnimatedContent(
-                targetState = isCompleted,
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                if (it) {
-                    Text(
-                        text = root.completeDate.toString(),
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                }
-            }
         }
     }
 }
@@ -113,7 +101,7 @@ private fun RootCardPreview(
     @PreviewParameter(RootRowPreviewParameterProvider::class) root: Root
 ) {
     TinkTheme {
-        RootCard(root = root)
+        RootCard(root = root, 1)
     }
 }
 
@@ -132,8 +120,6 @@ private class RootRowPreviewParameterProvider : PreviewParameterProvider<Root> {
             text = "AM",
             meaning = "To love",
             words = listOf("amicable", "enamored", "amorous", "paramour"),
-            isCompleted = true,
-            completeDate = LocalDate(year = 2026, month = 1, day = 26)
         ),
     )
 
@@ -142,6 +128,6 @@ private class RootRowPreviewParameterProvider : PreviewParameterProvider<Root> {
     override fun getDisplayName(index: Int): String? {
         // Return null or an empty string to use the default index-based name
         val root = rootList.getOrNull(index) ?: return null
-        return "${root.text} - ${root.isCompleted}"
+        return "${root.text}}"
     }
 }
