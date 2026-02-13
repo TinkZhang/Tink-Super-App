@@ -3,7 +3,6 @@ package app.tinks.tink.merriam
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tinks.tink.merriam.data.Unit
-import app.tinks.tink.merriam.db.toRoot
 import app.tinks.tink.merriam.network.RootPostDto
 import app.tinks.tink.network.ApiResult
 import app.tinks.tink.ui.components.AppSnackbarBus
@@ -64,16 +63,13 @@ class MerriamViewModel @Inject constructor(
 
     private fun observeLocalMerriams() {
         viewModelScope.launch {
-            repository.getAllMerriamsFlow().map { roots ->
-                roots.groupBy { it.unit }
-                    .map { (unitId, group) -> Unit(id = unitId, roots = group.map { it.toRoot() }) }
-            }.collectLatest { units ->
-                    _state.update {
-                        it.copy(
-                            allUnits = units
-                        )
-                    }
+            repository.getAllUnitsFlow().collectLatest { units ->
+                _state.update {
+                    it.copy(
+                        allUnits = units
+                    )
                 }
+            }
         }
     }
 
@@ -91,7 +87,7 @@ class MerriamViewModel @Inject constructor(
                         isLoading = false,
                         isNetworkError = false,
                         latest = result.data.latest,
-                        weeklyRecordData = WeeklyRecordData.fromWeeklyInt(result.data.weeeStats),
+                        weeklyRecordData = WeeklyRecordData.fromWeeklyInt(result.data.weekStats),
                     )
                 }
 

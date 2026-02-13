@@ -12,4 +12,4 @@ data class StatDto(
     fun toDomain(): Stat = Stat(latest, weekStats)
 }
 
-data class Stat(val latest: Int, val weeeStats: List<Int?>)
+data class Stat(val latest: Int, val weekStats: List<Int?>)
