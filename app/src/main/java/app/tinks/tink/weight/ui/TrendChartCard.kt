@@ -1,6 +1,5 @@
 package app.tinks.tink.weight.ui
 
-import android.widget.ToggleButton
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -14,22 +13,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AllInclusive
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.outlined.AllInclusive
 import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,10 +48,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.wear.compose.material3.ButtonGroupDefaults
 import app.tinks.tink.ui.components.ContentCard
 import app.tinks.tink.weight.TrendChartCardUiState
 import app.tinks.tink.weight.WeightEvent
@@ -64,8 +57,6 @@ import app.tinks.tink.weight.data.Weight
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -89,7 +80,7 @@ fun TrendChartCard(
                 ) {
                     Row(
                         Modifier.padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.Spacing),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         val modifiers =
                             listOf(Modifier.weight(1f), Modifier.weight(1.5f))
