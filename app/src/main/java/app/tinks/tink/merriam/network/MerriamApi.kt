@@ -13,7 +13,7 @@ interface MerriamApi {
 
     @POST("merriam")
     suspend fun postMerriam(
-        @Body request: RootPostDto
+        @Body request: List<RootPostDto>
     )
 }
 

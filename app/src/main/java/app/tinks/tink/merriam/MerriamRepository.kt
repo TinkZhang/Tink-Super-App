@@ -20,9 +20,9 @@ class MerriamRepository @Inject constructor(
     private val api: MerriamApi,
 ) {
     fun getAllMerriamsFlow(): Flow<List<RootEntity>> = dao.getAllRootsFlow()
-    fun addMerriamRecord(id: Int, root: String): Flow<ApiResult<Unit>> = flow {
+    fun addMerriamRecords(records: List<RootPostDto>): Flow<ApiResult<Unit>> = flow {
         emit(ApiResult.Loading)
-        emit(safeApiCall { api.postMerriam(RootPostDto(rootId = id, root = root)) })
+        emit(safeApiCall { api.postMerriam(records) })
     }.flowOn(Dispatchers.IO)
 
     fun getMerriamStat(): Flow<ApiResult<Stat>> = flow {

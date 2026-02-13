@@ -18,7 +18,6 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -84,7 +83,6 @@ private fun MerriamScreen(
                 }
             ) {
                 val listState = rememberLazyListState()
-                val coroutineScope = rememberCoroutineScope()
                 LaunchedEffect(latest) {
                         listState.animateScrollToItem(index = max(0, (latest/10) -1))
                 }
@@ -102,14 +100,7 @@ private fun MerriamScreen(
                         UnitItem(
                             unit = it,
                             latest = latest,
-                            onRootComplete = { id, root ->
-                                onEvent(
-                                    MerriamEvent.CompleteRoot(
-                                        id,
-                                        root
-                                    )
-                                )
-                            },
+                            onRootComplete = { id -> onEvent(MerriamEvent.CompleteRoot(id)) },
                         )
                     }
                 }

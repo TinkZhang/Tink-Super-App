@@ -31,12 +31,12 @@ import app.tinks.tink.ui.theme.TinkTheme
 fun RootCard(
     root: Root,
     latest: Int,
-    onComplete: (Int, String) -> Unit = { _, _ -> },
+    onComplete: (Int) -> Unit = {},
 ) {
     var isCompleted by remember(latest) { mutableStateOf(root.id <= latest) }
     ElevatedCard(
         modifier = Modifier.combinedClickable(
-            onLongClick = { onComplete(root.id, root.text) },
+            onLongClick = { onComplete(root.id) },
             onClick = {}
         ),
     ) {

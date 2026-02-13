@@ -47,7 +47,7 @@ import app.tinks.tink.ui.theme.TinkTheme
 fun UnitItem(
     unit: Unit,
     latest: Int,
-    onRootComplete: (Int, String) -> kotlin.Unit = {_, _ -> },
+    onRootComplete: (Int) -> kotlin.Unit = {},
 ) {
     var isExpanded by remember { mutableStateOf(unit.isExpanded) }
     val rotation by animateFloatAsState(if (isExpanded) 0f else 180f)
@@ -133,6 +133,11 @@ fun UnitItem(
                     Text(
                         text = unit.roots.last().text,
                         style = MaterialTheme.typography.titleMedium,
+                        color = if (unit.roots.last().id <= latest) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            Color.Unspecified
+                        },
                     )
                 }
             }

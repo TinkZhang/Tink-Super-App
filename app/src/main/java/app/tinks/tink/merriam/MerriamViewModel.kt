@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tinks.tink.merriam.data.Unit
 import app.tinks.tink.merriam.db.toRoot
+import app.tinks.tink.merriam.network.RootPostDto
 import app.tinks.tink.network.ApiResult
 import app.tinks.tink.ui.components.WeeklyRecordData
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface MerriamEvent {
-    data class CompleteRoot(val id: Int, val root: String) : MerriamEvent
+    data class CompleteRoot(val id: Int) : MerriamEvent
     object Refresh : MerriamEvent
 }
 
@@ -102,8 +103,8 @@ class MerriamViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
-    private fun addRecord(id: Int, root: String) {
-        repository.addMerriamRecord(id, root).onEach { result ->
+    private fun addRecords(records: List<RootPostDto>) {
+        repository.addMerriamRecords(records).onEach { result ->
             when (result) {
                 is ApiResult.Loading -> _state.update {
                     it.copy(
@@ -127,12 +128,26 @@ class MerriamViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
+    private fun buildRecordsToComplete(clickedId: Int): List<RootPostDto> {
+        val latest = _state.value.latest
+        if (clickedId <= latest) return emptyList()
+
+        return _state.value.allUnits
+            .flatMap { it.roots }
+            .sortedBy { it.id }
+            .asSequence()
+            .filter { it.id in (latest + 1)..clickedId }
+            .map { RootPostDto(rootId = it.id, root = it.text) }
+            .toList()
+    }
+
     fun onEvent(event: MerriamEvent) {
         when (event) {
             is MerriamEvent.CompleteRoot -> {
-                addRecord(event.id, event.root)
-                if (event.id > _state.value.latest) {
-                    _state.update { it.copy(latest = event.id) }
+                val records = buildRecordsToComplete(event.id)
+                if (records.isNotEmpty()) {
+                    addRecords(records)
+                    _state.update { it.copy(latest = records.last().rootId) }
                 }
             }
 
