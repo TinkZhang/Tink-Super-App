@@ -17,10 +17,15 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -30,18 +35,22 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import app.tinks.tink.haircut.HaircutScreen
+import app.tinks.tink.merriam.MerriamScreen
 import app.tinks.tink.navigation.MyNavKey
 import app.tinks.tink.navigation.ScreenA
 import app.tinks.tink.navigation.ScreenB
 import app.tinks.tink.navigation.ScreenHair
 import app.tinks.tink.navigation.ScreenLearntZi
 import app.tinks.tink.navigation.ScreenLeeter
+import app.tinks.tink.navigation.ScreenMerriam
 import app.tinks.tink.navigation.ScreenWeight
 import app.tinks.tink.navigation.ScreenZi
 import app.tinks.tink.navigation.allTopDestinations
+import app.tinks.tink.ui.components.AppSnackbarBus
 import app.tinks.tink.weight.WeightScreen
 import app.tinks.tink.zi.ZiScreen
 import app.tinks.tink.zi.zilist.LearntZiListScreen
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,8 +75,22 @@ fun MyApp(
     }
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        AppSnackbarBus.events.collect { event ->
+            val result = snackbarHostState.showSnackbar(
+                message = event.message,
+                actionLabel = event.actionLabel,
+                duration = SnackbarDuration.Short
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                event.onAction()
+            }
+        }
+    }
 
     ModalNavigationDrawer(
         drawerContent = {
@@ -97,6 +120,9 @@ fun MyApp(
     ) {
         Scaffold(
             modifier = modifier.fillMaxSize(),
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState)
+            },
             topBar = {
                 TopAppBar(
                     title = { Text(currentKey?.label ?: "响应式应用") },
@@ -126,10 +152,7 @@ fun MyApp(
             ) { key ->
                 NavEntry(key) {
                     when (key) {
-                        is ScreenA -> ZiScreen(hiltViewModel(), onNavigationEvent = {
-                            backStack.add(ScreenLearntZi)
-                        })
-
+                        is ScreenA -> MerriamScreen(hiltViewModel())
                         is ScreenB -> WeightScreen(hiltViewModel())
                         is ScreenWeight -> WeightScreen(hiltViewModel())
                         is ScreenHair -> HaircutScreen(hiltViewModel())
@@ -137,8 +160,8 @@ fun MyApp(
                         is ScreenZi -> ZiScreen(hiltViewModel(), onNavigationEvent = {
                             backStack.add(ScreenLearntZi)
                         })
-
                         is ScreenLearntZi -> LearntZiListScreen(hiltViewModel())
+                        is ScreenMerriam -> MerriamScreen(hiltViewModel())
                     }
                 }
             }

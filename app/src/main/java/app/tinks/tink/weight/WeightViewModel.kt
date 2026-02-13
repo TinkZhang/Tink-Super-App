@@ -2,6 +2,7 @@ package app.tinks.tink.weight
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tinks.tink.ui.components.AppSnackbarBus
 import app.tinks.tink.weight.data.Weight
 import app.tinks.tink.weight.data.toWeight
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -166,9 +167,14 @@ class WeightViewModel @Inject constructor(
      */
     private fun refreshWeights() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-            repository.refreshFromRemote()
-            _state.update { it.copy(isLoading = false) }
+            try {
+                _state.update { it.copy(isLoading = true) }
+                repository.refreshFromRemote()
+                _state.update { it.copy(isLoading = false) }
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false) }
+                AppSnackbarBus.showApiFailure(onRetry = ::refreshWeights)
+            }
         }
     }
 
@@ -182,5 +188,4 @@ class WeightViewModel @Inject constructor(
         _state.update { it.copy(selectedIndex = index) }
     }
 }
-
 

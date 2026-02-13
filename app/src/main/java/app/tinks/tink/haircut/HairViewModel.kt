@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tinks.tink.haircut.data.Haircut
 import app.tinks.tink.haircut.data.toHaircut
+import app.tinks.tink.ui.components.AppSnackbarBus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -137,7 +138,7 @@ class HaircutViewModel @Inject constructor(
                 _state.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false) }
-                e.printStackTrace()
+                AppSnackbarBus.showApiFailure(onRetry = ::refreshHaircuts)
             }
         }
     }
@@ -146,4 +147,3 @@ class HaircutViewModel @Inject constructor(
 
     }
 }
-

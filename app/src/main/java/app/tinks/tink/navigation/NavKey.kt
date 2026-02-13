@@ -1,6 +1,7 @@
 package app.tinks.tink.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Home
@@ -51,7 +52,12 @@ data object ScreenLearntZi : MyNavKey {
     override val icon = Icons.Filled.Translate
 }
 
+data object ScreenMerriam: MyNavKey {
+    override val label = "M-W Builder"
+    override val icon = Icons.Filled.Bookmark
+}
+
 val allTopDestinations = listOf(
     ScreenA, ScreenB, ScreenWeight, ScreenHair,
-    ScreenLeeter, ScreenZi,
+    ScreenLeeter, ScreenZi, ScreenMerriam
 )

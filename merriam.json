@@ -1,0 +1,3364 @@
+{
+    "merriam": [
+        {
+            "unit": 1,
+            "id": 11,
+            "root": "BENE",
+            "meaning": "well",
+            "words": [
+                "benediction",
+                "benefactor",
+                "beneficiary",
+                "benevolence"
+            ]
+        },
+        {
+            "unit": 1,
+            "id": 12,
+            "root": "AM",
+            "meaning": "to love",
+            "words": [
+                "amicable",
+                "enamored",
+                "amorous",
+                "paramour"
+            ]
+        },
+        {
+            "unit": 1,
+            "id": 13,
+            "root": "BELL",
+            "meaning": "war",
+            "words": [
+                "antebellum",
+                "bellicose",
+                "belligerence",
+                "rebellion"
+            ]
+        },
+        {
+            "unit": 1,
+            "id": 14,
+            "root": "PAC",
+            "meaning": "agree/peace",
+            "words": [
+                "pacify",
+                "pacifist",
+                "pact",
+                "pace"
+            ]
+        },
+        {
+            "unit": 1,
+            "id": 15,
+            "root": "CRIM",
+            "meaning": "fault/crime",
+            "words": [
+                "criminology",
+                "decriminalize",
+                "incriminate",
+                "recrimination"
+            ]
+        },
+        {
+            "unit": 1,
+            "id": 16,
+            "root": "PROB",
+            "meaning": "prove/proof",
+            "words": [
+                "approbation",
+                "probate",
+                "probity",
+                "reprobate"
+            ]
+        },
+        {
+            "unit": 1,
+            "id": 17,
+            "root": "GRAV",
+            "meaning": "heavy",
+            "words": [
+                "grave",
+                "gravitas",
+                "gravitate",
+                "aggravate"
+            ]
+        },
+        {
+            "unit": 1,
+            "id": 18,
+            "root": "LEV",
+            "meaning": "light/raise",
+            "words": [
+                "alleviate",
+                "elevation",
+                "cantilever",
+                "levity"
+            ]
+        },
+        {
+            "unit": 1,
+            "id": 19,
+            "root": "Mythology and History",
+            "meaning": "",
+            "words": [
+                "cicerone",
+                "hector",
+                "hedonism",
+                "nestor",
+                "spartan",
+                "stentorian",
+                "stoic",
+                "sybaritic"
+            ]
+        },
+        {
+            "unit": 2,
+            "id": 21,
+            "root": "MANIA",
+            "meaning": "madness",
+            "words": [
+                "kleptomania",
+                "dipsomaniac",
+                "megalomaniac",
+                "egomaniac"
+            ]
+        },
+        {
+            "unit": 2,
+            "id": 22,
+            "root": "PSYCH",
+            "meaning": "mind",
+            "words": [
+                "psyche",
+                "psychedelic",
+                "psychosomatic",
+                "psychotherapist"
+            ]
+        },
+        {
+            "unit": 2,
+            "id": 23,
+            "root": "CEPT",
+            "meaning": "take/seize",
+            "words": [
+                "reception",
+                "intercept",
+                "perceptible",
+                "susceptible"
+            ]
+        },
+        {
+            "unit": 2,
+            "id": 24,
+            "root": "FIN",
+            "meaning": "end/boundary",
+            "words": [
+                "confine",
+                "definitive",
+                "finite",
+                "infinitesimal"
+            ]
+        },
+        {
+            "unit": 2,
+            "id": 25,
+            "root": "JECT",
+            "meaning": "throw/hurl",
+            "words": [
+                "interject",
+                "conjecture",
+                "projection",
+                "trajectory"
+            ]
+        },
+        {
+            "unit": 2,
+            "id": 26,
+            "root": "TRACT",
+            "meaning": "drag/draw",
+            "words": [
+                "traction",
+                "detract",
+                "protracted",
+                "retraction"
+            ]
+        },
+        {
+            "unit": 2,
+            "id": 27,
+            "root": "DUC/DUCT",
+            "meaning": "lead",
+            "words": [
+                "conducive",
+                "deduction",
+                "induce",
+                "seduction"
+            ]
+        },
+        {
+            "unit": 2,
+            "id": 28,
+            "root": "SEQU",
+            "meaning": "follow",
+            "words": [
+                "sequential",
+                "subsequent",
+                "consequential",
+                "non sequitur"
+            ]
+        },
+        {
+            "unit": 2,
+            "id": 29,
+            "root": "Greek and Roman Gods",
+            "meaning": "",
+            "words": [
+                "Apollonian",
+                "bacchanalian",
+                "delphic",
+                "Dionysian",
+                "jovial",
+                "mercurial",
+                "Olympian",
+                "venereal"
+            ]
+        },
+        {
+            "unit": 3,
+            "id": 31,
+            "root": "AMBI",
+            "meaning": "both/around",
+            "words": [
+                "ambiguous",
+                "ambient",
+                "ambivalent",
+                "ambit"
+            ]
+        },
+        {
+            "unit": 3,
+            "id": 32,
+            "root": "EPI",
+            "meaning": "on/over",
+            "words": [
+                "epilogue",
+                "epitaph",
+                "epithet",
+                "epicenter"
+            ]
+        },
+        {
+            "unit": 3,
+            "id": 33,
+            "root": "HYPO",
+            "meaning": "below/under",
+            "words": [
+                "hypochondriac",
+                "hypocrisy",
+                "hypothermia",
+                "hypothetical"
+            ]
+        },
+        {
+            "unit": 3,
+            "id": 34,
+            "root": "THERM",
+            "meaning": "warm",
+            "words": [
+                "thermal",
+                "thermodynamics",
+                "thermonuclear",
+                "British thermal unit"
+            ]
+        },
+        {
+            "unit": 3,
+            "id": 35,
+            "root": "POLY",
+            "meaning": "many",
+            "words": [
+                "polyp",
+                "polyglot",
+                "polymer",
+                "polygraph"
+            ]
+        },
+        {
+            "unit": 3,
+            "id": 36,
+            "root": "PRIM",
+            "meaning": "first",
+            "words": [
+                "primal",
+                "primer",
+                "primate",
+                "primordial"
+            ]
+        },
+        {
+            "unit": 3,
+            "id": 37,
+            "root": "HOM/HOMO",
+            "meaning": "same",
+            "words": [
+                "homonym",
+                "homogeneous",
+                "homologous",
+                "homogenize"
+            ]
+        },
+        {
+            "unit": 3,
+            "id": 38,
+            "root": "DIS",
+            "meaning": "apart/opposite",
+            "words": [
+                "dissuade",
+                "disorient",
+                "discredit",
+                "dislodge"
+            ]
+        },
+        {
+            "unit": 3,
+            "id": 39,
+            "root": "Mythology and History II",
+            "meaning": "",
+            "words": [
+                "adonize",
+                "amazon",
+                "cassandra",
+                "myrmidon",
+                "nemesis",
+                "paean",
+                "palladium",
+                "siren"
+            ]
+        },
+        {
+            "unit": 4,
+            "id": 41,
+            "root": "VOR",
+            "meaning": "eat",
+            "words": [
+                "carnivorous",
+                "herbivorous",
+                "omnivorous",
+                "voracious"
+            ]
+        },
+        {
+            "unit": 4,
+            "id": 42,
+            "root": "CARN",
+            "meaning": "flesh",
+            "words": [
+                "carnage",
+                "carnal",
+                "carnival",
+                "incarnation"
+            ]
+        },
+        {
+            "unit": 4,
+            "id": 43,
+            "root": "CRED",
+            "meaning": "believe",
+            "words": [
+                "credence",
+                "credulity",
+                "creed",
+                "incredible"
+            ]
+        },
+        {
+            "unit": 4,
+            "id": 44,
+            "root": "FID",
+            "meaning": "faith",
+            "words": [
+                "affidavit",
+                "diffident",
+                "fiduciary",
+                "perfidy"
+            ]
+        },
+        {
+            "unit": 4,
+            "id": 45,
+            "root": "CURR/CURS",
+            "meaning": "run",
+            "words": [
+                "concurrent",
+                "cursory",
+                "discursive",
+                "precursor"
+            ]
+        },
+        {
+            "unit": 4,
+            "id": 46,
+            "root": "PED",
+            "meaning": "foot",
+            "words": [
+                "quadruped",
+                "pedigree",
+                "impediment",
+                "pedestrian"
+            ]
+        },
+        {
+            "unit": 4,
+            "id": 47,
+            "root": "FLECT",
+            "meaning": "bend",
+            "words": [
+                "deflect",
+                "genuflect",
+                "inflection",
+                "reflective"
+            ]
+        },
+        {
+            "unit": 4,
+            "id": 48,
+            "root": "POST",
+            "meaning": "after",
+            "words": [
+                "posterior",
+                "posthumous",
+                "postmodern",
+                "postmortem"
+            ]
+        },
+        {
+            "unit": 4,
+            "id": 49,
+            "root": "The Odyssey",
+            "meaning": "",
+            "words": [
+                "calypso",
+                "odyssey",
+                "palladium",
+                "Penelope",
+                "procrustean",
+                "protean",
+                "sibyl",
+                "siren"
+            ]
+        },
+        {
+            "unit": 5,
+            "id": 51,
+            "root": "MAL",
+            "meaning": "bad",
+            "words": [
+                "malevolent",
+                "malicious",
+                "malign",
+                "malnourished"
+            ]
+        },
+        {
+            "unit": 5,
+            "id": 52,
+            "root": "CATA",
+            "meaning": "down",
+            "words": [
+                "cataclysm",
+                "catacomb",
+                "catalyst",
+                "catatonic"
+            ]
+        },
+        {
+            "unit": 5,
+            "id": 53,
+            "root": "PROT/PROTO",
+            "meaning": "first",
+            "words": [
+                "protagonist",
+                "protocol",
+                "protoplasm",
+                "prototype"
+            ]
+        },
+        {
+            "unit": 5,
+            "id": 54,
+            "root": "ANTE",
+            "meaning": "before",
+            "words": [
+                "antechamber",
+                "antedate",
+                "antecedent",
+                "anterior"
+            ]
+        },
+        {
+            "unit": 5,
+            "id": 55,
+            "root": "ORTHO",
+            "meaning": "straight",
+            "words": [
+                "orthodoxy",
+                "orthography",
+                "orthodontics",
+                "orthopedics"
+            ]
+        },
+        {
+            "unit": 5,
+            "id": 56,
+            "root": "RECT",
+            "meaning": "straight",
+            "words": [
+                "rectitude",
+                "rectify",
+                "rectilinear",
+                "rector"
+            ]
+        },
+        {
+            "unit": 5,
+            "id": 57,
+            "root": "EU",
+            "meaning": "good/well",
+            "words": [
+                "eugenics",
+                "euphemism",
+                "euphoria",
+                "evangelist"
+            ]
+        },
+        {
+            "unit": 5,
+            "id": 58,
+            "root": "DYS",
+            "meaning": "bad/difficult",
+            "words": [
+                "dysfunctional",
+                "dyslexia",
+                "dyspeptic",
+                "dystrophy"
+            ]
+        },
+        {
+            "unit": 5,
+            "id": 59,
+            "root": "Mythology and History III",
+            "meaning": "",
+            "words": [
+                "aegis",
+                "amazon",
+                "cassandra",
+                "chimera",
+                "elysium",
+                "nemesis",
+                "olympian",
+                "paean"
+            ]
+        },
+        {
+            "unit": 6,
+            "id": 61,
+            "root": "EQU",
+            "meaning": "equal",
+            "words": [
+                "equable",
+                "adequacy",
+                "equilibrium",
+                "equinox"
+            ]
+        },
+        {
+            "unit": 6,
+            "id": 62,
+            "root": "QUI/QUIT",
+            "meaning": "rest/free",
+            "words": [
+                "quiescent",
+                "acquiesce",
+                "quietus",
+                "requiem"
+            ]
+        },
+        {
+            "unit": 6,
+            "id": 63,
+            "root": "PLE",
+            "meaning": "to fill",
+            "words": [
+                "complement",
+                "deplete",
+                "expletive",
+                "replete"
+            ]
+        },
+        {
+            "unit": 6,
+            "id": 64,
+            "root": "METR/METER",
+            "meaning": "measure",
+            "words": [
+                "metric",
+                "odometer",
+                "symmetrical",
+                "tachometer"
+            ]
+        },
+        {
+            "unit": 6,
+            "id": 65,
+            "root": "AUD",
+            "meaning": "hear",
+            "words": [
+                "auditor",
+                "auditory",
+                "audition",
+                "inaudible"
+            ]
+        },
+        {
+            "unit": 6,
+            "id": 66,
+            "root": "SON",
+            "meaning": "sound",
+            "words": [
+                "dissonant",
+                "resonance",
+                "sonic",
+                "ultrasonics"
+            ]
+        },
+        {
+            "unit": 6,
+            "id": 67,
+            "root": "ERR",
+            "meaning": "wander/stray",
+            "words": [
+                "aberrant",
+                "errant",
+                "erratic",
+                "erroneous"
+            ]
+        },
+        {
+            "unit": 6,
+            "id": 68,
+            "root": "CED",
+            "meaning": "go/yield",
+            "words": [
+                "recede",
+                "concede",
+                "precede",
+                "precedent"
+            ]
+        },
+        {
+            "unit": 6,
+            "id": 69,
+            "root": "Latin Borrowings",
+            "meaning": "",
+            "words": [
+                "alter ego",
+                "de facto",
+                "id est",
+                "per diem",
+                "pro bono",
+                "quasi",
+                "sangfroid",
+                "terra incognita"
+            ]
+        },
+        {
+            "unit": 7,
+            "id": 71,
+            "root": "VIS/VID",
+            "meaning": "see",
+            "words": [
+                "visage",
+                "eviscerate",
+                "improvise",
+                "videre"
+            ]
+        },
+        {
+            "unit": 7,
+            "id": 72,
+            "root": "SPECT",
+            "meaning": "look at",
+            "words": [
+                "specter",
+                "prospectus",
+                "introspection",
+                "retrospective"
+            ]
+        },
+        {
+            "unit": 7,
+            "id": 73,
+            "root": "VOC",
+            "meaning": "voice/speak",
+            "words": [
+                "equivocate",
+                "irrevocable",
+                "vociferous",
+                "vocation"
+            ]
+        },
+        {
+            "unit": 7,
+            "id": 74,
+            "root": "PHON",
+            "meaning": "sound",
+            "words": [
+                "cacophony",
+                "phonetic",
+                "polyphonic",
+                "symphony"
+            ]
+        },
+        {
+            "unit": 7,
+            "id": 75,
+            "root": "CUR",
+            "meaning": "care",
+            "words": [
+                "curative",
+                "curator",
+                "procure",
+                "sinecure"
+            ]
+        },
+        {
+            "unit": 7,
+            "id": 76,
+            "root": "PERI",
+            "meaning": "around",
+            "words": [
+                "perimeter",
+                "peripatetic",
+                "peripheral",
+                "periscope"
+            ]
+        },
+        {
+            "unit": 7,
+            "id": 77,
+            "root": "SENS",
+            "meaning": "feel/sense",
+            "words": [
+                "sensual",
+                "desensitize",
+                "extrasensory",
+                "sensuous"
+            ]
+        },
+        {
+            "unit": 7,
+            "id": 78,
+            "root": "SOPH",
+            "meaning": "wise/wisdom",
+            "words": [
+                "sophistry",
+                "sophisticated",
+                "sophomoric",
+                "theosophy"
+            ]
+        },
+        {
+            "unit": 7,
+            "id": 79,
+            "root": "Words from Names",
+            "meaning": "",
+            "words": [
+                "Achilles' heel",
+                "boycott",
+                "celsius",
+                "gerrymander",
+                "heckle",
+                "lynch",
+                "mendelevium",
+                "silhouette"
+            ]
+        },
+        {
+            "unit": 8,
+            "id": 81,
+            "root": "CARN",
+            "meaning": "flesh",
+            "words": [
+                "carnage",
+                "carnal",
+                "carnival",
+                "incarnation"
+            ]
+        },
+        {
+            "unit": 8,
+            "id": 82,
+            "root": "VOR",
+            "meaning": "eat",
+            "words": [
+                "herbivorous",
+                "insectivorous",
+                "omnivorous",
+                "voracious"
+            ]
+        },
+        {
+            "unit": 8,
+            "id": 83,
+            "root": "CRED",
+            "meaning": "believe",
+            "words": [
+                "credence",
+                "credibility",
+                "credulity",
+                "creed"
+            ]
+        },
+        {
+            "unit": 8,
+            "id": 84,
+            "root": "FID",
+            "meaning": "faith",
+            "words": [
+                "affidavit",
+                "diffident",
+                "fiduciary",
+                "perfidy"
+            ]
+        },
+        {
+            "unit": 8,
+            "id": 85,
+            "root": "CURR/CURS",
+            "meaning": "run",
+            "words": [
+                "concurrent",
+                "cursory",
+                "discursive",
+                "precursor"
+            ]
+        },
+        {
+            "unit": 8,
+            "id": 86,
+            "root": "PED",
+            "meaning": "foot",
+            "words": [
+                "impediment",
+                "pedigree",
+                "pedestrian",
+                "quadruped"
+            ]
+        },
+        {
+            "unit": 8,
+            "id": 87,
+            "root": "FLECT",
+            "meaning": "bend",
+            "words": [
+                "deflect",
+                "genuflect",
+                "inflection",
+                "reflective"
+            ]
+        },
+        {
+            "unit": 8,
+            "id": 88,
+            "root": "POST",
+            "meaning": "after",
+            "words": [
+                "posterior",
+                "posthumous",
+                "postmodern",
+                "postmortem"
+            ]
+        },
+        {
+            "unit": 8,
+            "id": 89,
+            "root": "Animal Words",
+            "meaning": "",
+            "words": [
+                "bovine",
+                "canine",
+                "equine",
+                "feline",
+                "leonine",
+                "piscine",
+                "porcine",
+                "ursine"
+            ]
+        },
+        {
+            "unit": 9,
+            "id": 91,
+            "root": "MAL",
+            "meaning": "bad",
+            "words": [
+                "malevolent",
+                "malicious",
+                "malign",
+                "malnourished"
+            ]
+        },
+        {
+            "unit": 9,
+            "id": 92,
+            "root": "CATA",
+            "meaning": "down",
+            "words": [
+                "cataclysm",
+                "catacomb",
+                "catalyst",
+                "catatonic"
+            ]
+        },
+        {
+            "unit": 9,
+            "id": 93,
+            "root": "PROT/PROTO",
+            "meaning": "first",
+            "words": [
+                "protagonist",
+                "protocol",
+                "protoplasm",
+                "prototype"
+            ]
+        },
+        {
+            "unit": 9,
+            "id": 94,
+            "root": "ANTE",
+            "meaning": "before",
+            "words": [
+                "antechamber",
+                "antedate",
+                "antecedent",
+                "anterior"
+            ]
+        },
+        {
+            "unit": 9,
+            "id": 95,
+            "root": "ORTHO",
+            "meaning": "straight",
+            "words": [
+                "orthodoxy",
+                "orthography",
+                "orthodontics",
+                "orthopedics"
+            ]
+        },
+        {
+            "unit": 9,
+            "id": 96,
+            "root": "RECT",
+            "meaning": "straight",
+            "words": [
+                "rectitude",
+                "rectify",
+                "rectilinear",
+                "rector"
+            ]
+        },
+        {
+            "unit": 9,
+            "id": 97,
+            "root": "EU",
+            "meaning": "good/well",
+            "words": [
+                "eugenics",
+                "euphemism",
+                "euphoria",
+                "evangelist"
+            ]
+        },
+        {
+            "unit": 9,
+            "id": 98,
+            "root": "DYS",
+            "meaning": "bad/difficult",
+            "words": [
+                "dysfunctional",
+                "dyslexia",
+                "dyspeptic",
+                "dystrophy"
+            ]
+        },
+        {
+            "unit": 9,
+            "id": 99,
+            "root": "Medical Words",
+            "meaning": "",
+            "words": [
+                "iatrogenic",
+                "hypochondria",
+                "psychosomatic",
+                "orthopedic",
+                "postpartum",
+                "prognosis",
+                "syndrome",
+                "therapy"
+            ]
+        },
+        {
+            "unit": 10,
+            "id": 101,
+            "root": "LOG",
+            "meaning": "word/reason",
+            "words": [
+                "analogy",
+                "eulogy",
+                "logistics",
+                "prologue"
+            ]
+        },
+        {
+            "unit": 10,
+            "id": 102,
+            "root": "TERR",
+            "meaning": "earth",
+            "words": [
+                "parterre",
+                "subterranean",
+                "terrarium",
+                "terrestrial"
+            ]
+        },
+        {
+            "unit": 10,
+            "id": 103,
+            "root": "MAR",
+            "meaning": "sea",
+            "words": [
+                "marina",
+                "maritime",
+                "mercantile",
+                "meridian"
+            ]
+        },
+        {
+            "unit": 10,
+            "id": 104,
+            "root": "PATH",
+            "meaning": "feeling/suffering",
+            "words": [
+                "apathetic",
+                "empathy",
+                "pathology",
+                "pathos"
+            ]
+        },
+        {
+            "unit": 10,
+            "id": 105,
+            "root": "PEN/PUN",
+            "meaning": "punish",
+            "words": [
+                "penal",
+                "penance",
+                "punitive",
+                "impunity"
+            ]
+        },
+        {
+            "unit": 10,
+            "id": 106,
+            "root": "MATR/MATER",
+            "meaning": "mother",
+            "words": [
+                "maternity",
+                "matriculate",
+                "matrilineal",
+                "matrimony"
+            ]
+        },
+        {
+            "unit": 10,
+            "id": 107,
+            "root": "PATR",
+            "meaning": "father",
+            "words": [
+                "patronize",
+                "paternal",
+                "patriarch",
+                "expatriate"
+            ]
+        },
+        {
+            "unit": 10,
+            "id": 108,
+            "root": "AQU",
+            "meaning": "water",
+            "words": [
+                "aquaculture",
+                "aquifer",
+                "aquiline",
+                "subaqueous"
+            ]
+        },
+        {
+            "unit": 10,
+            "id": 109,
+            "root": "Number Words",
+            "meaning": "",
+            "words": [
+                "monarchy",
+                "unilateral",
+                "binary",
+                "bipartite",
+                "trichotomy",
+                "triad",
+                "tetralogy",
+                "quadrant"
+            ]
+        },
+        {
+            "unit": 11,
+            "id": 111,
+            "root": "CANT",
+            "meaning": "sing",
+            "words": [
+                "cantata",
+                "incantation",
+                "recant",
+                "cantor"
+            ]
+        },
+        {
+            "unit": 11,
+            "id": 112,
+            "root": "LINGU",
+            "meaning": "tongue",
+            "words": [
+                "linguistics",
+                "multilingual",
+                "lingua franca",
+                "linguine"
+            ]
+        },
+        {
+            "unit": 11,
+            "id": 113,
+            "root": "SPIR",
+            "meaning": "breath",
+            "words": [
+                "spirited",
+                "dispiriting",
+                "respirator",
+                "conspire"
+            ]
+        },
+        {
+            "unit": 11,
+            "id": 114,
+            "root": "VERB",
+            "meaning": "word",
+            "words": [
+                "verbiage",
+                "proverbial",
+                "verbatim",
+                "verbose"
+            ]
+        },
+        {
+            "unit": 11,
+            "id": 115,
+            "root": "CORP",
+            "meaning": "body",
+            "words": [
+                "corporeal",
+                "corpulent",
+                "incorporate",
+                "corpuscle"
+            ]
+        },
+        {
+            "unit": 11,
+            "id": 116,
+            "root": "SOMN",
+            "meaning": "sleep",
+            "words": [
+                "somnambulist",
+                "somnolent",
+                "soporific",
+                "insomnia"
+            ]
+        },
+        {
+            "unit": 11,
+            "id": 117,
+            "root": "PHOS/PHOT",
+            "meaning": "light",
+            "words": [
+                "phosphorescence",
+                "photogenic",
+                "photon",
+                "photosynthesis"
+            ]
+        },
+        {
+            "unit": 11,
+            "id": 118,
+            "root": "LUC",
+            "meaning": "light",
+            "words": [
+                "elucidate",
+                "lucid",
+                "lucubration",
+                "translucent"
+            ]
+        },
+        {
+            "unit": 11,
+            "id": 119,
+            "root": "Medical Words II",
+            "meaning": "",
+            "words": [
+                "atrophy",
+                "benign",
+                "carcinoma",
+                "leukemia",
+                "melanoma",
+                "metastasis",
+                "prognosis",
+                "therapeutic"
+            ]
+        },
+        {
+            "unit": 12,
+            "id": 121,
+            "root": "UMBR",
+            "meaning": "shadow",
+            "words": [
+                "adumbrate",
+                "penumbra",
+                "umbrage",
+                "umbrella"
+            ]
+        },
+        {
+            "unit": 12,
+            "id": 122,
+            "root": "VEST",
+            "meaning": "clothing",
+            "words": [
+                "divest",
+                "investiture",
+                "transvestite",
+                "travesty"
+            ]
+        },
+        {
+            "unit": 12,
+            "id": 123,
+            "root": "THE/THEO",
+            "meaning": "god",
+            "words": [
+                "apotheosis",
+                "atheistic",
+                "pantheon",
+                "theocracy"
+            ]
+        },
+        {
+            "unit": 12,
+            "id": 124,
+            "root": "ICON",
+            "meaning": "image",
+            "words": [
+                "icon",
+                "iconic",
+                "iconoclast",
+                "iconography"
+            ]
+        },
+        {
+            "unit": 12,
+            "id": 125,
+            "root": "URB",
+            "meaning": "city",
+            "words": [
+                "urbane",
+                "exurb",
+                "suburbia",
+                "urbanite"
+            ]
+        },
+        {
+            "unit": 12,
+            "id": 126,
+            "root": "CULT",
+            "meaning": "care",
+            "words": [
+                "acculturation",
+                "cultivate",
+                "culture",
+                "horticulture"
+            ]
+        },
+        {
+            "unit": 12,
+            "id": 127,
+            "root": "DEM/DEMO",
+            "meaning": "people",
+            "words": [
+                "demographic",
+                "endemic",
+                "pandemic",
+                "demotic"
+            ]
+        },
+        {
+            "unit": 12,
+            "id": 128,
+            "root": "POPUL",
+            "meaning": "people",
+            "words": [
+                "populace",
+                "populist",
+                "populate",
+                "vox populi"
+            ]
+        },
+        {
+            "unit": 12,
+            "id": 129,
+            "root": "Words from Names II",
+            "meaning": "",
+            "words": [
+                "braille",
+                "casanova",
+                "chauvinist",
+                "derrick",
+                "don quixote",
+                "nicotine",
+                "pantaloon",
+                "shrapnel"
+            ]
+        },
+        {
+            "unit": 13,
+            "id": 131,
+            "root": "CORD",
+            "meaning": "heart",
+            "words": [
+                "accord",
+                "concordance",
+                "cordial",
+                "discordant"
+            ]
+        },
+        {
+            "unit": 13,
+            "id": 132,
+            "root": "CULP",
+            "meaning": "guilt",
+            "words": [
+                "culpable",
+                "exculpate",
+                "inculpate",
+                "mea culpa"
+            ]
+        },
+        {
+            "unit": 13,
+            "id": 133,
+            "root": "DICT",
+            "meaning": "say",
+            "words": [
+                "edict",
+                "interdiction",
+                "jurisdiction",
+                "malediction"
+            ]
+        },
+        {
+            "unit": 13,
+            "id": 134,
+            "root": "GNI/GNO",
+            "meaning": "know",
+            "words": [
+                "cognitive",
+                "diagnosis",
+                "incognito",
+                "prognosis"
+            ]
+        },
+        {
+            "unit": 13,
+            "id": 135,
+            "root": "GRAPH",
+            "meaning": "write",
+            "words": [
+                "calligraphy",
+                "hagiography",
+                "logogram",
+                "typography"
+            ]
+        },
+        {
+            "unit": 13,
+            "id": 136,
+            "root": "ART",
+            "meaning": "skill",
+            "words": [
+                "artful",
+                "artifact",
+                "artifice",
+                "artisan"
+            ]
+        },
+        {
+            "unit": 13,
+            "id": 137,
+            "root": "FORT",
+            "meaning": "strong",
+            "words": [
+                "fortify",
+                "fortitude",
+                "fortress",
+                "forte"
+            ]
+        },
+        {
+            "unit": 13,
+            "id": 138,
+            "root": "CIS",
+            "meaning": "cut",
+            "words": [
+                "concise",
+                "excision",
+                "incisive",
+                "precision"
+            ]
+        },
+        {
+            "unit": 13,
+            "id": 139,
+            "root": "Latin Borrowings II",
+            "meaning": "",
+            "words": [
+                "ad hoc",
+                "ad hominem",
+                "alter ego",
+                "de facto",
+                "ex post facto",
+                "honorarium",
+                "magnum opus",
+                "persona non grata"
+            ]
+        },
+        {
+            "unit": 14,
+            "id": 141,
+            "root": "CRYPT",
+            "meaning": "hidden",
+            "words": [
+                "cryptic",
+                "encrypt",
+                "cryptogram",
+                "cryptology"
+            ]
+        },
+        {
+            "unit": 14,
+            "id": 142,
+            "root": "AB/ABS",
+            "meaning": "away/from",
+            "words": [
+                "abscond",
+                "abstemious",
+                "abstraction",
+                "abstruse"
+            ]
+        },
+        {
+            "unit": 14,
+            "id": 143,
+            "root": "PED",
+            "meaning": "child",
+            "words": [
+                "pedagogy",
+                "pediatrician",
+                "pedant",
+                "encyclopedia"
+            ]
+        },
+        {
+            "unit": 14,
+            "id": 144,
+            "root": "TROP",
+            "meaning": "turn",
+            "words": [
+                "tropism",
+                "entropy",
+                "heliotrope",
+                "psychotropic"
+            ]
+        },
+        {
+            "unit": 14,
+            "id": 145,
+            "root": "NEO",
+            "meaning": "new",
+            "words": [
+                "neoclassic",
+                "neolithic",
+                "neologism",
+                "neophyte"
+            ]
+        },
+        {
+            "unit": 14,
+            "id": 146,
+            "root": "NOV",
+            "meaning": "new",
+            "words": [
+                "innovation",
+                "novelty",
+                "novice",
+                "renovate"
+            ]
+        },
+        {
+            "unit": 14,
+            "id": 147,
+            "root": "POS",
+            "meaning": "put",
+            "words": [
+                "imposition",
+                "juxtapose",
+                "repository",
+                "disposition"
+            ]
+        },
+        {
+            "unit": 14,
+            "id": 148,
+            "root": "TEN",
+            "meaning": "hold",
+            "words": [
+                "tenacious",
+                "tenable",
+                "tenure",
+                "tenet"
+            ]
+        },
+        {
+            "unit": 14,
+            "id": 149,
+            "root": "Greek Borrowings",
+            "meaning": "",
+            "words": [
+                "amnesty",
+                "anathema",
+                "climax",
+                "epitome",
+                "hyperbole",
+                "paradigm",
+                "paradox",
+                "phenomenon"
+            ]
+        },
+        {
+            "unit": 15,
+            "id": 151,
+            "root": "TERM/TERMIN",
+            "meaning": "end",
+            "words": [
+                "determinate",
+                "interminable",
+                "terminal",
+                "terminology"
+            ]
+        },
+        {
+            "unit": 15,
+            "id": 152,
+            "root": "GEO",
+            "meaning": "earth",
+            "words": [
+                "geocentric",
+                "geophysics",
+                "geostationary",
+                "geothermal"
+            ]
+        },
+        {
+            "unit": 15,
+            "id": 153,
+            "root": "SPHER",
+            "meaning": "ball",
+            "words": [
+                "biosphere",
+                "hemisphere",
+                "spherical",
+                "stratosphere"
+            ]
+        },
+        {
+            "unit": 15,
+            "id": 154,
+            "root": "VERT",
+            "meaning": "turn",
+            "words": [
+                "revert",
+                "divert",
+                "invert",
+                "subvert"
+            ]
+        },
+        {
+            "unit": 15,
+            "id": 155,
+            "root": "MORPH",
+            "meaning": "shape",
+            "words": [
+                "amorphous",
+                "anthropomorphic",
+                "metamorphosis",
+                "morphology"
+            ]
+        },
+        {
+            "unit": 15,
+            "id": 156,
+            "root": "FORM",
+            "meaning": "shape",
+            "words": [
+                "conformity",
+                "formative",
+                "format",
+                "formulaic"
+            ]
+        },
+        {
+            "unit": 15,
+            "id": 157,
+            "root": "DOC/DOCT",
+            "meaning": "teach",
+            "words": [
+                "docile",
+                "doctrinaire",
+                "doctrine",
+                "indoctrinate"
+            ]
+        },
+        {
+            "unit": 15,
+            "id": 158,
+            "root": "TUT",
+            "meaning": "guide",
+            "words": [
+                "intuition",
+                "tuition",
+                "tutelage",
+                "tutorial"
+            ]
+        },
+        {
+            "unit": 15,
+            "id": 159,
+            "root": "Animal Words II",
+            "meaning": "",
+            "words": [
+                "aquiline",
+                "asinine",
+                "corvine",
+                "lupine",
+                "ovine",
+                "pavonine",
+                "serpentine",
+                "vulpine"
+            ]
+        },
+        {
+            "unit": 16,
+            "id": 161,
+            "root": "TOP",
+            "meaning": "place",
+            "words": [
+                "topical",
+                "utopia",
+                "topography",
+                "ectopic"
+            ]
+        },
+        {
+            "unit": 16,
+            "id": 162,
+            "root": "CENTR",
+            "meaning": "center",
+            "words": [
+                "eccentric",
+                "ethnocentric",
+                "egocentric",
+                "centrifugal"
+            ]
+        },
+        {
+            "unit": 16,
+            "id": 163,
+            "root": "DOM",
+            "meaning": "house",
+            "words": [
+                "domestic",
+                "dominate",
+                "domicile",
+                "domain"
+            ]
+        },
+        {
+            "unit": 16,
+            "id": 164,
+            "root": "OMNI",
+            "meaning": "all",
+            "words": [
+                "omnibus",
+                "omnipotent",
+                "omnipresent",
+                "omniscient"
+            ]
+        },
+        {
+            "unit": 16,
+            "id": 165,
+            "root": "HOL/HOLO",
+            "meaning": "whole",
+            "words": [
+                "holistic",
+                "holograph",
+                "holocaust",
+                "hologram"
+            ]
+        },
+        {
+            "unit": 16,
+            "id": 166,
+            "root": "RETRO",
+            "meaning": "back",
+            "words": [
+                "retroactive",
+                "retrofit",
+                "retrograde",
+                "retrospective"
+            ]
+        },
+        {
+            "unit": 16,
+            "id": 167,
+            "root": "TEMPOR",
+            "meaning": "time",
+            "words": [
+                "extemporaneous",
+                "temporal",
+                "temporize",
+                "contemporary"
+            ]
+        },
+        {
+            "unit": 16,
+            "id": 168,
+            "root": "CHRON",
+            "meaning": "time",
+            "words": [
+                "anachronism",
+                "chronic",
+                "chronicle",
+                "chronology"
+            ]
+        },
+        {
+            "unit": 16,
+            "id": 169,
+            "root": "French Borrowings",
+            "meaning": "",
+            "words": [
+                "bric-a-brac",
+                "carte blanche",
+                "cliché",
+                "déjà vu",
+                "double entendre",
+                "fait accompli",
+                "faux pas",
+                "finesse"
+            ]
+        },
+        {
+            "unit": 17,
+            "id": 171,
+            "root": "TRI",
+            "meaning": "three",
+            "words": [
+                "triad",
+                "trilogy",
+                "trimester",
+                "trinity"
+            ]
+        },
+        {
+            "unit": 17,
+            "id": 172,
+            "root": "QUADR/QUART",
+            "meaning": "four",
+            "words": [
+                "quadrant",
+                "quadrille",
+                "quadriplegic",
+                "quartile"
+            ]
+        },
+        {
+            "unit": 17,
+            "id": 173,
+            "root": "QUINT",
+            "meaning": "five",
+            "words": [
+                "quintessence",
+                "quintet",
+                "quintuple",
+                "quintile"
+            ]
+        },
+        {
+            "unit": 17,
+            "id": 174,
+            "root": "DEC",
+            "meaning": "ten",
+            "words": [
+                "decimate",
+                "decathlon",
+                "decibel",
+                "Deuteronomy"
+            ]
+        },
+        {
+            "unit": 17,
+            "id": 175,
+            "root": "CENT",
+            "meaning": "hundred",
+            "words": [
+                "centenary",
+                "centigrade",
+                "centimeter",
+                "centurion"
+            ]
+        },
+        {
+            "unit": 17,
+            "id": 176,
+            "root": "MULTI",
+            "meaning": "many",
+            "words": [
+                "multifarious",
+                "multilateral",
+                "multiplex",
+                "multitudinous"
+            ]
+        },
+        {
+            "unit": 17,
+            "id": 177,
+            "root": "BREV",
+            "meaning": "short",
+            "words": [
+                "abbreviate",
+                "brevity",
+                "breve",
+                "brevier"
+            ]
+        },
+        {
+            "unit": 17,
+            "id": 178,
+            "root": "OMNI",
+            "meaning": "all",
+            "words": [
+                "omnivorous",
+                "omnipresent",
+                "omnipotent",
+                "omniscient"
+            ]
+        },
+        {
+            "unit": 17,
+            "id": 179,
+            "root": "Mythology and History IV",
+            "meaning": "",
+            "words": [
+                "augur",
+                "auspices",
+                "cathedral",
+                "disciples",
+                "hegemony",
+                "iconoclast",
+                "pagan",
+                "theocracy"
+            ]
+        },
+        {
+            "unit": 18,
+            "id": 181,
+            "root": "VER",
+            "meaning": "truth",
+            "words": [
+                "aver",
+                "veracious",
+                "verdict",
+                "verify"
+            ]
+        },
+        {
+            "unit": 18,
+            "id": 182,
+            "root": "SAG",
+            "meaning": "wise",
+            "words": [
+                "sagacious",
+                "sage",
+                "presage",
+                "sagacity"
+            ]
+        },
+        {
+            "unit": 18,
+            "id": 183,
+            "root": "PREC",
+            "meaning": "price/value",
+            "words": [
+                "appreciate",
+                "depreciate",
+                "appraisal",
+                "precious"
+            ]
+        },
+        {
+            "unit": 18,
+            "id": 184,
+            "root": "LINE",
+            "meaning": "line",
+            "words": [
+                "lineage",
+                "linearity",
+                "lineament",
+                "lineal"
+            ]
+        },
+        {
+            "unit": 18,
+            "id": 185,
+            "root": "POT",
+            "meaning": "power",
+            "words": [
+                "potent",
+                "impotent",
+                "omnipotent",
+                "potentate"
+            ]
+        },
+        {
+            "unit": 18,
+            "id": 186,
+            "root": "VAL",
+            "meaning": "strength/worth",
+            "words": [
+                "ambivalent",
+                "prevalent",
+                "valorous",
+                "validate"
+            ]
+        },
+        {
+            "unit": 18,
+            "id": 187,
+            "root": "EN",
+            "meaning": "in/within",
+            "words": [
+                "encapsulate",
+                "envisage",
+                "enthralled",
+                "enigma"
+            ]
+        },
+        {
+            "unit": 18,
+            "id": 188,
+            "root": "EX",
+            "meaning": "out",
+            "words": [
+                "excise",
+                "exculpate",
+                "exorbitant",
+                "expatriate"
+            ]
+        },
+        {
+            "unit": 18,
+            "id": 189,
+            "root": "Names of Places",
+            "meaning": "",
+            "words": [
+                "arcadian",
+                "bedlam",
+                "byzantine",
+                "olympian",
+                "philistine",
+                "surreal",
+                "sybaritic",
+                "utopian"
+            ]
+        },
+        {
+            "unit": 19,
+            "id": 191,
+            "root": "ARCH",
+            "meaning": "ruler/chief",
+            "words": [
+                "anarchy",
+                "hierarchy",
+                "matriarch",
+                "patriarch"
+            ]
+        },
+        {
+            "unit": 19,
+            "id": 192,
+            "root": "THE",
+            "meaning": "god",
+            "words": [
+                "atheist",
+                "pantheistic",
+                "theology",
+                "theocracy"
+            ]
+        },
+        {
+            "unit": 19,
+            "id": 193,
+            "root": "PAN",
+            "meaning": "all",
+            "words": [
+                "panacea",
+                "pandemonium",
+                "panorama",
+                "pantheon"
+            ]
+        },
+        {
+            "unit": 19,
+            "id": 194,
+            "root": "MONO",
+            "meaning": "one",
+            "words": [
+                "monochrome",
+                "monogram",
+                "monolith",
+                "monologue"
+            ]
+        },
+        {
+            "unit": 19,
+            "id": 195,
+            "root": "POLY",
+            "meaning": "many",
+            "words": [
+                "polygamy",
+                "polyglot",
+                "polygon",
+                "polygraph"
+            ]
+        },
+        {
+            "unit": 19,
+            "id": 196,
+            "root": "HYPER",
+            "meaning": "above/beyond",
+            "words": [
+                "hyperactive",
+                "hyperbole",
+                "hypercritical",
+                "hypertension"
+            ]
+        },
+        {
+            "unit": 19,
+            "id": 197,
+            "root": "HYPO",
+            "meaning": "under/below",
+            "words": [
+                "hypochondriac",
+                "hypodermic",
+                "hypothermia",
+                "hypothetical"
+            ]
+        },
+        {
+            "unit": 19,
+            "id": 198,
+            "root": "MICRO",
+            "meaning": "small",
+            "words": [
+                "microbe",
+                "microcosm",
+                "microbiology",
+                "microwave"
+            ]
+        },
+        {
+            "unit": 19,
+            "id": 199,
+            "root": "Number Words II",
+            "meaning": "",
+            "words": [
+                "duality",
+                "hemisphere",
+                "monogamy",
+                "quadrennial",
+                "quinary",
+                "trilateral",
+                "unilateral",
+                "vigesimal"
+            ]
+        },
+        {
+            "unit": 20,
+            "id": 201,
+            "root": "ACRI/ACER",
+            "meaning": "sharp/sour",
+            "words": [
+                "acerbic",
+                "acrid",
+                "acrimony",
+                "exacerbate"
+            ]
+        },
+        {
+            "unit": 20,
+            "id": 202,
+            "root": "STRICT",
+            "meaning": "draw tight",
+            "words": [
+                "constrict",
+                "restriction",
+                "stricture",
+                "stringent"
+            ]
+        },
+        {
+            "unit": 20,
+            "id": 203,
+            "root": "STRU/STRUCT",
+            "meaning": "build",
+            "words": [
+                "infrastructure",
+                "construe",
+                "instrumental",
+                "misconstrue"
+            ]
+        },
+        {
+            "unit": 20,
+            "id": 204,
+            "root": "PROP/PROPRI",
+            "meaning": "own/proper",
+            "words": [
+                "appropriate",
+                "expropriate",
+                "proprietary",
+                "propriety"
+            ]
+        },
+        {
+            "unit": 20,
+            "id": 205,
+            "root": "TORT",
+            "meaning": "twist",
+            "words": [
+                "extort",
+                "retort",
+                "tortuous",
+                "torture"
+            ]
+        },
+        {
+            "unit": 20,
+            "id": 206,
+            "root": "VIV",
+            "meaning": "live",
+            "words": [
+                "convivial",
+                "revivify",
+                "vivacious",
+                "vivisection"
+            ]
+        },
+        {
+            "unit": 20,
+            "id": 207,
+            "root": "SERV",
+            "meaning": "serve/keep",
+            "words": [
+                "servile",
+                "servitude",
+                "subservient",
+                "conservation"
+            ]
+        },
+        {
+            "unit": 20,
+            "id": 208,
+            "root": "CLUS",
+            "meaning": "close",
+            "words": [
+                "conclusion",
+                "exclusive",
+                "preclude",
+                "seclusion"
+            ]
+        },
+        {
+            "unit": 20,
+            "id": 209,
+            "root": "Food Words",
+            "meaning": "",
+            "words": [
+                "confection",
+                "culinary",
+                "epicure",
+                "gastronomy",
+                "glutton",
+                "potable",
+                "succulent",
+                "voracious"
+            ]
+        },
+        {
+            "unit": 21,
+            "id": 211,
+            "root": "CAPIT",
+            "meaning": "head",
+            "words": [
+                "capitalism",
+                "capitulate",
+                "decapitate",
+                "recapitulate"
+            ]
+        },
+        {
+            "unit": 21,
+            "id": 212,
+            "root": "ANTHROP",
+            "meaning": "human",
+            "words": [
+                "anthropoid",
+                "anthropology",
+                "misanthropic",
+                "philanthropy"
+            ]
+        },
+        {
+            "unit": 21,
+            "id": 213,
+            "root": "KINE",
+            "meaning": "movement",
+            "words": [
+                "kinesiology",
+                "kinetic",
+                "telekinesis",
+                "cinema"
+            ]
+        },
+        {
+            "unit": 21,
+            "id": 214,
+            "root": "DYNAM",
+            "meaning": "power",
+            "words": [
+                "dynamic",
+                "dynamo",
+                "aerodynamic",
+                "hydrodynamic"
+            ]
+        },
+        {
+            "unit": 21,
+            "id": 215,
+            "root": "GRAD",
+            "meaning": "step/degree",
+            "words": [
+                "gradient",
+                "gradualism",
+                "retrograde",
+                "degrade"
+            ]
+        },
+        {
+            "unit": 21,
+            "id": 216,
+            "root": "REG",
+            "meaning": "rule",
+            "words": [
+                "regal",
+                "regency",
+                "regicide",
+                "regimen"
+            ]
+        },
+        {
+            "unit": 21,
+            "id": 217,
+            "root": "SPIR",
+            "meaning": "breathe",
+            "words": [
+                "aspiration",
+                "expire",
+                "perspire",
+                "transpire"
+            ]
+        },
+        {
+            "unit": 21,
+            "id": 218,
+            "root": "PORT",
+            "meaning": "carry",
+            "words": [
+                "deportment",
+                "portfolio",
+                "portage",
+                "portly"
+            ]
+        },
+        {
+            "unit": 21,
+            "id": 219,
+            "root": "Mythology and History V",
+            "meaning": "",
+            "words": [
+                "atlantes",
+                "aurora",
+                "babylon",
+                "chaos",
+                "draconian",
+                "myrmidon",
+                "nemesis",
+                "saturnine"
+            ]
+        },
+        {
+            "unit": 22,
+            "id": 221,
+            "root": "CRIT",
+            "meaning": "judge/decide",
+            "words": [
+                "critical",
+                "criterion",
+                "hypocritical",
+                "critique"
+            ]
+        },
+        {
+            "unit": 22,
+            "id": 222,
+            "root": "JUR",
+            "meaning": "swear/law",
+            "words": [
+                "abjure",
+                "perjury",
+                "jurisprudence",
+                "adjure"
+            ]
+        },
+        {
+            "unit": 22,
+            "id": 223,
+            "root": "PEND",
+            "meaning": "hang/weigh",
+            "words": [
+                "appendix",
+                "compendium",
+                "expenditure",
+                "pendant"
+            ]
+        },
+        {
+            "unit": 22,
+            "id": 224,
+            "root": "STAT",
+            "meaning": "stand/position",
+            "words": [
+                "static",
+                "status quo",
+                "statute",
+                "ecstasy"
+            ]
+        },
+        {
+            "unit": 22,
+            "id": 225,
+            "root": "CAD",
+            "meaning": "fall/happen",
+            "words": [
+                "cadence",
+                "decadence",
+                "casuistry",
+                "decadent"
+            ]
+        },
+        {
+            "unit": 22,
+            "id": 226,
+            "root": "FLU",
+            "meaning": "flow",
+            "words": [
+                "affluence",
+                "effluent",
+                "fluctuation",
+                "influence"
+            ]
+        },
+        {
+            "unit": 22,
+            "id": 227,
+            "root": "TORT",
+            "meaning": "twist",
+            "words": [
+                "distortion",
+                "extort",
+                "retort",
+                "tortuous"
+            ]
+        },
+        {
+            "unit": 22,
+            "id": 228,
+            "root": "VOLV",
+            "meaning": "roll/turn",
+            "words": [
+                "evolution",
+                "involution",
+                "revolution",
+                "voluble"
+            ]
+        },
+        {
+            "unit": 22,
+            "id": 229,
+            "root": "Law and Government",
+            "meaning": "",
+            "words": [
+                "arbitration",
+                "brief",
+                "deposition",
+                "equity",
+                "injunction",
+                "litigation",
+                "precedent",
+                "statute"
+            ]
+        },
+        {
+            "unit": 23,
+            "id": 231,
+            "root": "AGER",
+            "meaning": "field",
+            "words": [
+                "agrarian",
+                "agronomy",
+                "agriculture",
+                "peregrination"
+            ]
+        },
+        {
+            "unit": 23,
+            "id": 232,
+            "root": "MUT",
+            "meaning": "change",
+            "words": [
+                "mutable",
+                "mutation",
+                "transmute",
+                "immutable"
+            ]
+        },
+        {
+            "unit": 23,
+            "id": 233,
+            "root": "NASC/NAT",
+            "meaning": "born",
+            "words": [
+                "nascent",
+                "innate",
+                "natal",
+                "renaissance"
+            ]
+        },
+        {
+            "unit": 23,
+            "id": 234,
+            "root": "PHIL",
+            "meaning": "love",
+            "words": [
+                "philanthropist",
+                "philology",
+                "philosophy",
+                "bibliophile"
+            ]
+        },
+        {
+            "unit": 23,
+            "id": 235,
+            "root": "PHOB",
+            "meaning": "fear",
+            "words": [
+                "acrophobia",
+                "agoraphobia",
+                "claustrophobia",
+                "xenophobia"
+            ]
+        },
+        {
+            "unit": 23,
+            "id": 236,
+            "root": "PON/POS",
+            "meaning": "put/place",
+            "words": [
+                "component",
+                "disposition",
+                "exponent",
+                "proponent"
+            ]
+        },
+        {
+            "unit": 23,
+            "id": 237,
+            "root": "SEQU",
+            "meaning": "follow",
+            "words": [
+                "consecutive",
+                "subsequent",
+                "consequential",
+                "sequel"
+            ]
+        },
+        {
+            "unit": 23,
+            "id": 238,
+            "root": "STRU/STRUCT",
+            "meaning": "build",
+            "words": [
+                "construct",
+                "indestructible",
+                "infrastructure",
+                "structure"
+            ]
+        },
+        {
+            "unit": 23,
+            "id": 239,
+            "root": "Science Words",
+            "meaning": "",
+            "words": [
+                "absolute zero",
+                "entropy",
+                "fission",
+                "inertia",
+                "isotope",
+                "nebula",
+                "photon",
+                "symbiosis"
+            ]
+        },
+        {
+            "unit": 24,
+            "id": 241,
+            "root": "AMBI",
+            "meaning": "both/around",
+            "words": [
+                "ambidextrous",
+                "ambiance",
+                "ambivalent",
+                "ambit"
+            ]
+        },
+        {
+            "unit": 24,
+            "id": 242,
+            "root": "CIRCUM",
+            "meaning": "around",
+            "words": [
+                "circuitous",
+                "circumference",
+                "circumspect",
+                "circumvent"
+            ]
+        },
+        {
+            "unit": 24,
+            "id": 243,
+            "root": "EXTRA",
+            "meaning": "outside/beyond",
+            "words": [
+                "extracurricular",
+                "extraneous",
+                "extrapolate",
+                "extraordinary"
+            ]
+        },
+        {
+            "unit": 24,
+            "id": 244,
+            "root": "INTRA",
+            "meaning": "within",
+            "words": [
+                "intravenous",
+                "intramural",
+                "introspective",
+                "intrastate"
+            ]
+        },
+        {
+            "unit": 24,
+            "id": 245,
+            "root": "POST",
+            "meaning": "after",
+            "words": [
+                "postpone",
+                "postscript",
+                "posthumous",
+                "postlude"
+            ]
+        },
+        {
+            "unit": 24,
+            "id": 246,
+            "root": "PRE",
+            "meaning": "before",
+            "words": [
+                "precede",
+                "precedent",
+                "preclude",
+                "precocious"
+            ]
+        },
+        {
+            "unit": 24,
+            "id": 247,
+            "root": "SUB",
+            "meaning": "under/below",
+            "words": [
+                "subconscious",
+                "subjugate",
+                "subliminal",
+                "subversion"
+            ]
+        },
+        {
+            "unit": 24,
+            "id": 248,
+            "root": "TRANS",
+            "meaning": "across/through",
+            "words": [
+                "transcend",
+                "transgression",
+                "transient",
+                "translucent"
+            ]
+        },
+        {
+            "unit": 24,
+            "id": 249,
+            "root": "Military Words",
+            "meaning": "",
+            "words": [
+                "armistice",
+                "attrition",
+                "camisole",
+                "cartridge",
+                "ordnance",
+                "perimeter",
+                "salvo",
+                "shrapnel"
+            ]
+        },
+        {
+            "unit": 25,
+            "id": 251,
+            "root": "ANIM",
+            "meaning": "breath/soul",
+            "words": [
+                "animadversion",
+                "animal",
+                "animate",
+                "animosity"
+            ]
+        },
+        {
+            "unit": 25,
+            "id": 252,
+            "root": "FIG",
+            "meaning": "shape/mold",
+            "words": [
+                "effigy",
+                "figment",
+                "figurative",
+                "configuration"
+            ]
+        },
+        {
+            "unit": 25,
+            "id": 253,
+            "root": "ANN/ENN",
+            "meaning": "year",
+            "words": [
+                "annals",
+                "annuity",
+                "perennial",
+                "superannuated"
+            ]
+        },
+        {
+            "unit": 25,
+            "id": 254,
+            "root": "EV",
+            "meaning": "age/time",
+            "words": [
+                "coeval",
+                "longevity",
+                "medieval",
+                "primeval"
+            ]
+        },
+        {
+            "unit": 25,
+            "id": 255,
+            "root": "CORP",
+            "meaning": "body",
+            "words": [
+                "corporal",
+                "corporate",
+                "corporeal",
+                "corpulent"
+            ]
+        },
+        {
+            "unit": 25,
+            "id": 256,
+            "root": "TANG/TACT",
+            "meaning": "touch",
+            "words": [
+                "tactile",
+                "tangential",
+                "tangible",
+                "intact"
+            ]
+        },
+        {
+            "unit": 25,
+            "id": 257,
+            "root": "COGN",
+            "meaning": "know",
+            "words": [
+                "cognizance",
+                "incognito",
+                "recognizance",
+                "prognosis"
+            ]
+        },
+        {
+            "unit": 25,
+            "id": 258,
+            "root": "SCI",
+            "meaning": "know",
+            "words": [
+                "conscientious",
+                "nescience",
+                "prescient",
+                "unconscionable"
+            ]
+        },
+        {
+            "unit": 25,
+            "id": 259,
+            "root": "Mythology and History VI",
+            "meaning": "",
+            "words": [
+                "albion",
+                "benedictine",
+                "calvary",
+                "golgotha",
+                "islam",
+                "judaism",
+                "mecca",
+                "shangri-la"
+            ]
+        },
+        {
+            "unit": 26,
+            "id": 261,
+            "root": "CLUD/CLUS",
+            "meaning": "close",
+            "words": [
+                "preclude",
+                "reclusive",
+                "seclusion",
+                "occlusion"
+            ]
+        },
+        {
+            "unit": 26,
+            "id": 262,
+            "root": "PLIC",
+            "meaning": "fold/layer",
+            "words": [
+                "implicit",
+                "explicate",
+                "replicate",
+                "supplication"
+            ]
+        },
+        {
+            "unit": 26,
+            "id": 263,
+            "root": "FAC",
+            "meaning": "make/do",
+            "words": [
+                "facile",
+                "facilitate",
+                "faction",
+                "factotum"
+            ]
+        },
+        {
+            "unit": 26,
+            "id": 264,
+            "root": "DUC",
+            "meaning": "lead",
+            "words": [
+                "conducive",
+                "induce",
+                "seduce",
+                "traduce"
+            ]
+        },
+        {
+            "unit": 26,
+            "id": 265,
+            "root": "VERB",
+            "meaning": "word",
+            "words": [
+                "proverbial",
+                "verbatim",
+                "verbose",
+                "verbiage"
+            ]
+        },
+        {
+            "unit": 26,
+            "id": 266,
+            "root": "NOM",
+            "meaning": "name",
+            "words": [
+                "nominal",
+                "nomenclature",
+                "ignominious",
+                "misnomer"
+            ]
+        },
+        {
+            "unit": 26,
+            "id": 267,
+            "root": "SCRIB/SCRIP",
+            "meaning": "write",
+            "words": [
+                "ascribe",
+                "conscription",
+                "proscribe",
+                "manuscript"
+            ]
+        },
+        {
+            "unit": 26,
+            "id": 268,
+            "root": "VOL",
+            "meaning": "will/wish",
+            "words": [
+                "benevolence",
+                "malevolent",
+                "volition",
+                "voluntary"
+            ]
+        },
+        {
+            "unit": 26,
+            "id": 269,
+            "root": "Business Words",
+            "meaning": "",
+            "words": [
+                "arbitrage",
+                "cartel",
+                "consortium",
+                "equity",
+                "liability",
+                "monopoly",
+                "pittance",
+                "proxy"
+            ]
+        },
+        {
+            "unit": 27,
+            "id": 271,
+            "root": "AMBUL",
+            "meaning": "walk",
+            "words": [
+                "ambulatory",
+                "perambulate",
+                "preamble",
+                "somnambulist"
+            ]
+        },
+        {
+            "unit": 27,
+            "id": 272,
+            "root": "CURS",
+            "meaning": "run",
+            "words": [
+                "cursory",
+                "discursive",
+                "precursor",
+                "excursion"
+            ]
+        },
+        {
+            "unit": 27,
+            "id": 273,
+            "root": "ERR",
+            "meaning": "wander",
+            "words": [
+                "aberrant",
+                "errant",
+                "erratic",
+                "erroneous"
+            ]
+        },
+        {
+            "unit": 27,
+            "id": 274,
+            "root": "CED",
+            "meaning": "go/yield",
+            "words": [
+                "concede",
+                "precede",
+                "recede",
+                "secede"
+            ]
+        },
+        {
+            "unit": 27,
+            "id": 275,
+            "root": "FER",
+            "meaning": "carry/bear",
+            "words": [
+                "deferential",
+                "fertile",
+                "inference",
+                "proliferate"
+            ]
+        },
+        {
+            "unit": 27,
+            "id": 276,
+            "root": "PON",
+            "meaning": "put/place",
+            "words": [
+                "component",
+                "exponent",
+                "postpone",
+                "superimpose"
+            ]
+        },
+        {
+            "unit": 27,
+            "id": 277,
+            "root": "VERS/VERT",
+            "meaning": "turn",
+            "words": [
+                "adversary",
+                "aversion",
+                "extrovert",
+                "introvert"
+            ]
+        },
+        {
+            "unit": 27,
+            "id": 278,
+            "root": "TEN",
+            "meaning": "hold",
+            "words": [
+                "tenable",
+                "tenacious",
+                "tenet",
+                "tenure"
+            ]
+        },
+        {
+            "unit": 27,
+            "id": 279,
+            "root": "Foreign Borrowings",
+            "meaning": "",
+            "words": [
+                "aficionado",
+                "barrio",
+                "bonanza",
+                "bravado",
+                "hacienda",
+                "junta",
+                "peccadillo",
+                "renegade"
+            ]
+        },
+        {
+            "unit": 28,
+            "id": 281,
+            "root": "HOMO",
+            "meaning": "man/human",
+            "words": [
+                "hominid",
+                "homage",
+                "homicide",
+                "homo sapiens"
+            ]
+        },
+        {
+            "unit": 28,
+            "id": 282,
+            "root": "GEN",
+            "meaning": "birth/kind",
+            "words": [
+                "genesis",
+                "generic",
+                "genre",
+                "indigenous"
+            ]
+        },
+        {
+            "unit": 28,
+            "id": 283,
+            "root": "PATER",
+            "meaning": "father",
+            "words": [
+                "paternalistic",
+                "patrician",
+                "patrimony",
+                "patronize"
+            ]
+        },
+        {
+            "unit": 28,
+            "id": 284,
+            "root": "MATER",
+            "meaning": "mother",
+            "words": [
+                "maternal",
+                "matriarch",
+                "matriculate",
+                "matrix"
+            ]
+        },
+        {
+            "unit": 28,
+            "id": 285,
+            "root": "FRATER",
+            "meaning": "brother",
+            "words": [
+                "fraternal",
+                "fraternize",
+                "fratricide",
+                "confraternity"
+            ]
+        },
+        {
+            "unit": 28,
+            "id": 286,
+            "root": "SOROR",
+            "meaning": "sister",
+            "words": [
+                "sororate",
+                "sororicide",
+                "sorority",
+                "sororal"
+            ]
+        },
+        {
+            "unit": 28,
+            "id": 287,
+            "root": "UXOR",
+            "meaning": "wife",
+            "words": [
+                "uxorial",
+                "uxorious",
+                "uxoricide",
+                "uxoriousness"
+            ]
+        },
+        {
+            "unit": 28,
+            "id": 288,
+            "root": "FILI",
+            "meaning": "son/daughter",
+            "words": [
+                "filial",
+                "filiation",
+                "affiliate",
+                "filicide"
+            ]
+        },
+        {
+            "unit": 28,
+            "id": 289,
+            "root": "Mythology and History VII",
+            "meaning": "",
+            "words": [
+                "armageddon",
+                "babylon",
+                "golgotha",
+                "leviate",
+                "manna",
+                "philistine",
+                "shibboleth",
+                "silicon valley"
+            ]
+        },
+        {
+            "unit": 29,
+            "id": 291,
+            "root": "ALI",
+            "meaning": "other",
+            "words": [
+                "alias",
+                "alienate",
+                "inalienable",
+                "alibi"
+            ]
+        },
+        {
+            "unit": 29,
+            "id": 292,
+            "root": "ALTER",
+            "meaning": "other",
+            "words": [
+                "alteration",
+                "altercation",
+                "alternate",
+                "altruism"
+            ]
+        },
+        {
+            "unit": 29,
+            "id": 293,
+            "root": "SIMIL",
+            "meaning": "same",
+            "words": [
+                "assimilate",
+                "similitude",
+                "simile",
+                "simultaneous"
+            ]
+        },
+        {
+            "unit": 29,
+            "id": 294,
+            "root": "VIV",
+            "meaning": "live",
+            "words": [
+                "vivacious",
+                "vivid",
+                "vivisection",
+                "revive"
+            ]
+        },
+        {
+            "unit": 29,
+            "id": 295,
+            "root": "MOR",
+            "meaning": "die",
+            "words": [
+                "mortify",
+                "moribund",
+                "immortal",
+                "mortality"
+            ]
+        },
+        {
+            "unit": 29,
+            "id": 296,
+            "root": "SOL",
+            "meaning": "alone",
+            "words": [
+                "soliloquy",
+                "solitary",
+                "solitude",
+                "desolate"
+            ]
+        },
+        {
+            "unit": 29,
+            "id": 297,
+            "root": "ISOL",
+            "meaning": "island",
+            "words": [
+                "isolate",
+                "insulate",
+                "isolationism",
+                "insulation"
+            ]
+        },
+        {
+            "unit": 29,
+            "id": 298,
+            "root": "SOMN",
+            "meaning": "sleep",
+            "words": [
+                "somnolent",
+                "insomnia",
+                "somnambulist",
+                "soporific"
+            ]
+        },
+        {
+            "unit": 29,
+            "id": 299,
+            "root": "Nature Words",
+            "meaning": "",
+            "words": [
+                "archipelago",
+                "borealis",
+                "canyon",
+                "fossil",
+                "glacier",
+                "lagoon",
+                "mesa",
+                "savanna"
+            ]
+        },
+        {
+            "unit": 30,
+            "id": 301,
+            "root": "NEG",
+            "meaning": "deny",
+            "words": [
+                "abnegation",
+                "negligible",
+                "renegade",
+                "renege"
+            ]
+        },
+        {
+            "unit": 30,
+            "id": 302,
+            "root": "RE",
+            "meaning": "back/again",
+            "words": [
+                "recede",
+                "reiterate",
+                "rejuvenate",
+                "relentless"
+            ]
+        },
+        {
+            "unit": 30,
+            "id": 303,
+            "root": "PRO",
+            "meaning": "forward/for",
+            "words": [
+                "proclaim",
+                "procrastinate",
+                "prodigious",
+                "proponent"
+            ]
+        },
+        {
+            "unit": 30,
+            "id": 304,
+            "root": "CONTRA",
+            "meaning": "against",
+            "words": [
+                "contraband",
+                "contraindication",
+                "contravene",
+                "contretemps"
+            ]
+        },
+        {
+            "unit": 30,
+            "id": 305,
+            "root": "INTER",
+            "meaning": "between",
+            "words": [
+                "intercede",
+                "interline",
+                "interlock",
+                "intersperse"
+            ]
+        },
+        {
+            "unit": 30,
+            "id": 306,
+            "root": "INTRA",
+            "meaning": "within",
+            "words": [
+                "intramural",
+                "intranet",
+                "intrastate",
+                "intravenous"
+            ]
+        },
+        {
+            "unit": 30,
+            "id": 307,
+            "root": "PER",
+            "meaning": "through",
+            "words": [
+                "percolate",
+                "permeate",
+                "persevere",
+                "perspacity"
+            ]
+        },
+        {
+            "unit": 30,
+            "id": 308,
+            "root": "PRE",
+            "meaning": "before",
+            "words": [
+                "preamble",
+                "precarious",
+                "precursor",
+                "preferential"
+            ]
+        },
+        {
+            "unit": 30,
+            "id": 309,
+            "root": "Final Review/Mix",
+            "meaning": "",
+            "words": [
+                "acumen",
+                "altruism",
+                "anomaly",
+                "catalyst",
+                "epitome",
+                "paradox",
+                "symbiosis",
+                "zealot"
+            ]
+        }
+    ]
+}
