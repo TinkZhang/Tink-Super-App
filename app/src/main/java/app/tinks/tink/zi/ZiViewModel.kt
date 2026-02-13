@@ -2,6 +2,7 @@ package app.tinks.tink.zi
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tinks.tink.ui.components.AppSnackbarBus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -142,9 +143,8 @@ class ZiViewModel @Inject constructor(
                 _state.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false) }
-                e.printStackTrace()
+                AppSnackbarBus.showApiFailure(onRetry = ::refreshZis)
             }
         }
     }
 }
-

@@ -6,6 +6,7 @@ import app.tinks.tink.merriam.data.Unit
 import app.tinks.tink.merriam.db.toRoot
 import app.tinks.tink.merriam.network.RootPostDto
 import app.tinks.tink.network.ApiResult
+import app.tinks.tink.ui.components.AppSnackbarBus
 import app.tinks.tink.ui.components.WeeklyRecordData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -98,6 +99,8 @@ class MerriamViewModel @Inject constructor(
                     it.copy(
                         isLoading = false, isNetworkError = true
                     )
+                }.also {
+                    AppSnackbarBus.showApiFailure(onRetry = ::loadStat)
                 }
             }
         }.launchIn(viewModelScope)
@@ -123,6 +126,10 @@ class MerriamViewModel @Inject constructor(
                     it.copy(
                         isLoading = false, isNetworkError = true
                     )
+                }.also {
+                    AppSnackbarBus.showApiFailure {
+                        addRecords(records)
+                    }
                 }
             }
         }.launchIn(viewModelScope)
