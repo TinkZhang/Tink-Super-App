@@ -11,14 +11,11 @@ import app.tinks.tink.merriam.db.MerriamTypeConverters
 import app.tinks.tink.merriam.db.RootEntity
 import app.tinks.tink.weight.db.WeightDao
 import app.tinks.tink.weight.db.WeightEntity
-import app.tinks.tink.zi.ZiDao
-import app.tinks.tink.zi.ZiEntity
 
-@Database(entities = [WeightEntity::class, HaircutEntity::class, ZiEntity::class, RootEntity::class], version = 1)
+@Database(entities = [WeightEntity::class, HaircutEntity::class, RootEntity::class], version = 2)
 @TypeConverters(LocalDateConverter::class, MerriamTypeConverters::class)
 abstract class TinkDatabase : RoomDatabase() {
     abstract fun weightDao(): WeightDao
     abstract fun haircutDao(): HaircutDao
-    abstract fun ziDao(): ZiDao
     abstract fun merriamDao(): MerriamDao
 }

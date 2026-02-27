@@ -121,12 +121,11 @@ private fun ZiScreen(
         if (showDialog) {
             AddZiDialog(
                 onDismiss = { onEvent(ZiEvent.DismissDialog) },
-                onConfirm = { proficiency, zis, date ->
+                onConfirm = { proficiency, zis ->
                     onEvent(
-                        ZiEvent.AddZi(
+                        ZiEvent.UpdateZi(
                             zis = zis,
                             proficiency = proficiency ?: 0,
-                            date = date
                         )
                     )
                 }

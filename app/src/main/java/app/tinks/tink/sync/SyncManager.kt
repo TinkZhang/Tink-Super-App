@@ -2,7 +2,6 @@ package app.tinks.tink.sync
 
 import app.tinks.tink.haircut.HaircutRepository
 import app.tinks.tink.weight.WeightRepository
-import app.tinks.tink.zi.ZiRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -14,7 +13,6 @@ import javax.inject.Singleton
 class SyncManager @Inject constructor(
     private val networkMonitor: NetworkMonitor,
     private val weightRepository: WeightRepository,
-    private val ziRepository: ZiRepository,
     private val haircutRepository: HaircutRepository,
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -25,10 +23,8 @@ class SyncManager @Inject constructor(
                 if (connected) {
                     try {
                         weightRepository.syncPending()
-                        ziRepository.syncPending()
                         haircutRepository.syncPending()
                         weightRepository.refreshFromRemote()
-                        ziRepository.refreshFromRemote()
                         haircutRepository.refreshFromRemote()
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -45,10 +41,8 @@ class SyncManager @Inject constructor(
         scope.launch {
             try {
                 weightRepository.syncPending()
-                ziRepository.syncPending()
                 haircutRepository.syncPending()
                 weightRepository.refreshFromRemote()
-                ziRepository.refreshFromRemote()
                 haircutRepository.refreshFromRemote()
             } catch (e: Exception) {
                 e.printStackTrace()

@@ -35,7 +35,6 @@ data class MerriamState(
     val allUnits: List<Unit> = emptyList(),
     val isLoading: Boolean = true,
     val isNetworkError: Boolean = false,
-    val isMerriamChanged: Boolean = false,
     val latest: Int = 0,
     val weeklyRecordData: WeeklyRecordData = WeeklyRecordData(null, emptyList())
 ) {

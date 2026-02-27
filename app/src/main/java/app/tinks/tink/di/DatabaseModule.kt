@@ -2,6 +2,8 @@ package app.tinks.tink.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import app.tinks.tink.db.TinkDatabase
 import dagger.Module
 import dagger.Provides
@@ -13,6 +15,11 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
+    private val MIGRATION_1_2 = object : Migration(1, 2) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("DROP TABLE IF EXISTS `zi`")
+        }
+    }
 
     @Provides
     @Singleton
@@ -21,7 +28,10 @@ object DatabaseModule {
             context,
             TinkDatabase::class.java,
             "tink.db"
-        ).createFromAsset("database/tink.db").build()
+        )
+            .createFromAsset("database/tink.db")
+            .addMigrations(MIGRATION_1_2)
+            .build()
     }
 
     @Provides
@@ -29,9 +39,6 @@ object DatabaseModule {
 
     @Provides
     fun provideHaircutDao(db: TinkDatabase) = db.haircutDao()
-
-    @Provides
-    fun provideZiDao(db: TinkDatabase) = db.ziDao()
 
     @Provides
     fun provideMerriamDao(db: TinkDatabase) = db.merriamDao()

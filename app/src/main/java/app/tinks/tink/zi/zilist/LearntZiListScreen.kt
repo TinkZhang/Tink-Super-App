@@ -20,12 +20,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tinks.tink.zi.SawtoothCard
 import app.tinks.tink.zi.Zi
+import app.tinks.tink.zi.ZiEvent
+import app.tinks.tink.zi.ZiViewModel
 
 @Composable
-fun LearntZiListScreen(viewModel: LearntZiListViewModel) {
+fun LearntZiListScreen(viewModel: ZiViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LearntZiListScreen(
-        zis = uiState.zis,
+        zis = uiState.allZis,
         onEvent = viewModel::onEvent,
     )
 }
@@ -33,11 +35,11 @@ fun LearntZiListScreen(viewModel: LearntZiListViewModel) {
 @Composable
 private fun LearntZiListScreen(
     zis: List<Zi> = emptyList(),
-    onEvent: (ZiListEvent) -> Unit = {},
+    onEvent: (ZiEvent) -> Unit = {},
 ) {
 
     LaunchedEffect(Unit) {
-        onEvent(ZiListEvent.Refresh)
+        onEvent(ZiEvent.Refresh)
     }
 
     LazyVerticalGrid(columns = GridCells.Fixed(3)) {

@@ -1,6 +1,7 @@
 package app.tinks.tink.di
 
 import app.tinks.tink.merriam.network.MerriamApi
+import app.tinks.tink.zi.ZiApi
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
@@ -56,4 +57,9 @@ object NetworkModule {
     @Singleton
     fun provideMerriamApi(retrofit: Retrofit): MerriamApi =
         retrofit.create(MerriamApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideZiApi(retrofit: Retrofit): ZiApi =
+        retrofit.create(ZiApi::class.java)
 }

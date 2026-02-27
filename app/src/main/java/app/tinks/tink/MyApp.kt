@@ -50,7 +50,6 @@ import app.tinks.tink.ui.components.AppSnackbarBus
 import app.tinks.tink.weight.WeightScreen
 import app.tinks.tink.zi.ZiScreen
 import app.tinks.tink.zi.zilist.LearntZiListScreen
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,7 +95,7 @@ fun MyApp(
         drawerContent = {
             ModalDrawerSheet(Modifier.width(280.dp)) {
                 Text(
-                    "Nav 3 Menu",
+                    "Tink's 2026",
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(24.dp)
                 )
@@ -152,7 +151,9 @@ fun MyApp(
             ) { key ->
                 NavEntry(key) {
                     when (key) {
-                        is ScreenA -> MerriamScreen(hiltViewModel())
+                        is ScreenA -> ZiScreen(hiltViewModel(), onNavigationEvent = {
+                            backStack.add(ScreenLearntZi)
+                        })
                         is ScreenB -> WeightScreen(hiltViewModel())
                         is ScreenWeight -> WeightScreen(hiltViewModel())
                         is ScreenHair -> HaircutScreen(hiltViewModel())
