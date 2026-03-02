@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface ZiEvent {
@@ -19,6 +20,7 @@ sealed interface ZiEvent {
     object Refresh : ZiEvent
     object DismissDialog : ZiEvent
     object AddZiDialogOpen : ZiEvent
+    object GenerateStory : ZiEvent
 }
 
 data class ZiUiState(
@@ -74,6 +76,7 @@ class ZiViewModel @Inject constructor(
             ZiEvent.Refresh -> refreshAllData()
             is ZiEvent.DismissDialog -> _state.update { it.copy(showDialog = false) }
             is ZiEvent.AddZiDialogOpen -> _state.update { it.copy(showDialog = true) }
+            ZiEvent.GenerateStory -> generateStory()
         }
     }
 
@@ -134,5 +137,30 @@ class ZiViewModel @Inject constructor(
                 }
             }
         }.launchIn(viewModelScope)
+    }
+
+    private fun generateStory() {
+        viewModelScope.launch {
+            val length = repository.getStoryLength()
+            repository.generateStory(length = length).onEach { result ->
+                when (result) {
+                    is ApiResult.Loading -> _state.update {
+                        it.copy(isLoading = true)
+                    }
+
+                    is ApiResult.Success -> _state.update {
+                        it.copy(isLoading = false)
+                    }.also {
+                        AppSnackbarBus.showMessage("故事生成成功")
+                    }
+
+                    is ApiResult.Error -> _state.update {
+                        it.copy(isLoading = false)
+                    }.also {
+                        AppSnackbarBus.showMessage("故事生成失败")
+                    }
+                }
+            }.launchIn(viewModelScope)
+        }
     }
 }

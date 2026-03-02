@@ -11,17 +11,24 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,7 +39,11 @@ import app.tinks.tink.ui.components.ContentCard
 
 
 @Composable
-fun ZiScreen(viewModel: ZiViewModel, onNavigationEvent: () -> Unit) {
+fun ZiScreen(
+    viewModel: ZiViewModel,
+    onNavigationEvent: () -> Unit,
+    onStoryListNavigation: () -> Unit,
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ZiScreen(
         isLoading = uiState.isLoading,
@@ -41,6 +52,7 @@ fun ZiScreen(viewModel: ZiViewModel, onNavigationEvent: () -> Unit) {
         reviewList = uiState.reviewList,
         onEvent = viewModel::onEvent,
         onNavigationEvent = onNavigationEvent,
+        onStoryListNavigation = onStoryListNavigation,
     )
 }
 
@@ -53,6 +65,7 @@ private fun ZiScreen(
     learntZiNum: Int = 0,
     onEvent: (ZiEvent) -> Unit = {},
     onNavigationEvent: () -> Unit = {},
+    onStoryListNavigation: () -> Unit = {},
 ) {
 
     LaunchedEffect(Unit) {
@@ -60,53 +73,81 @@ private fun ZiScreen(
     }
     Box(modifier = Modifier.fillMaxSize()) {
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            ContentCard(
-                title = "掌握汉字数量",
-                showNavigation = true,
-                onCardNavigation = { onNavigationEvent() }) {
-                Text(
-                    text = learntZiNum.toString(),
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 60.sp
-                    ),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+        val refreshState = rememberPullToRefreshState()
+        PullToRefreshBox(
+            isRefreshing = isLoading,
+            onRefresh = { onEvent(ZiEvent.Refresh) },
+            modifier = Modifier.fillMaxSize(),
+            state = refreshState,
+            indicator = {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .graphicsLayer {
+                            val scale =
+                                if (isLoading) 1f else refreshState.distanceFraction.coerceIn(
+                                    0f,
+                                    1f
+                                )
+                            scaleX = scale
+                            scaleY = scale
+                            alpha = scale
+                        }
+                ) {
+                    ContainedLoadingIndicator()
+                }
             }
-            if (reviewList.isNotEmpty()) {
-                ContentCard(title = "复习汉字") {
-                    LazyVerticalGrid(columns = GridCells.Fixed(3)) {
-                        items(reviewList) { zi ->
-                            SawtoothCard(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp)
-                            ) {
-                                Text(
-                                    text = zi.zi,
-                                    style = MaterialTheme.typography.displayLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 40.sp
-                                    ),
-                                    textAlign = TextAlign.Center,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(16.dp)
+                    .padding(bottom = 72.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                ContentCard(
+                    title = "掌握汉字数量",
+                    showNavigation = true,
+                    onCardNavigation = { onNavigationEvent() }) {
+                    Text(
+                        text = learntZiNum.toString(),
+                        style = MaterialTheme.typography.displayLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 60.sp
+                        ),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                if (reviewList.isNotEmpty()) {
+                    ContentCard(title = "复习汉字") {
+                        LazyVerticalGrid(columns = GridCells.Fixed(3)) {
+                            items(reviewList) { zi ->
+                                SawtoothCard(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(12.dp),
-                                )
+                                        .padding(8.dp)
+                                ) {
+                                    Text(
+                                        text = zi.zi,
+                                        style = MaterialTheme.typography.displayLarge.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 40.sp
+                                        ),
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
+
         FloatingActionButton(
             onClick = { onEvent(ZiEvent.AddZiDialogOpen) },
             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -116,6 +157,30 @@ private fun ZiScreen(
                 .padding(16.dp)
         ) {
             Icon(Icons.Filled.Add, "添加记录")
+        }
+
+        FloatingActionButton(
+            onClick = { onEvent(ZiEvent.GenerateStory) },
+            shape = FloatingActionButtonDefaults.largeShape,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Filled.RestartAlt, "生成故事")
+        }
+
+
+        FloatingActionButton(
+            onClick = onStoryListNavigation,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.AutoMirrored.Filled.List, "故事列表")
         }
 
         if (showDialog) {
@@ -138,5 +203,5 @@ private fun ZiScreen(
 @Preview
 @Composable
 private fun ZiScreenPreview() {
-    ZiScreen()
+    ZiScreen(onStoryListNavigation = {})
 }

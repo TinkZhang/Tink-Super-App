@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.SharedFlow
 
 data class AppSnackbarEvent(
     val message: String,
-    val actionLabel: String = "Retry",
-    val onAction: () -> Unit
+    val actionLabel: String? = "Retry",
+    val onAction: () -> Unit = {}
 )
 
 object AppSnackbarBus {
@@ -22,6 +22,15 @@ object AppSnackbarBus {
             AppSnackbarEvent(
                 message = "Request failed",
                 onAction = onRetry
+            )
+        )
+    }
+
+    fun showMessage(message: String) {
+        _events.tryEmit(
+            AppSnackbarEvent(
+                message = message,
+                actionLabel = null
             )
         )
     }

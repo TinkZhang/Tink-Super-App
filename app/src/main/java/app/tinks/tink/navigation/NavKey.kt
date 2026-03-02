@@ -57,6 +57,21 @@ data object ScreenMerriam: MyNavKey {
     override val icon = Icons.Filled.Bookmark
 }
 
+data object ScreenSettings : MyNavKey {
+    override val label = "设置"
+    override val icon = Icons.Filled.Settings
+}
+
+data object ScreenStoryList : MyNavKey {
+    override val label = "故事列表"
+    override val icon = Icons.Filled.Bookmark
+}
+
+data class ScreenStoryDetail(val storyId: String) : MyNavKey {
+    override val label = "故事详情"
+    override val icon = Icons.Filled.Bookmark
+}
+
 val allTopDestinations = listOf(
     ScreenA, ScreenB, ScreenWeight, ScreenHair,
     ScreenLeeter, ScreenZi, ScreenMerriam

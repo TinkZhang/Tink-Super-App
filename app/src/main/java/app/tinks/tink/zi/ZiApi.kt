@@ -4,6 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Query
 
@@ -19,6 +20,9 @@ interface ZiApi {
 
     @GET("zi/learnt_zi_num")
     suspend fun getLearntZiNum(): Int
+
+    @POST("story/generate")
+    suspend fun generateStory(@Body request: StoryGenerateRequest)
 }
 
 @Serializable
@@ -33,4 +37,9 @@ data class ZiDto(
     val proficiency: Int,
     @SerialName("last_date")
     val lastDate: String,
+)
+
+@Serializable
+data class StoryGenerateRequest(
+    val length: Int,
 )
