@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Looks
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -57,6 +58,11 @@ data object ScreenMerriam: MyNavKey {
     override val icon = Icons.Filled.Bookmark
 }
 
+data object ScreenTime: MyNavKey {
+    override val label = "Time"
+    override val icon = Icons.Filled.Schedule
+}
+
 data object ScreenSettings : MyNavKey {
     override val label = "设置"
     override val icon = Icons.Filled.Settings
@@ -74,5 +80,5 @@ data class ScreenStoryDetail(val storyId: String) : MyNavKey {
 
 val allTopDestinations = listOf(
     ScreenA, ScreenB, ScreenWeight, ScreenHair,
-    ScreenLeeter, ScreenZi, ScreenMerriam
+    ScreenLeeter, ScreenZi, ScreenMerriam, ScreenTime
 )

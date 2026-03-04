@@ -2,6 +2,7 @@ package app.tinks.tink.di
 
 import app.tinks.tink.merriam.network.MerriamApi
 import app.tinks.tink.story.StoryApi
+import app.tinks.tink.time.TimeApi
 import app.tinks.tink.zi.ZiApi
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
@@ -68,4 +69,9 @@ object NetworkModule {
     @Singleton
     fun provideStoryApi(retrofit: Retrofit): StoryApi =
         retrofit.create(StoryApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTimeApi(retrofit: Retrofit): TimeApi =
+        retrofit.create(TimeApi::class.java)
 }

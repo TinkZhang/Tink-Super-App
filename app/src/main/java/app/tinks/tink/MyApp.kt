@@ -8,6 +8,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -24,16 +26,14 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -52,12 +52,14 @@ import app.tinks.tink.navigation.ScreenMerriam
 import app.tinks.tink.navigation.ScreenSettings
 import app.tinks.tink.navigation.ScreenStoryDetail
 import app.tinks.tink.navigation.ScreenStoryList
+import app.tinks.tink.navigation.ScreenTime
 import app.tinks.tink.navigation.ScreenWeight
 import app.tinks.tink.navigation.ScreenZi
 import app.tinks.tink.navigation.allTopDestinations
 import app.tinks.tink.settings.SettingsScreen
 import app.tinks.tink.story.StoryDetailScreen
 import app.tinks.tink.story.StoryListScreen
+import app.tinks.tink.time.TimeScreen
 import app.tinks.tink.ui.components.AppSnackbarBus
 import app.tinks.tink.weight.WeightScreen
 import app.tinks.tink.zi.ZiScreen
@@ -181,11 +183,7 @@ fun MyApp(
             ) { key ->
                 NavEntry(key) {
                     when (key) {
-                        is ScreenA -> ZiScreen(
-                            hiltViewModel(),
-                            onNavigationEvent = { backStack.add(ScreenLearntZi) },
-                            onStoryListNavigation = { backStack.add(ScreenStoryList) }
-                        )
+                        is ScreenA -> TimeScreen(hiltViewModel())
                         is ScreenB -> WeightScreen(hiltViewModel())
                         is ScreenWeight -> WeightScreen(hiltViewModel())
                         is ScreenHair -> HaircutScreen(hiltViewModel())
@@ -197,6 +195,7 @@ fun MyApp(
                         )
                         is ScreenLearntZi -> LearntZiListScreen(hiltViewModel())
                         is ScreenMerriam -> MerriamScreen(hiltViewModel())
+                        is ScreenTime -> TimeScreen(hiltViewModel())
                         is ScreenSettings -> SettingsScreen(hiltViewModel())
                         is ScreenStoryList -> StoryListScreen(
                             hiltViewModel(),
