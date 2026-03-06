@@ -59,7 +59,9 @@ import app.tinks.tink.navigation.allTopDestinations
 import app.tinks.tink.settings.SettingsScreen
 import app.tinks.tink.story.StoryDetailScreen
 import app.tinks.tink.story.StoryListScreen
+import app.tinks.tink.time.TimeEvent
 import app.tinks.tink.time.TimeScreen
+import app.tinks.tink.time.TimeViewModel
 import app.tinks.tink.ui.components.AppSnackbarBus
 import app.tinks.tink.weight.WeightScreen
 import app.tinks.tink.zi.ZiScreen
@@ -69,10 +71,15 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApp(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    quickAddRequestId: Int = 0,
+    openAddFromQuickSettings: Boolean = false,
+    onQuickSettingsRequestConsumed: () -> Unit = {},
 ) {
     val backStack = remember { mutableStateListOf<MyNavKey>(ScreenA) }
     val currentKey = backStack.lastOrNull()
+    var pendingQuickAddRequestId by remember { mutableStateOf<Int?>(null) }
+    var handledQuickAddRequestId by remember { mutableStateOf<Int?>(null) }
 
     val onNavigate: (MyNavKey) -> Unit = { destination ->
         if (currentKey != destination) {
@@ -103,6 +110,14 @@ fun MyApp(
             if (result == SnackbarResult.ActionPerformed) {
                 event.onAction()
             }
+        }
+    }
+
+    LaunchedEffect(openAddFromQuickSettings, quickAddRequestId) {
+        if (openAddFromQuickSettings) {
+            onNavigate(ScreenTime)
+            pendingQuickAddRequestId = quickAddRequestId
+            onQuickSettingsRequestConsumed()
         }
     }
 
@@ -195,7 +210,17 @@ fun MyApp(
                         )
                         is ScreenLearntZi -> LearntZiListScreen(hiltViewModel())
                         is ScreenMerriam -> MerriamScreen(hiltViewModel())
-                        is ScreenTime -> TimeScreen(hiltViewModel())
+                        is ScreenTime -> {
+                            val timeViewModel = hiltViewModel<TimeViewModel>()
+                            LaunchedEffect(pendingQuickAddRequestId) {
+                                val requestId = pendingQuickAddRequestId
+                                if (requestId != null && requestId != handledQuickAddRequestId) {
+                                    timeViewModel.onEvent(TimeEvent.OpenAddDialog)
+                                    handledQuickAddRequestId = requestId
+                                }
+                            }
+                            TimeScreen(timeViewModel)
+                        }
                         is ScreenSettings -> SettingsScreen(hiltViewModel())
                         is ScreenStoryList -> StoryListScreen(
                             hiltViewModel(),
