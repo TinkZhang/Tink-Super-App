@@ -1,6 +1,7 @@
 package app.tinks.tink.time
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,8 +20,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -35,14 +36,18 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberDatePickerState
@@ -59,6 +64,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.Instant
 import java.time.LocalDate
@@ -109,9 +116,11 @@ private fun TimeScreen(
     }
 
     if (state.showEditor) {
+        val editingId = state.editor.editingId
         TimeEntryDialog(
             editor = state.editor,
             isSaving = state.isSaving,
+            isDeleting = editingId != null && editingId in state.deletingIds,
             onDismiss = { onEvent(TimeEvent.DismissDialog) },
             onTitleChange = { onEvent(TimeEvent.UpdateTitle(it)) },
             onDescriptionChange = { onEvent(TimeEvent.UpdateDescription(it)) },
@@ -120,6 +129,12 @@ private fun TimeScreen(
             onEndChange = { onEvent(TimeEvent.UpdateEndTime(it)) },
             onDurationClick = { onEvent(TimeEvent.ApplyDurationMinutes(it)) },
             onSubmit = { onEvent(TimeEvent.SaveEntry) },
+            onDelete = editingId?.let { id ->
+                {
+                    onEvent(TimeEvent.DeleteEntry(id))
+                    onEvent(TimeEvent.DismissDialog)
+                }
+            },
         )
     }
 
@@ -136,7 +151,10 @@ private fun TimeScreen(
                         .align(Alignment.TopCenter)
                         .graphicsLayer {
                             val scale =
-                                if (state.isLoading) 1f else refreshState.distanceFraction.coerceIn(0f, 1f)
+                                if (state.isLoading) 1f else refreshState.distanceFraction.coerceIn(
+                                    0f,
+                                    1f
+                                )
                             scaleX = scale
                             scaleY = scale
                             alpha = scale
@@ -152,7 +170,6 @@ private fun TimeScreen(
                     onStartDateClick = { showStartDatePicker = true },
                     onEndDateClick = { showEndDatePicker = true },
                     onEdit = { onEvent(TimeEvent.EditEntry(it)) },
-                    onDelete = { onEvent(TimeEvent.DeleteEntry(it)) },
                 )
             }
         }
@@ -176,11 +193,10 @@ private fun LazyTimeContent(
     onStartDateClick: () -> Unit,
     onEndDateClick: () -> Unit,
     onEdit: (TimeEntry) -> Unit,
-    onDelete: (Long) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 90.dp),
+        contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 90.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item("date_range") {
@@ -216,7 +232,6 @@ private fun LazyTimeContent(
                 dayEntries = dayEntries,
                 deletingIds = state.deletingIds,
                 onEdit = onEdit,
-                onDelete = onDelete,
             )
         }
     }
@@ -229,35 +244,46 @@ private fun DateRangeCard(
     onStartDateClick: () -> Unit,
     onEndDateClick: () -> Unit,
 ) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+    Column(
+        modifier = Modifier
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = "Date Range",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+            DateRangeTextField(
+                label = "Start",
+                value = startDate.format(DATE_FORMATTER),
+                onClick = onStartDateClick,
+                modifier = Modifier.weight(1f),
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                OutlinedButton(
-                    onClick = onStartDateClick,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("Start: ${startDate.format(DATE_FORMATTER)}")
-                }
-                OutlinedButton(
-                    onClick = onEndDateClick,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("End: ${endDate.format(DATE_FORMATTER)}")
-                }
-            }
+            DateRangeTextField(
+                label = "End",
+                value = endDate.format(DATE_FORMATTER),
+                onClick = onEndDateClick,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
+}
+
+@Composable
+private fun DateRangeTextField(
+    label: String,
+    value: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = {},
+        label = { Text(label) },
+        readOnly = true,
+        singleLine = true,
+        modifier = modifier.clickable(onClick = onClick),
+    )
 }
 
 @Composable
@@ -291,16 +317,13 @@ private fun StatisticsCard(stats: List<TimeStatistic>) {
                                 .clip(CircleShape)
                                 .background(category.color)
                         )
-                        Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                        Column(modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp)) {
                             Text(
-                                text = category.name,
+                                text = category.categoryName(),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                text = category.description,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         Text(
@@ -320,26 +343,28 @@ private fun DayEntriesCard(
     dayEntries: TimeDayEntries,
     deletingIds: Set<Long>,
     onEdit: (TimeEntry) -> Unit,
-    onDelete: (Long) -> Unit,
 ) {
     val dayLabel = dayEntries.day.format(DAY_HEADER_FORMATTER)
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 text = dayLabel,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
             )
-            dayEntries.entries.forEach { entry ->
+            dayEntries.entries.forEachIndexed { index, entry ->
                 TimeEntryRow(
                     entry = entry,
                     isDeleting = entry.id in deletingIds,
                     onEdit = onEdit,
-                    onDelete = onDelete,
                 )
+                if (index < dayEntries.entries.lastIndex) {
+                    HorizontalDivider()
+                }
             }
         }
     }
@@ -350,88 +375,82 @@ private fun TimeEntryRow(
     entry: TimeEntry,
     isDeleting: Boolean,
     onEdit: (TimeEntry) -> Unit,
-    onDelete: (Long) -> Unit,
 ) {
     val zone = ZoneId.systemDefault()
     val start = entry.start.atZoneSameInstant(zone)
     val end = entry.end.atZoneSameInstant(zone)
     val category = categoryOf(entry.type)
 
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isDeleting) { onEdit(entry) }
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Text(
+                text = start.toLocalTime().format(TIME_FORMATTER),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "|",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = end.toLocalTime().format(TIME_FORMATTER),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = start.toLocalTime().format(TIME_FORMATTER),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(category.color)
                 )
                 Text(
-                    text = end.toLocalTime().format(TIME_FORMATTER),
-                    style = MaterialTheme.typography.bodySmall,
+                    text = "  ${category.categoryName()}",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = formatDurationMinutes(
+                        java.time.Duration.between(start, end).toMinutes().coerceAtLeast(0)
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
+            Text(
+                text = entry.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (!entry.description.isNullOrBlank()) {
+                Text(
+                    text = entry.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
 
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(category.color)
-                    )
-                    Text(
-                        text = "  ${category.name}",
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        text = formatDurationMinutes(
-                            java.time.Duration.between(start, end).toMinutes().coerceAtLeast(0)
-                        ),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-                Text(
-                    text = entry.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                if (!entry.description.isNullOrBlank()) {
-                    Text(
-                        text = entry.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-
-            Column {
-                IconButton(onClick = { onEdit(entry) }) {
-                    Icon(Icons.Filled.Edit, contentDescription = "Edit")
-                }
-                IconButton(
-                    onClick = { onDelete(entry.id) },
-                    enabled = !isDeleting,
-                ) {
-                    if (isDeleting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    } else {
-                        Icon(Icons.Filled.Delete, contentDescription = "Delete")
-                    }
-                }
-            }
+        if (isDeleting) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(20.dp)
+                    .align(Alignment.CenterVertically),
+                strokeWidth = 2.dp,
+            )
         }
     }
 }
@@ -441,6 +460,7 @@ private fun TimeEntryRow(
 private fun TimeEntryDialog(
     editor: TimeEditorState,
     isSaving: Boolean,
+    isDeleting: Boolean,
     onDismiss: () -> Unit,
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
@@ -449,6 +469,7 @@ private fun TimeEntryDialog(
     onEndChange: (LocalDateTime) -> Unit,
     onDurationClick: (Long) -> Unit,
     onSubmit: () -> Unit,
+    onDelete: (() -> Unit)?,
 ) {
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
@@ -476,125 +497,184 @@ private fun TimeEntryDialog(
         )
     }
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(if (editor.editingId == null) "Add Time Entry" else "Edit Time Entry")
-        },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                OutlinedTextField(
-                    value = editor.title,
-                    onValueChange = onTitleChange,
-                    label = { Text("Title") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-
-                Box {
-                    OutlinedTextField(
-                        value = categoryOf(editor.type).name,
-                        onValueChange = {},
-                        label = { Text("Type") },
-                        readOnly = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = {
-                            IconButton(onClick = { showTypeMenu = true }) {
-                                Icon(Icons.Filled.ArrowDropDown, contentDescription = "Select type")
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Text(if (editor.editingId == null) "Add Time Entry" else "Edit Time Entry")
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onDismiss) {
+                                Icon(Icons.Filled.Close, contentDescription = "Close")
+                            }
+                        },
+                    )
+                },
+                bottomBar = {
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            if (onDelete != null) {
+                                OutlinedButton(
+                                    onClick = onDelete,
+                                    enabled = !isDeleting && !isSaving,
+                                ) {
+                                    if (isDeleting) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp,
+                                        )
+                                    } else {
+                                        Icon(
+                                            Icons.Filled.Delete,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                        Text("  Delete")
+                                    }
+                                }
+                            }
+                            Button(
+                                onClick = onSubmit,
+                                enabled = editor.isValid() && !isSaving && !isDeleting,
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                if (isSaving) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    Text(if (editor.editingId == null) "Add" else "Save")
+                                }
                             }
                         }
+                    }
+                },
+            ) { paddingValues ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 16.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    OutlinedTextField(
+                        value = editor.title,
+                        onValueChange = onTitleChange,
+                        label = { Text("Title") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
                     )
-                    DropdownMenu(
-                        expanded = showTypeMenu,
-                        onDismissRequest = { showTypeMenu = false },
+
+                    Box {
+                        OutlinedTextField(
+                            value = categoryOf(editor.type).categoryName(),
+                            onValueChange = {},
+                            label = { Text("Type") },
+                            readOnly = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showTypeMenu = true },
+                            trailingIcon = {
+                                IconButton(onClick = { showTypeMenu = true }) {
+                                    Icon(
+                                        Icons.Filled.ArrowDropDown,
+                                        contentDescription = "Select type"
+                                    )
+                                }
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = showTypeMenu,
+                            onDismissRequest = { showTypeMenu = false },
+                        ) {
+                            TIME_CATEGORIES.forEach { category ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(10.dp)
+                                                    .clip(CircleShape)
+                                                    .background(category.color)
+                                            )
+                                            Text(category.categoryName())
+                                        }
+                                    },
+                                    onClick = {
+                                        onTypeChange(category.id)
+                                        showTypeMenu = false
+                                    },
+                                )
+                            }
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = { showStartPicker = true },
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
-                        TIME_CATEGORIES.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text("${category.id}. ${category.name}") },
-                                onClick = {
-                                    onTypeChange(category.id)
-                                    showTypeMenu = false
-                                },
+                        Icon(Icons.Filled.Schedule, contentDescription = null)
+                        Text("  Start: ${editor.start.format(DATE_TIME_FORMATTER)}")
+                    }
+
+                    OutlinedButton(
+                        onClick = { showEndPicker = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Filled.Schedule, contentDescription = null)
+                        Text("  End: ${editor.end.format(DATE_TIME_FORMATTER)}")
+                    }
+
+                    Text(
+                        text = "Quick duration (minutes):",
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        listOf(30L, 60L, 90L, 120L).forEach { option ->
+                            AssistChip(
+                                onClick = { onDurationClick(option) },
+                                label = { Text("${option}m") },
                             )
                         }
                     }
-                }
 
-                OutlinedButton(
-                    onClick = { showStartPicker = true },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Icon(Icons.Filled.Schedule, contentDescription = null)
-                    Text("  Start: ${editor.start.format(DATE_TIME_FORMATTER)}")
-                }
+                    OutlinedTextField(
+                        value = editor.description,
+                        onValueChange = onDescriptionChange,
+                        label = { Text("Description (optional)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 5,
+                    )
 
-                OutlinedButton(
-                    onClick = { showEndPicker = true },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Icon(Icons.Filled.Schedule, contentDescription = null)
-                    Text("  End: ${editor.end.format(DATE_TIME_FORMATTER)}")
-                }
-
-                Text(
-                    text = "Quick duration (minutes):",
-                    style = MaterialTheme.typography.labelLarge,
-                )
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    listOf(30L, 60L, 90L, 120L).forEach { option ->
-                        AssistChip(
-                            onClick = { onDurationClick(option) },
-                            label = { Text("${option}m") },
+                    if (!editor.end.isAfter(editor.start)) {
+                        Text(
+                            text = "End time must be after start time.",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
                         )
                     }
                 }
-
-                OutlinedTextField(
-                    value = editor.description,
-                    onValueChange = onDescriptionChange,
-                    label = { Text("Description (optional)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                )
-
-                if (!editor.end.isAfter(editor.start)) {
-                    Text(
-                        text = "End time must be after start time.",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
             }
-        },
-        confirmButton = {
-            Button(
-                onClick = onSubmit,
-                enabled = editor.isValid() && !isSaving,
-            ) {
-                if (isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                    )
-                } else {
-                    Text(if (editor.editingId == null) "Add" else "Save")
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -738,6 +818,10 @@ private val TIME_CATEGORIES = listOf(
 private fun categoryOf(id: Int): TimeCategory {
     return TIME_CATEGORIES.firstOrNull { it.id == id }
         ?: TimeCategory(id = id, name = "Type $id", color = Color.Gray, description = "Unknown")
+}
+
+private fun TimeCategory.categoryName(): String {
+    return description.ifBlank { name }
 }
 
 private fun formatDuration(duration: Long): String {
