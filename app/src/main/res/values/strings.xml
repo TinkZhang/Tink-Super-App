@@ -3,4 +3,6 @@
     <string name="qs_tile_add_time_label">Add Time</string>
     <string name="qs_tile_add_time_subtitle">Quick time entry</string>
     <string name="qs_tile_add_time_content_description">Open add time entry</string>
+    <string name="widget_digital_detox_name">Digital Detox</string>
+    <string name="widget_digital_detox_description">Shows a focus reminder based on time and day.</string>
 </resources>
