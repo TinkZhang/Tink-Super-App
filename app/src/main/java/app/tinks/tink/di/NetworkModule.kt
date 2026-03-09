@@ -1,8 +1,10 @@
 package app.tinks.tink.di
 
+import app.tinks.tink.haircut.HaircutApi
 import app.tinks.tink.merriam.network.MerriamApi
 import app.tinks.tink.story.StoryApi
 import app.tinks.tink.time.TimeApi
+import app.tinks.tink.weight.WeightApi
 import app.tinks.tink.zi.ZiApi
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
@@ -72,6 +74,16 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideHaircutApi(retrofit: Retrofit): HaircutApi =
+        retrofit.create(HaircutApi::class.java)
+
+    @Provides
+    @Singleton
     fun provideTimeApi(retrofit: Retrofit): TimeApi =
         retrofit.create(TimeApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideWeightApi(retrofit: Retrofit): WeightApi =
+        retrofit.create(WeightApi::class.java)
 }

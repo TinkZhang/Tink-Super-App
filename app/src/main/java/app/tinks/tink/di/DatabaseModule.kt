@@ -35,11 +35,5 @@ object DatabaseModule {
     }
 
     @Provides
-    fun provideWeightDao(db: TinkDatabase) = db.weightDao()
-
-    @Provides
-    fun provideHaircutDao(db: TinkDatabase) = db.haircutDao()
-
-    @Provides
     fun provideMerriamDao(db: TinkDatabase) = db.merriamDao()
 }

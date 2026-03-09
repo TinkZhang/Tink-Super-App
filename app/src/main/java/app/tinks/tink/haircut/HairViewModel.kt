@@ -3,16 +3,17 @@ package app.tinks.tink.haircut
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tinks.tink.haircut.data.Haircut
-import app.tinks.tink.haircut.data.toHaircut
+import app.tinks.tink.network.ApiResult
 import app.tinks.tink.ui.components.AppSnackbarBus
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -28,8 +29,6 @@ sealed interface HaircutEvent {
 
     data class DeleteHaircut(val id: Int) : HaircutEvent
     object RefreshHaircutList : HaircutEvent
-
-    data class ChangeSelectedTrendIndex(val index: Int) : HaircutEvent
 }
 
 data class HaircutUiState(
@@ -53,44 +52,20 @@ data class HaircutState(
     )
 }
 
+@OptIn(ExperimentalTime::class)
 @HiltViewModel
 class HaircutViewModel @Inject constructor(
-    private val repository: HaircutRepository
+    private val repository: HaircutRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HaircutState())
     val uiState = _state.map { it.toUiState() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())
 
-    init {
-        observeLocalHaircuts()
-    }
+    private var refreshJob: Job? = null
 
-    /**
-     * 监听本地 Room 数据变化，实时更新 UI。
-     * 这样即使在离线时也能立刻看到最新数据。
-     */
-    @OptIn(ExperimentalTime::class)
-    private fun observeLocalHaircuts() {
-        viewModelScope.launch {
-            repository.getAllHaircutsFlow().map { it.map { e -> e.toHaircut() } }
-                .collectLatest { haircuts ->
-                    _state.update {
-                        it.copy(
-                            history = haircuts,
-                            days = (if (haircuts.isEmpty()) {
-                                -1
-                            } else {
-                                val today = Clock.System.now()
-                                    .toLocalDateTime(TimeZone.currentSystemDefault()).date
-                                val firstDay = haircuts.first().date
-                                today.toEpochDays() - firstDay.toEpochDays()
-                            }).toInt(),
-                            isLoading = false
-                        )
-                    }
-                }
-        }
+    init {
+        refreshHaircuts()
     }
 
     fun onEvent(event: HaircutEvent) {
@@ -100,50 +75,88 @@ class HaircutViewModel @Inject constructor(
             is HaircutEvent.SubmitHaircut -> submitHaircut(event.price, event.shopName, event.date)
             is HaircutEvent.DeleteHaircut -> deleteHaircut(event.id)
             HaircutEvent.RefreshHaircutList -> refreshHaircuts()
-            is HaircutEvent.ChangeSelectedTrendIndex -> updateChartData(event.index)
         }
     }
 
-    /**
-     * 提交理发记录：立即写入 Room（即使无网），标记为 isSynced = false。
-     */
     private fun submitHaircut(price: Int, shopName: String, date: LocalDate) {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, showDialog = false) }
-            repository.addHaircut(
-                price = price,
-                shopName = shopName,
-                date = date
-            )
-            _state.update { it.copy(isLoading = false) }
-        }
+        repository.addHaircut(
+            price = price,
+            shopName = shopName,
+            date = date,
+        ).onEach { result ->
+            when (result) {
+                is ApiResult.Loading -> _state.update {
+                    it.copy(isLoading = true, showDialog = false)
+                }
+
+                is ApiResult.Success -> refreshHaircuts()
+
+                is ApiResult.Error -> _state.update {
+                    it.copy(isLoading = false)
+                }.also {
+                    AppSnackbarBus.showApiFailure(
+                        onRetry = { submitHaircut(price, shopName, date) }
+                    )
+                }
+            }
+        }.launchIn(viewModelScope)
     }
 
     private fun deleteHaircut(id: Int) {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-            repository.deleteHaircut(id)
-            _state.update { it.copy(isLoading = false) }
-        }
-    }
+        repository.deleteHaircut(id)
+            .onEach { result ->
+                when (result) {
+                    is ApiResult.Loading -> _state.update {
+                        it.copy(isLoading = true)
+                    }
 
-    /**
-     * 手动刷新按钮触发（从 Supabase 拉取远程最新数据）
-     */
-    private fun refreshHaircuts() {
-        viewModelScope.launch {
-            try {
-                _state.update { it.copy(isLoading = true) }
-                repository.refreshFromRemote()
-                _state.update { it.copy(isLoading = false) }
-            } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false) }
-                AppSnackbarBus.showApiFailure(onRetry = ::refreshHaircuts)
+                    is ApiResult.Success -> refreshHaircuts()
+
+                    is ApiResult.Error -> _state.update {
+                        it.copy(isLoading = false)
+                    }.also {
+                        AppSnackbarBus.showApiFailure(onRetry = { deleteHaircut(id) })
+                    }
+                }
             }
-        }
+            .launchIn(viewModelScope)
     }
 
-    private fun updateChartData(index: Int) {
+    private fun refreshHaircuts() {
+        refreshJob?.cancel()
+        refreshJob = repository.getHaircuts()
+            .onEach { result ->
+                when (result) {
+                    is ApiResult.Loading -> _state.update {
+                        it.copy(isLoading = true)
+                    }
 
+                    is ApiResult.Success -> _state.update {
+                        it.copy(
+                            history = result.data,
+                            days = calculateDaysSinceLatestHaircut(result.data),
+                            isLoading = false,
+                        )
+                    }
+
+                    is ApiResult.Error -> _state.update {
+                        it.copy(isLoading = false)
+                    }.also {
+                        AppSnackbarBus.showApiFailure(onRetry = ::refreshHaircuts)
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun calculateDaysSinceLatestHaircut(haircuts: List<Haircut>): Int {
+        if (haircuts.isEmpty()) {
+            return -1
+        }
+
+        val today = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
+        return (today.toEpochDays() - haircuts.first().date.toEpochDays()).toInt()
     }
 }

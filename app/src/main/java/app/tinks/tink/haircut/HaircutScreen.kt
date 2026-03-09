@@ -44,7 +44,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -88,10 +87,6 @@ private fun HaircutScreen(
     showDialog: Boolean = false,
     onEvent: (HaircutEvent) -> Unit = {},
 ) {
-
-    LaunchedEffect(Unit) {
-        onEvent(HaircutEvent.RefreshHaircutList)
-    }
 
     if (showDialog) {
         AddHaircutDialog(

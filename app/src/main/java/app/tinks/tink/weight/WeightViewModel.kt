@@ -2,32 +2,30 @@ package app.tinks.tink.weight
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tinks.tink.network.ApiResult
 import app.tinks.tink.ui.components.AppSnackbarBus
 import app.tinks.tink.weight.data.Weight
-import app.tinks.tink.weight.data.toWeight
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 sealed interface WeightEvent {
     object AddWeight : WeightEvent
     data class DeleteWeight(val id: Int) : WeightEvent
-    data class UpdateWeight(val id: Int, val weight: Double) : WeightEvent
     object RefreshWeightList : WeightEvent
-
     data class AdjustNewWeight(val delta: Float) : WeightEvent
-
     data class ChangeSelectedTrendIndex(val index: Int) : WeightEvent
 }
 
@@ -53,134 +51,153 @@ data class WeightState(
     val lastWeight: Weight? = null,
     val newWeight: Double? = null,
     val allWeights: List<Weight> = emptyList(),
-    val isLoading: Boolean = true,
+    val isLoading: Boolean = false,
     val isWeightChanged: Boolean = false,
     val selectedIndex: Int = 0,
 ) {
-    fun toUiState(): WeightUiState = WeightUiState(
-        isLoading = isLoading,
-        weightControlCardUiState = WeightControlCardUiState(
-            isTodayRecorded = ZonedDateTime.ofInstant(
-                Instant.ofEpochMilli(lastWeight?.createdTime ?: 0), ZoneId.systemDefault()
-            ) == ZonedDateTime.now(),
-            lastDateText = lastWeight?.createdTime?.let {
-                Instant.ofEpochMilli(it).atZone(
-                    ZoneId.systemDefault()
-                ).toLocalDate().format(
-                    DateTimeFormatter.ISO_LOCAL_DATE
-                )
-            } ?: "",
-            showConfirm = isWeightChanged,
-            newWeight = newWeight,
-        ),
-        trendChartCardUiState = TrendChartCardUiState(
-            selectedIndex = selectedIndex,
-            weightList = if (selectedIndex == 0) filterWeightsByCurrentMonth(allWeights) else allWeights
-        )
-    )
+    fun toUiState(): WeightUiState {
+        val latestDate = lastWeight?.createdTime?.let {
+            Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+        }
 
-    private fun filterWeightsByCurrentMonth(weights: List<Weight>): List<Weight> {
+        return WeightUiState(
+            isLoading = isLoading,
+            weightControlCardUiState = WeightControlCardUiState(
+                isTodayRecorded = latestDate == LocalDate.now(),
+                lastDateText = latestDate?.format(DateTimeFormatter.ISO_LOCAL_DATE).orEmpty(),
+                showConfirm = isWeightChanged,
+                newWeight = newWeight,
+            ),
+            trendChartCardUiState = TrendChartCardUiState(
+                selectedIndex = selectedIndex,
+                weightList = getTrendWeights(allWeights, selectedIndex),
+            )
+        )
+    }
+
+    private fun getTrendWeights(weights: List<Weight>, selectedIndex: Int): List<Weight> {
+        val sortedWeights = weights.sortedBy { it.createdTime }
+        if (selectedIndex != 0) {
+            return sortedWeights
+        }
+
         val currentMonth = YearMonth.now()
-        return weights.filter { weight ->
+        return sortedWeights.filter { weight ->
             val weightDate = Instant.ofEpochMilli(weight.createdTime)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate()
-            val weightMonth = YearMonth.from(weightDate)
-            weightMonth == currentMonth
-        }.sortedBy { it.createdTime }
+            YearMonth.from(weightDate) == currentMonth
+        }
     }
 }
 
 @HiltViewModel
 class WeightViewModel @Inject constructor(
-    private val repository: WeightRepository
+    private val repository: WeightRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WeightState())
     val uiState = _state.map { it.toUiState() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())
 
-    init {
-        observeLocalWeights()
-    }
+    private var refreshJob: Job? = null
 
-    /**
-     * 监听本地 Room 数据变化，实时更新 UI。
-     * 这样即使在离线时也能立刻看到最新数据。
-     */
-    private fun observeLocalWeights() {
-        viewModelScope.launch {
-            repository.getAllWeightsFlow().map { it.map { e -> e.toWeight() } }
-                .collectLatest { weights ->
-                    _state.update {
-                        it.copy(
-                            lastWeight = weights.getOrNull(1),
-                            newWeight = weights.getOrNull(1)?.weight,
-                            allWeights = weights,
-                            isLoading = false
-                        )
-                    }
-                }
-        }
+    init {
+        refreshWeights()
     }
 
     fun onEvent(event: WeightEvent) {
         when (event) {
             is WeightEvent.AddWeight -> addWeight()
             is WeightEvent.DeleteWeight -> deleteWeight(event.id)
-            is WeightEvent.UpdateWeight -> updateWeight(event.id, event.weight)
             WeightEvent.RefreshWeightList -> refreshWeights()
             is WeightEvent.AdjustNewWeight -> adjustNewWeight(event.delta)
             is WeightEvent.ChangeSelectedTrendIndex -> updateChartData(event.index)
         }
     }
 
-    /**
-     * 添加体重：立即写入 Room（即使无网），标记为 isSynced = false。
-     */
     private fun addWeight() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, isWeightChanged = false) }
-            _state.value.newWeight?.let { repository.addWeight(it) }
-            _state.update { it.copy(isLoading = false) }
-        }
+        val weight = _state.value.newWeight ?: return
+        repository.addWeight(weight)
+            .onEach { result ->
+                when (result) {
+                    is ApiResult.Loading -> _state.update {
+                        it.copy(isLoading = true, isWeightChanged = false)
+                    }
+
+                    is ApiResult.Success -> refreshWeights(resetDraft = true)
+
+                    is ApiResult.Error -> _state.update {
+                        it.copy(isLoading = false, isWeightChanged = true)
+                    }.also {
+                        AppSnackbarBus.showApiFailure(onRetry = ::addWeight)
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun deleteWeight(id: Int) {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-            repository.deleteWeight(id)
-            _state.update { it.copy(isLoading = false) }
-        }
-    }
+        repository.deleteWeight(id)
+            .onEach { result ->
+                when (result) {
+                    is ApiResult.Loading -> _state.update {
+                        it.copy(isLoading = true)
+                    }
 
-    private fun updateWeight(id: Int, weight: Double) {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-            repository.updateWeight(id, weight)
-            _state.update { it.copy(isLoading = false) }
-        }
-    }
+                    is ApiResult.Success -> refreshWeights(resetDraft = true)
 
-    /**
-     * 手动刷新按钮触发（从 Supabase 拉取远程最新数据）
-     */
-    private fun refreshWeights() {
-        viewModelScope.launch {
-            try {
-                _state.update { it.copy(isLoading = true) }
-                repository.refreshFromRemote()
-                _state.update { it.copy(isLoading = false) }
-            } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false) }
-                AppSnackbarBus.showApiFailure(onRetry = ::refreshWeights)
+                    is ApiResult.Error -> _state.update {
+                        it.copy(isLoading = false)
+                    }.also {
+                        AppSnackbarBus.showApiFailure(onRetry = { deleteWeight(id) })
+                    }
+                }
             }
-        }
+            .launchIn(viewModelScope)
+    }
+
+    private fun refreshWeights(resetDraft: Boolean = false) {
+        refreshJob?.cancel()
+        refreshJob = repository.getWeights()
+            .onEach { result ->
+                when (result) {
+                    is ApiResult.Loading -> _state.update {
+                        it.copy(isLoading = true)
+                    }
+
+                    is ApiResult.Success -> _state.update { state ->
+                        val latestWeight = result.data.firstOrNull()
+                        state.copy(
+                            lastWeight = latestWeight,
+                            newWeight = when {
+                                resetDraft || !state.isWeightChanged -> latestWeight?.weight
+                                    ?: state.newWeight
+
+                                else -> state.newWeight
+                            },
+                            allWeights = result.data,
+                            isLoading = false,
+                            isWeightChanged = if (resetDraft) false else state.isWeightChanged,
+                        )
+                    }
+
+                    is ApiResult.Error -> _state.update {
+                        it.copy(isLoading = false)
+                    }.also {
+                        AppSnackbarBus.showApiFailure(onRetry = { refreshWeights(resetDraft) })
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun adjustNewWeight(delta: Float) {
-        viewModelScope.launch {
-            _state.update { it.copy(newWeight = it.newWeight?.plus(delta), isWeightChanged = true) }
+        _state.update {
+            it.copy(
+                newWeight = it.newWeight?.plus(delta),
+                isWeightChanged = true,
+            )
         }
     }
 
@@ -188,4 +205,3 @@ class WeightViewModel @Inject constructor(
         _state.update { it.copy(selectedIndex = index) }
     }
 }
-
