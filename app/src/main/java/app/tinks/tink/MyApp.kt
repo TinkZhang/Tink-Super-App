@@ -40,11 +40,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import app.tinks.tink.book.BookScreen
 import app.tinks.tink.haircut.HaircutScreen
 import app.tinks.tink.merriam.MerriamScreen
 import app.tinks.tink.navigation.MyNavKey
 import app.tinks.tink.navigation.ScreenA
 import app.tinks.tink.navigation.ScreenB
+import app.tinks.tink.navigation.ScreenBooks
 import app.tinks.tink.navigation.ScreenHair
 import app.tinks.tink.navigation.ScreenLearntZi
 import app.tinks.tink.navigation.ScreenLeeter
@@ -222,6 +224,7 @@ fun MyApp(
                             TimeScreen(timeViewModel)
                         }
                         is ScreenSettings -> SettingsScreen(hiltViewModel())
+                        is ScreenBooks -> BookScreen(hiltViewModel())
                         is ScreenStoryList -> StoryListScreen(
                             hiltViewModel(),
                             onStoryClick = { story ->
