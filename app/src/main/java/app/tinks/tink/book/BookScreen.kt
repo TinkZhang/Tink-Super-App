@@ -45,8 +45,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SecondaryTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -92,10 +90,6 @@ private fun BookScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            BooksTabs(
-                screen = state.screen,
-                onEvent = onEvent,
-            )
             Box(Modifier.fillMaxSize()) {
                 when (val screen = state.screen) {
                     BooksScreenState.Home -> BooksHome(state, onEvent)
@@ -119,30 +113,6 @@ private fun BookScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun BooksTabs(
-    screen: BooksScreenState,
-    onEvent: (BookEvent) -> Unit,
-) {
-    val selectedIndex = when (screen) {
-        BooksScreenState.Home -> 0
-        is BooksScreenState.List -> when (screen.state) {
-            BookState.Reading -> 1
-            BookState.Wish -> 2
-            BookState.Archived -> 3
-        }
-        BooksScreenState.Search -> 4
-        else -> -1
-    }
-    SecondaryTabRow(selectedTabIndex = selectedIndex.coerceAtLeast(0)) {
-        Tab(selected = selectedIndex == 0, onClick = { onEvent(BookEvent.OpenHome) }, text = { Text("Home") })
-        Tab(selected = selectedIndex == 1, onClick = { onEvent(BookEvent.OpenList(BookState.Reading)) }, text = { Text("Reading") })
-        Tab(selected = selectedIndex == 2, onClick = { onEvent(BookEvent.OpenList(BookState.Wish)) }, text = { Text("Wish") })
-        Tab(selected = selectedIndex == 3, onClick = { onEvent(BookEvent.OpenList(BookState.Archived)) }, text = { Text("Archive") })
-        Tab(selected = selectedIndex == 4, onClick = { onEvent(BookEvent.OpenSearch) }, text = { Text("Search") })
     }
 }
 

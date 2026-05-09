@@ -92,6 +92,7 @@ interface GoogleBooksApi {
         @Query("q") keyword: String,
         @Query("startIndex") startIndex: Int = 0,
         @Query("maxResults") maxResults: Int = 20,
+        @Query("key") key: String = "AIzaSyCYZkpbbuaEaoDZIHUeKDXK4QJ03GeMgsA",
     ): GoogleBooksResponse
 }
 
