@@ -4,6 +4,8 @@ import app.tinks.tink.book.BookApi
 import app.tinks.tink.book.GoogleBooksApi
 import app.tinks.tink.haircut.HaircutApi
 import app.tinks.tink.merriam.network.MerriamApi
+import app.tinks.tink.settings.ApiEnvironment
+import app.tinks.tink.settings.AppEnvironmentRepository
 import app.tinks.tink.story.StoryApi
 import app.tinks.tink.time.TimeApi
 import app.tinks.tink.weight.WeightApi
@@ -35,9 +37,31 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        appEnvironmentRepository: AppEnvironmentRepository,
     ): OkHttpClient =
         OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val request = chain.request()
+                val url = request.url
+                val shouldUseDevApi =
+                    appEnvironmentRepository.currentEnvironment() == ApiEnvironment.Dev &&
+                        url.host == "api.tinks.app" &&
+                        !url.encodedPath.startsWith("/dev/")
+
+                val updatedRequest = if (shouldUseDevApi) {
+                    request.newBuilder()
+                        .url(
+                            url.newBuilder()
+                                .encodedPath("/dev${url.encodedPath}")
+                                .build()
+                        )
+                        .build()
+                } else {
+                    request
+                }
+                chain.proceed(updatedRequest)
+            }
             .addInterceptor(loggingInterceptor)
             .build()
 

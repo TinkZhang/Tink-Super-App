@@ -38,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.tooling.preview.Preview
@@ -110,7 +109,7 @@ fun WeightControlCard(
                             style = MaterialTheme.typography.displayLarge.copy(
                                 fontSize = 80.sp,
                                 fontWeight = FontWeight.Bold,
-                                letterSpacing = (-2).sp
+                                letterSpacing = 0.sp
                             ),
                             color = MaterialTheme.colorScheme.onSurface
                         )
