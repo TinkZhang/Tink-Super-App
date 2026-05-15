@@ -33,6 +33,7 @@ data class WeightUiState(
     val isLoading: Boolean,
     val weightControlCardUiState: WeightControlCardUiState,
     val trendChartCardUiState: TrendChartCardUiState,
+    val allWeights: List<Weight>,
 )
 
 data class TrendChartCardUiState(
@@ -71,7 +72,8 @@ data class WeightState(
             trendChartCardUiState = TrendChartCardUiState(
                 selectedIndex = selectedIndex,
                 weightList = getTrendWeights(allWeights, selectedIndex),
-            )
+            ),
+            allWeights = allWeights,
         )
     }
 

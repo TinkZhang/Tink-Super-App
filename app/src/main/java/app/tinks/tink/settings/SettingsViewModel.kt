@@ -16,11 +16,13 @@ import javax.inject.Inject
 data class SettingsUiState(
     val storyLength: Int = 200,
     val showStoryLengthDialog: Boolean = false,
+    val apiEnvironment: ApiEnvironment = ApiEnvironment.Dev,
 )
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val ziRepository: ZiRepository,
+    private val appEnvironmentRepository: AppEnvironmentRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsUiState())
@@ -29,6 +31,7 @@ class SettingsViewModel @Inject constructor(
 
     init {
         loadStoryLength()
+        observeApiEnvironment()
     }
 
     fun openStoryLengthDialog() {
@@ -60,6 +63,24 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val length = ziRepository.getStoryLength()
             _state.update { it.copy(storyLength = length) }
+        }
+    }
+
+    fun updateApiEnvironment(useDevApi: Boolean) {
+        viewModelScope.launch {
+            val environment = if (useDevApi) ApiEnvironment.Dev else ApiEnvironment.Prod
+            appEnvironmentRepository.setEnvironment(environment)
+            AppSnackbarBus.showMessage(
+                if (useDevApi) "已切换到开发 API" else "已切换到生产 API"
+            )
+        }
+    }
+
+    private fun observeApiEnvironment() {
+        viewModelScope.launch {
+            appEnvironmentRepository.observeEnvironment().collect { environment ->
+                _state.update { it.copy(apiEnvironment = environment) }
+            }
         }
     }
 }
