@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,7 +54,9 @@ fun WeightControlCard(
     onEvent: (WeightEvent) -> Unit = {},
 ) {
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("weight_control_card"), colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ), elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
     ) {
@@ -90,6 +93,7 @@ fun WeightControlCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
+                    .testTag("weight_drag_area")
                     // 垂直拖动逻辑
                     .pointerInput(Unit) {
                         detectVerticalDragGestures { change, dragAmount ->
@@ -106,6 +110,7 @@ fun WeightControlCard(
                     weightControlCardUiState.newWeight?.let {
                         Text(
                             text = "%.1f".format(it),
+                            modifier = Modifier.testTag("weight_current_value"),
                             style = MaterialTheme.typography.displayLarge.copy(
                                 fontSize = 80.sp,
                                 fontWeight = FontWeight.Bold,
@@ -151,7 +156,8 @@ fun WeightControlCard(
                     onClick = { onEvent(WeightEvent.AddWeight) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp),
+                        .height(56.dp)
+                        .testTag("weight_add_record_button"),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Icon(Icons.Outlined.MonitorWeight, contentDescription = null)

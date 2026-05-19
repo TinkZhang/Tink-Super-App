@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavEntry
@@ -147,7 +148,9 @@ fun MyApp(
                             onNavigate(dest)
                             scope.launch { drawerState.close() }
                         },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        modifier = Modifier
+                            .padding(NavigationDrawerItemDefaults.ItemPadding)
+                            .testTag(dest.drawerTestTag())
                     )
                 }
             }
@@ -167,13 +170,18 @@ fun MyApp(
                     navigationIcon = {
                         if (currentKey in allTopDestinations) {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Filled.Menu, contentDescription = "打开抽屉")
+                                Icon(
+                                    Icons.Filled.Menu,
+                                    contentDescription = "打开抽屉",
+                                    modifier = Modifier.testTag("top_bar_menu_button")
+                                )
                             }
                         } else {
                             IconButton(onClick = { navigateBack() }) {
                                 Icon(
                                     Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "返回上级"
+                                    contentDescription = "返回上级",
+                                    modifier = Modifier.testTag("top_bar_back_button")
                                 )
                             }
                         }
@@ -254,4 +262,20 @@ fun MyApp(
             }
         }
     }
+}
+
+private fun MyNavKey.drawerTestTag(): String = when (this) {
+    ScreenA -> "drawer_destination_home"
+    ScreenB, ScreenWeight -> "drawer_destination_weight"
+    ScreenHair -> "drawer_destination_hair"
+    ScreenLeeter -> "drawer_destination_leeter"
+    ScreenZi -> "drawer_destination_zi"
+    ScreenMerriam -> "drawer_destination_merriam"
+    ScreenTime -> "drawer_destination_time"
+    ScreenBooks -> "drawer_destination_books"
+    ScreenSettings -> "drawer_destination_settings"
+    ScreenLearntZi -> "drawer_destination_learnt_zi"
+    ScreenStoryList -> "drawer_destination_story_list"
+    is ScreenStoryDetail -> "drawer_destination_story_detail"
+    ScreenWeightHistory -> "drawer_destination_weight_history"
 }

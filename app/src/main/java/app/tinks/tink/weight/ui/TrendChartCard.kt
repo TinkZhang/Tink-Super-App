@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -58,7 +59,12 @@ fun TrendChartCard(
     trendChartCardUiState: TrendChartCardUiState,
     onEvent: (WeightEvent) -> Unit = {},
 ) {
-    ContentCard(title = "体重趋势", modifier = Modifier.fillMaxWidth()) {
+    ContentCard(
+        title = "体重趋势",
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("weight_trend_card")
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             TrendRangeToggle(
                 selectedIndex = trendChartCardUiState.selectedIndex,
@@ -69,6 +75,7 @@ fun TrendChartCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(244.dp)
+                    .testTag("weight_trend_chart")
             ) {
                 if (trendChartCardUiState.weightList.isEmpty()) {
                     Text(
@@ -104,7 +111,9 @@ private fun TrendRangeToggle(selectedIndex: Int, onSelected: (Int) -> Unit) {
                 ToggleButton(
                     checked = selectedIndex == index,
                     onCheckedChange = { onSelected(index) },
-                    modifier = Modifier.semantics { role = Role.RadioButton },
+                    modifier = Modifier
+                        .testTag("weight_trend_${if (index == 0) "month" else "all"}")
+                        .semantics { role = Role.RadioButton },
                 ) {
                     Icon(
                         imageVector = if (selectedIndex == index) checkedIcons[index] else uncheckedIcons[index],

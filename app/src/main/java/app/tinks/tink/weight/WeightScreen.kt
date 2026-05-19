@@ -169,13 +169,18 @@ internal fun WeightHistoryScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .testTag("weight_history_list"),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
     ) {
         if (weights.isEmpty()) {
             item("empty") {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                ElevatedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("weight_history_empty")
+                ) {
                     androidx.compose.foundation.layout.Column(
                         modifier = Modifier.padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -201,7 +206,11 @@ internal fun WeightHistoryScreen(
 
 @Composable
 private fun WeightHistoryItem(weight: Weight, onDelete: () -> Unit) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("weight_history_item_${weight.id}")
+    ) {
         ListItem(
             headlineContent = {
                 Text(
@@ -215,7 +224,10 @@ private fun WeightHistoryItem(weight: Weight, onDelete: () -> Unit) {
                 Icon(Icons.Outlined.MonitorWeight, contentDescription = null)
             },
             trailingContent = {
-                IconButton(onClick = onDelete) {
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.testTag("weight_delete_button_${weight.id}")
+                ) {
                     Icon(Icons.Filled.Delete, contentDescription = "删除")
                 }
             },

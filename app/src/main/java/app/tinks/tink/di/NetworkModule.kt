@@ -1,5 +1,6 @@
 package app.tinks.tink.di
 
+import app.tinks.tink.BuildConfig
 import app.tinks.tink.book.BookApi
 import app.tinks.tink.book.GoogleBooksApi
 import app.tinks.tink.haircut.HaircutApi
@@ -47,6 +48,7 @@ object NetworkModule {
                 val shouldUseDevApi =
                     appEnvironmentRepository.currentEnvironment() == ApiEnvironment.Dev &&
                         url.host == "api.tinks.app" &&
+                        BuildConfig.TINK_API_BASE_URL.contains("api.tinks.app") &&
                         !url.encodedPath.startsWith("/dev/")
 
                 val updatedRequest = if (shouldUseDevApi) {
@@ -77,7 +79,7 @@ object NetworkModule {
         okHttpClient: OkHttpClient
     ): Retrofit =
         Retrofit.Builder()
-            .baseUrl("https://api.tinks.app/")
+            .baseUrl(BuildConfig.TINK_API_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(
                 json.asConverterFactory("application/json".toMediaType())
