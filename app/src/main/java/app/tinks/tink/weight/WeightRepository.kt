@@ -11,10 +11,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class WeightRepository @Inject constructor(
+open class WeightRepository @Inject constructor(
     private val api: WeightApi,
 ) {
-    fun getWeights(): Flow<ApiResult<List<Weight>>> = flow {
+    open fun getWeights(): Flow<ApiResult<List<Weight>>> = flow {
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
@@ -25,7 +25,7 @@ class WeightRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    fun addWeight(weight: Double): Flow<ApiResult<Weight>> = flow {
+    open fun addWeight(weight: Double): Flow<ApiResult<Weight>> = flow {
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
@@ -34,7 +34,7 @@ class WeightRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    fun deleteWeight(id: Int): Flow<ApiResult<Unit>> = flow {
+    open fun deleteWeight(id: Int): Flow<ApiResult<Unit>> = flow {
         emit(ApiResult.Loading)
         emit(
             safeApiCall {

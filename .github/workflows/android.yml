@@ -6,6 +6,11 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  actions: read
+  pages: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -22,5 +27,144 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
+      - name: Run Android tests
+        id: gradle
+        shell: bash
+        run: |
+          set +e
+
+          ./gradlew testDebugUnitTest
+          unit_status=$?
+
+          ./gradlew jacocoDebugUnitTestReport
+          coverage_status=$?
+
+          ./gradlew validateDebugScreenshotTest
+          screenshot_status=$?
+
+          {
+            echo "unit_status=$unit_status"
+            echo "coverage_status=$coverage_status"
+            echo "screenshot_status=$screenshot_status"
+          } >> "$GITHUB_OUTPUT"
+
+          exit 0
+
+      - name: Prepare HTML reports
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          report_root="reports-site/runs/${GITHUB_RUN_ID}"
+          mkdir -p "$report_root/unit" "$report_root/coverage" "$report_root/screenshots" "$report_root/junit"
+
+          copy_report() {
+            local source="$1"
+            local target="$2"
+            local title="$3"
+
+            if [ -d "$source" ]; then
+              cp -R "$source"/. "$target"/
+            else
+              cat > "$target/index.html" <<HTML
+          <!doctype html>
+          <html>
+            <head><meta charset="utf-8"><title>${title}</title></head>
+            <body>
+              <h1>${title}</h1>
+              <p>Report directory was not generated.</p>
+            </body>
+          </html>
+          HTML
+            fi
+          }
+
+          copy_report "app/build/reports/tests/testDebugUnitTest" "$report_root/unit" "Unit and UI Test Report"
+          copy_report "app/build/reports/jacoco/jacocoDebugUnitTestReport/html" "$report_root/coverage" "Coverage Report"
+          copy_report "app/build/reports/screenshotTest/preview/debug" "$report_root/screenshots" "Screenshot Test Report"
+
+          if [ -d "app/build/test-results/testDebugUnitTest" ]; then
+            cp -R app/build/test-results/testDebugUnitTest/. "$report_root/junit"/
+          fi
+
+          unit_status="${{ steps.gradle.outputs.unit_status }}"
+          coverage_status="${{ steps.gradle.outputs.coverage_status }}"
+          screenshot_status="${{ steps.gradle.outputs.screenshot_status }}"
+
+          cat > "$report_root/index.html" <<HTML
+          <!doctype html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Tink Android Test Report ${GITHUB_RUN_ID}</title>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 40px; line-height: 1.5; }
+                table { border-collapse: collapse; min-width: 520px; }
+                th, td { border: 1px solid #ddd; padding: 10px 12px; text-align: left; }
+                th { background: #f6f8fa; }
+                .ok { color: #116329; font-weight: 700; }
+                .fail { color: #b42318; font-weight: 700; }
+              </style>
+            </head>
+            <body>
+              <h1>Tink Android Test Report</h1>
+              <p>Run <a href="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}">${GITHUB_RUN_ID}</a></p>
+              <table>
+                <tr><th>Report</th><th>Status</th></tr>
+                <tr><td><a href="unit/index.html">Unit + Robolectric UI Tests</a></td><td class="$([ "$unit_status" = "0" ] && echo ok || echo fail)">${unit_status}</td></tr>
+                <tr><td><a href="coverage/index.html">Jacoco Coverage</a></td><td class="$([ "$coverage_status" = "0" ] && echo ok || echo fail)">${coverage_status}</td></tr>
+                <tr><td><a href="screenshots/index.html">Screenshot Tests</a></td><td class="$([ "$screenshot_status" = "0" ] && echo ok || echo fail)">${screenshot_status}</td></tr>
+              </table>
+            </body>
+          </html>
+          HTML
+
+          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            rm -rf reports-site/latest
+            mkdir -p reports-site/latest
+            cp -R "$report_root"/. reports-site/latest/
+          fi
+
+          touch reports-site/.nojekyll
+
+      - name: Upload Android reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-reports
+          path: reports-site
+          if-no-files-found: warn
+
+      - name: Publish reports to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./reports-site
+          keep_files: true
+
+      - name: Configure GitHub Pages source
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/pages" >/dev/null 2>&1 || \
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/pages" \
+              -f source[branch]=gh-pages \
+              -f source[path]=/
+
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/pages" \
+            -f source[branch]=gh-pages \
+            -f source[path]=/
+
+      - name: Fail if Android tests failed
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.gradle.outputs.unit_status }}" != "0" ] ||
+             [ "${{ steps.gradle.outputs.coverage_status }}" != "0" ] ||
+             [ "${{ steps.gradle.outputs.screenshot_status }}" != "0" ]; then
+            exit 1
+          fi

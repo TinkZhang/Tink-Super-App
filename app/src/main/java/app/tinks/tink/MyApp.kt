@@ -56,8 +56,10 @@ import app.tinks.tink.navigation.ScreenStoryDetail
 import app.tinks.tink.navigation.ScreenStoryList
 import app.tinks.tink.navigation.ScreenTime
 import app.tinks.tink.navigation.ScreenWeight
+import app.tinks.tink.navigation.ScreenWeightHistory
 import app.tinks.tink.navigation.ScreenZi
 import app.tinks.tink.navigation.allTopDestinations
+import app.tinks.tink.navigation.topDestination
 import app.tinks.tink.settings.SettingsScreen
 import app.tinks.tink.story.StoryDetailScreen
 import app.tinks.tink.story.StoryListScreen
@@ -65,6 +67,7 @@ import app.tinks.tink.time.TimeEvent
 import app.tinks.tink.time.TimeScreen
 import app.tinks.tink.time.TimeViewModel
 import app.tinks.tink.ui.components.AppSnackbarBus
+import app.tinks.tink.weight.WeightHistoryScreen
 import app.tinks.tink.weight.WeightScreen
 import app.tinks.tink.zi.ZiScreen
 import app.tinks.tink.zi.zilist.LearntZiListScreen
@@ -80,6 +83,7 @@ fun MyApp(
 ) {
     val backStack = remember { mutableStateListOf<MyNavKey>(ScreenA) }
     val currentKey = backStack.lastOrNull()
+    val currentTopDestination = currentKey?.topDestination()
     var pendingQuickAddRequestId by remember { mutableStateOf<Int?>(null) }
     var handledQuickAddRequestId by remember { mutableStateOf<Int?>(null) }
 
@@ -93,7 +97,9 @@ fun MyApp(
     }
 
     fun navigateBack() {
-        backStack.removeLast()
+        if (backStack.size > 1) {
+            backStack.removeLast()
+        }
     }
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -136,7 +142,7 @@ fun MyApp(
                     NavigationDrawerItem(
                         label = { Text(dest.label) },
                         icon = { Icon(dest.icon, dest.label) },
-                        selected = currentKey == dest,
+                        selected = currentTopDestination == dest,
                         onClick = {
                             onNavigate(dest)
                             scope.launch { drawerState.close() }
@@ -196,13 +202,21 @@ fun MyApp(
                 backStack = backStack,
                 modifier = Modifier
                     .padding(paddingValues)
-                    .fillMaxSize()
+                    .fillMaxSize(),
+                onBack = { navigateBack() },
             ) { key ->
                 NavEntry(key) {
                     when (key) {
                         is ScreenA -> TimeScreen(hiltViewModel())
-                        is ScreenB -> WeightScreen(hiltViewModel())
-                        is ScreenWeight -> WeightScreen(hiltViewModel())
+                        is ScreenB -> WeightScreen(
+                            hiltViewModel(),
+                            onOpenHistory = { backStack.add(ScreenWeightHistory) },
+                        )
+                        is ScreenWeight -> WeightScreen(
+                            hiltViewModel(),
+                            onOpenHistory = { backStack.add(ScreenWeightHistory) },
+                        )
+                        is ScreenWeightHistory -> WeightHistoryScreen(hiltViewModel())
                         is ScreenHair -> HaircutScreen(hiltViewModel())
                         is ScreenLeeter -> HaircutScreen(hiltViewModel())
                         is ScreenZi -> ZiScreen(

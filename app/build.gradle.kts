@@ -1,10 +1,14 @@
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.screenshot)
     kotlin("plugin.serialization") version "2.2.21"
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
+    jacoco
 }
 
 android {
@@ -20,7 +24,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "app.tinks.tink.HiltTestRunner"
     }
 
     buildTypes {
@@ -42,6 +46,57 @@ android {
     buildFeatures {
         compose = true
     }
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+}
+
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
+}
+
+tasks.register<JacocoReport>("jacocoDebugUnitTestReport") {
+    dependsOn("testDebugUnitTest")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+
+    val coverageExclusions = listOf(
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "**/*Hilt*.*",
+        "**/*_Factory.*",
+        "**/*_MembersInjector.*",
+        "**/*Component*.*",
+    )
+
+    classDirectories.setFrom(
+        files(
+            fileTree("$buildDir/tmp/kotlin-classes/debug") {
+                exclude(coverageExclusions)
+            },
+            fileTree("$buildDir/intermediates/javac/debug/compileDebugJavaWithJavac/classes") {
+                exclude(coverageExclusions)
+            },
+        )
+    )
+    sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+    executionData.setFrom(
+        fileTree(buildDir) {
+            include(
+                "jacoco/testDebugUnitTest.exec",
+                "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+            )
+        }
+    )
 }
 
 dependencies {
@@ -59,7 +114,17 @@ dependencies {
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.ui.graphics)
     testImplementation(libs.junit)
+    testImplementation(libs.androidx.junit)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.runner)
+    testImplementation(libs.androidx.test.rules)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
@@ -82,6 +147,8 @@ dependencies {
 //    Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)
+    androidTestImplementation(libs.hilt.android.testing)
+    kaptAndroidTest(libs.hilt.android.compiler)
     implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
 
     implementation(libs.androidx.room.runtime)
@@ -94,5 +161,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.material3.adaptive.navigation3)
     implementation(libs.kotlinx.serialization.core)
+
+    screenshotTestImplementation(libs.screenshot.validation.api)
+    screenshotTestImplementation(libs.androidx.compose.ui.tooling)
 
 }

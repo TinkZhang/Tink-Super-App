@@ -34,6 +34,11 @@ data object ScreenWeight : MyNavKey {
     override val icon = Icons.Filled.Build
 }
 
+data object ScreenWeightHistory : MyNavKey {
+    override val label = "体重历史"
+    override val icon = Icons.Filled.Build
+}
+
 data object ScreenHair : MyNavKey {
     override val label = "理发"
     override val icon = Icons.Filled.Looks
