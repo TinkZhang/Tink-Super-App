@@ -144,21 +144,6 @@ jobs:
           publish_dir: ./reports-site
           keep_files: true
 
-      - name: Configure GitHub Pages source
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          gh api "repos/${GITHUB_REPOSITORY}/pages" >/dev/null 2>&1 || \
-            gh api --method POST "repos/${GITHUB_REPOSITORY}/pages" \
-              -f source[branch]=gh-pages \
-              -f source[path]=/
-
-          gh api --method PUT "repos/${GITHUB_REPOSITORY}/pages" \
-            -f source[branch]=gh-pages \
-            -f source[path]=/
-
       - name: Fail if Android tests failed
         if: always()
         shell: bash
