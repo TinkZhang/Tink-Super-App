@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.weight.WeightRepositoryTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-05-19T09:51:58.936Z" hostname="runnervmrw5os" time="0.076">
+  <properties/>
+  <testcase name="addWeight_postsCreatePayload" classname="app.tinks.tink.weight.WeightRepositoryTest" time="0.059"/>
+  <testcase name="deleteWeight_callsApiWithWeightId" classname="app.tinks.tink.weight.WeightRepositoryTest" time="0.004"/>
+  <testcase name="getWeights_emitsLoadingThenSuccess_withWeightsSortedDescending" classname="app.tinks.tink.weight.WeightRepositoryTest" time="0.005"/>
+  <testcase name="getWeights_emitsError_whenApiThrows" classname="app.tinks.tink.weight.WeightRepositoryTest" time="0.008"/>
+  <system-out><![CDATA[safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall caught exception: boom
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.navigation.NavigationHierarchyTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-19T09:51:49.031Z" hostname="runnervmrw5os" time="0.072">
+  <properties/>
+  <testcase name="topDestination_mapsWeightHistoryToWeight" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.058"/>
+  <testcase name="topDestination_returnsSelf_forTopLevelDestinations" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.011"/>
+  <testcase name="topDestination_mapsStoryFlowToZi" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
