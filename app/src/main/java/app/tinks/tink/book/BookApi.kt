@@ -1,5 +1,6 @@
 package app.tinks.tink.book
 
+import app.tinks.tink.BuildConfig
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
@@ -92,7 +93,7 @@ interface GoogleBooksApi {
         @Query("q") keyword: String,
         @Query("startIndex") startIndex: Int = 0,
         @Query("maxResults") maxResults: Int = 20,
-        @Query("key") key: String = "AIzaSyCYZkpbbuaEaoDZIHUeKDXK4QJ03GeMgsA",
+        @Query("key") key: String = BuildConfig.GOOGLE_API_KEY,
     ): GoogleBooksResponse
 }
 

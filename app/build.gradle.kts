@@ -1,4 +1,20 @@
 import org.gradle.testing.jacoco.tasks.JacocoReport
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use(::load)
+    }
+}
+
+fun secretValue(name: String): String =
+    providers.environmentVariable(name).orNull
+        ?: localProperties.getProperty(name)
+        ?: ""
+
+fun buildConfigString(value: String): String =
+    "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
 plugins {
     alias(libs.plugins.android.application)
@@ -25,6 +41,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "app.tinks.tink.HiltTestRunner"
+        buildConfigField(
+            "String",
+            "GOOGLE_API_KEY",
+            buildConfigString(secretValue("GOOGLE_API_KEY")),
+        )
     }
 
     buildTypes {
@@ -45,6 +66,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
     testOptions {
