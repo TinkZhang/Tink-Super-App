@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WeightControlCard.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.weight.ui</a> &gt; <span class="el_source">WeightControlCard.kt</span></div><h1>WeightControlCard.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.weight.ui
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.MonitorWeight
+import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.tinks.tink.weight.WeightControlCardUiState
+import app.tinks.tink.weight.WeightEvent
+import app.tinks.tink.weight.data.Weight
+
+@Composable
+fun WeightControlCard(
+    weightControlCardUiState: WeightControlCardUiState,
+<span class="nc" id="L53">    onEvent: (WeightEvent) -&gt; Unit = {},</span>
+<span class="nc bnc" id="L54" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L55">    ElevatedCard(</span>
+<span class="nc" id="L56">        modifier = Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(</span>
+<span class="nc" id="L57">            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh</span>
+<span class="nc" id="L58">        ), elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)</span>
+<span class="nc" id="L59">    ) {</span>
+<span class="nc" id="L60">        Column(</span>
+<span class="nc" id="L61">            modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally</span>
+        ) {
+            // 顶部状态 Chip
+<span class="nc bnc" id="L64" title="All 2 branches missed.">            if (!weightControlCardUiState.isTodayRecorded) {</span>
+<span class="nc" id="L65">                AssistChip(</span>
+<span class="nc" id="L66">                    onClick = {},</span>
+<span class="nc" id="L67">                    label = { Text(&quot;上次记录: ${weightControlCardUiState.lastDateText}&quot;) },</span>
+<span class="nc" id="L68">                    leadingIcon = {</span>
+<span class="nc" id="L69">                        Icon(Icons.Outlined.Warning, null, tint = MaterialTheme.colorScheme.error)</span>
+<span class="nc" id="L70">                    },</span>
+<span class="nc" id="L71">                    colors = AssistChipDefaults.assistChipColors(</span>
+<span class="nc" id="L72">                        labelColor = MaterialTheme.colorScheme.error</span>
+                    ),
+<span class="nc" id="L74">                    border = AssistChipDefaults.assistChipBorder(</span>
+<span class="nc" id="L75">                        enabled = true, borderColor = MaterialTheme.colorScheme.error</span>
+                    )
+                )
+<span class="nc" id="L78">            } else {</span>
+<span class="nc" id="L79">                AssistChip(onClick = {}, label = { Text(&quot;今日已记录&quot;) }, leadingIcon = {</span>
+<span class="nc" id="L80">                    Icon(Icons.Filled.Check, null, tint = MaterialTheme.colorScheme.primary)</span>
+<span class="nc" id="L81">                })</span>
+            }
+
+<span class="nc" id="L84">            Spacer(Modifier.height(24.dp))</span>
+
+            // 体重数值显示与滑动交互区
+<span class="nc" id="L87">            Row(</span>
+<span class="nc" id="L88">                verticalAlignment = Alignment.CenterVertically,</span>
+<span class="nc" id="L89">                horizontalArrangement = Arrangement.SpaceBetween,</span>
+<span class="nc" id="L90">                modifier = Modifier</span>
+<span class="nc" id="L91">                    .fillMaxWidth()</span>
+<span class="nc" id="L92">                    .height(180.dp)</span>
+                    // 垂直拖动逻辑
+<span class="nc" id="L94">                    .pointerInput(Unit) {</span>
+<span class="nc" id="L95">                        detectVerticalDragGestures { change, dragAmount -&gt;</span>
+<span class="nc" id="L96">                            change.consume()</span>
+                            // 灵敏度调节: dragAmount / 50 意味着每滑动50px改变0.1
+                            // 负号是因为上滑(负数)应该增加体重
+<span class="nc" id="L99">                            val delta = -(dragAmount / 300f)</span>
+<span class="nc" id="L100">                            onEvent(WeightEvent.AdjustNewWeight(delta))</span>
+<span class="nc" id="L101">                        }</span>
+<span class="nc" id="L102">                    }) {</span>
+<span class="nc" id="L103">                Spacer(modifier = Modifier)</span>
+                // 大字体数值
+<span class="nc" id="L105">                Row(verticalAlignment = Alignment.Bottom) {</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">                    weightControlCardUiState.newWeight?.let {</span>
+<span class="nc" id="L107">                        Text(</span>
+<span class="nc" id="L108">                            text = &quot;%.1f&quot;.format(it),</span>
+<span class="nc" id="L109">                            style = MaterialTheme.typography.displayLarge.copy(</span>
+<span class="nc" id="L110">                                fontSize = 80.sp,</span>
+<span class="nc" id="L111">                                fontWeight = FontWeight.Bold,</span>
+<span class="nc" id="L112">                                letterSpacing = 0.sp</span>
+                            ),
+<span class="nc" id="L114">                            color = MaterialTheme.colorScheme.onSurface</span>
+                        )
+<span class="nc" id="L116">                    }</span>
+<span class="nc" id="L117">                }</span>
+                // 背景装饰：模拟滚轮刻度
+<span class="nc" id="L119">                Column(</span>
+<span class="nc" id="L120">                    verticalArrangement = Arrangement.SpaceBetween,</span>
+<span class="nc" id="L121">                    horizontalAlignment = Alignment.CenterHorizontally,</span>
+<span class="nc" id="L122">                    modifier = Modifier</span>
+<span class="nc" id="L123">                        .fillMaxHeight()</span>
+<span class="nc" id="L124">                        .alpha(0.2f)</span>
+                ) {
+<span class="nc" id="L126">                    Icon(Icons.Filled.KeyboardArrowUp, null, modifier = Modifier.size(32.dp))</span>
+<span class="nc" id="L127">                    Spacer(Modifier.height(8.dp))</span>
+                    // 简单的刻度线
+<span class="nc bnc" id="L129" title="All 2 branches missed.">                    repeat(5) {</span>
+<span class="nc" id="L130">                        Box(</span>
+<span class="nc" id="L131">                            modifier = Modifier</span>
+<span class="nc" id="L132">                                .width(40.dp)</span>
+<span class="nc" id="L133">                                .height(2.dp)</span>
+<span class="nc" id="L134">                                .background(MaterialTheme.colorScheme.onSurface)</span>
+                        )
+<span class="nc" id="L136">                    }</span>
+<span class="nc" id="L137">                    Spacer(Modifier.height(8.dp))</span>
+<span class="nc" id="L138">                    Icon(Icons.Filled.KeyboardArrowDown, null, modifier = Modifier.size(32.dp))</span>
+<span class="nc" id="L139">                }</span>
+<span class="nc" id="L140">            }</span>
+
+<span class="nc" id="L142">            Spacer(Modifier.height(24.dp))</span>
+
+            // 确认按钮 (带动画)
+<span class="nc" id="L145">            AnimatedVisibility(</span>
+<span class="nc" id="L146">                visible = weightControlCardUiState.showConfirm,</span>
+<span class="nc" id="L147">                enter = expandVertically() + fadeIn(),</span>
+<span class="nc" id="L148">                exit = shrinkVertically() + fadeOut()</span>
+<span class="nc" id="L149">            ) {</span>
+<span class="nc" id="L150">                Button(</span>
+<span class="nc" id="L151">                    onClick = { onEvent(WeightEvent.AddWeight) },</span>
+<span class="nc" id="L152">                    modifier = Modifier</span>
+<span class="nc" id="L153">                        .fillMaxWidth()</span>
+<span class="nc" id="L154">                        .height(56.dp),</span>
+<span class="nc" id="L155">                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)</span>
+<span class="nc" id="L156">                ) {</span>
+<span class="nc" id="L157">                    Icon(Icons.Outlined.MonitorWeight, contentDescription = null)</span>
+<span class="nc" id="L158">                    Spacer(Modifier.width(8.dp))</span>
+<span class="nc" id="L159">                    Text(&quot;添加新记录: %.1f 斤&quot;.format(weightControlCardUiState.newWeight))</span>
+<span class="nc" id="L160">                }</span>
+<span class="nc" id="L161">            }</span>
+
+<span class="nc bnc" id="L163" title="All 4 branches missed.">            if (!weightControlCardUiState.showConfirm &amp;&amp; weightControlCardUiState.isTodayRecorded) {</span>
+<span class="nc" id="L164">                Text(</span>
+<span class="nc" id="L165">                    &quot;保持这种势头！&quot;,</span>
+<span class="nc" id="L166">                    style = MaterialTheme.typography.bodyMedium,</span>
+<span class="nc" id="L167">                    color = MaterialTheme.colorScheme.primary</span>
+                )
+<span class="nc" id="L169">            }</span>
+<span class="nc" id="L170">        }</span>
+<span class="nc" id="L171">    }</span>
+<span class="nc" id="L172">}</span>
+
+@Preview
+@Composable
+<span class="nc bnc" id="L176" title="All 4 branches missed.">private fun WeightViewCardOldPreview() {</span>
+<span class="nc" id="L177">    WeightControlCard(</span>
+<span class="nc" id="L178">        weightControlCardUiState = WeightControlCardUiState(</span>
+<span class="nc" id="L179">            isTodayRecorded = false,</span>
+<span class="nc" id="L180">            newWeight = 70.0,</span>
+<span class="nc" id="L181">            lastDateText = &quot;2025-11-01&quot;,</span>
+<span class="nc" id="L182">            showConfirm = true</span>
+        )
+    )
+<span class="nc" id="L185">}</span>
+
+@Preview
+@Composable
+<span class="nc bnc" id="L189" title="All 4 branches missed.">private fun WeightViewCardTodayPreview() {</span>
+<span class="nc" id="L190">    WeightControlCard(</span>
+<span class="nc" id="L191">        weightControlCardUiState = WeightControlCardUiState(</span>
+<span class="nc" id="L192">            isTodayRecorded = true,</span>
+<span class="nc" id="L193">            newWeight = 71.0,</span>
+<span class="nc" id="L194">            lastDateText = &quot;2025-11-01&quot;,</span>
+<span class="nc" id="L195">            showConfirm = false</span>
+        )
+    )
+<span class="nc" id="L198">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SettingsScreen.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.settings</a> &gt; <span class="el_source">SettingsScreen.kt</span></div><h1>SettingsScreen.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.settings
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tinks.tink.zi.StorySettingsDialog
+
+@Composable
+<span class="nc bnc" id="L21" title="All 8 branches missed.">fun SettingsScreen(viewModel: SettingsViewModel) {</span>
+<span class="nc" id="L22">    val uiState by viewModel.uiState.collectAsStateWithLifecycle()</span>
+<span class="nc" id="L23">    SettingsScreen(</span>
+<span class="nc" id="L24">        storyLength = uiState.storyLength,</span>
+<span class="nc" id="L25">        apiEnvironment = uiState.apiEnvironment,</span>
+<span class="nc" id="L26">        showStoryLengthDialog = uiState.showStoryLengthDialog,</span>
+<span class="nc" id="L27">        onOpenStoryLength = viewModel::openStoryLengthDialog,</span>
+<span class="nc" id="L28">        onDismissStoryLength = viewModel::dismissStoryLengthDialog,</span>
+<span class="nc" id="L29">        onUpdateStoryLength = viewModel::updateStoryLength,</span>
+<span class="nc" id="L30">        onUpdateApiEnvironment = viewModel::updateApiEnvironment,</span>
+    )
+<span class="nc" id="L32">}</span>
+
+@Composable
+private fun SettingsScreen(
+    storyLength: Int,
+    apiEnvironment: ApiEnvironment,
+    showStoryLengthDialog: Boolean,
+    onOpenStoryLength: () -&gt; Unit,
+    onDismissStoryLength: () -&gt; Unit,
+    onUpdateStoryLength: (Int) -&gt; Unit,
+    onUpdateApiEnvironment: (Boolean) -&gt; Unit,
+<span class="nc bnc" id="L43" title="All 32 branches missed.">) {</span>
+<span class="nc" id="L44">    Column(</span>
+<span class="nc" id="L45">        modifier = Modifier</span>
+<span class="nc" id="L46">            .fillMaxSize()</span>
+<span class="nc" id="L47">            .padding(vertical = 8.dp)</span>
+    ) {
+<span class="nc" id="L49">        Text(</span>
+<span class="nc" id="L50">            text = &quot;偏好设置&quot;,</span>
+<span class="nc" id="L51">            style = MaterialTheme.typography.titleSmall,</span>
+<span class="nc" id="L52">            color = MaterialTheme.colorScheme.primary,</span>
+<span class="nc" id="L53">            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)</span>
+        )
+<span class="nc" id="L55">        ListItem(</span>
+<span class="nc" id="L56">            headlineContent = { Text(&quot;开发 API&quot;) },</span>
+<span class="nc" id="L57">            supportingContent = {</span>
+<span class="nc" id="L58">                Text(</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">                    if (apiEnvironment == ApiEnvironment.Dev) {</span>
+<span class="nc" id="L60">                        &quot;当前使用 Tink-Dev 数据库&quot;</span>
+                    } else {
+<span class="nc" id="L62">                        &quot;当前使用生产数据库&quot;</span>
+                    }
+                )
+<span class="nc" id="L65">            },</span>
+<span class="nc" id="L66">            modifier = Modifier</span>
+<span class="nc" id="L67">                .fillMaxWidth()</span>
+<span class="nc" id="L68">                .padding(horizontal = 8.dp),</span>
+<span class="nc" id="L69">            trailingContent = {</span>
+<span class="nc" id="L70">                Switch(</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">                    checked = apiEnvironment == ApiEnvironment.Dev,</span>
+<span class="nc" id="L72">                    onCheckedChange = onUpdateApiEnvironment,</span>
+                )
+<span class="nc" id="L74">            },</span>
+        )
+<span class="nc" id="L76">        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))</span>
+
+<span class="nc" id="L78">        ListItem(</span>
+<span class="nc" id="L79">            headlineContent = { Text(&quot;故事长度&quot;) },</span>
+<span class="nc" id="L80">            supportingContent = { Text(&quot;$storyLength&quot;) },</span>
+<span class="nc" id="L81">            modifier = Modifier</span>
+<span class="nc" id="L82">                .fillMaxWidth()</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">                .clickable { onOpenStoryLength() }</span>
+<span class="nc" id="L84">                .padding(horizontal = 8.dp),</span>
+<span class="nc" id="L85">            trailingContent = { Text(&quot;修改&quot;) },</span>
+        )
+<span class="nc" id="L87">        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))</span>
+
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        if (showStoryLengthDialog) {</span>
+<span class="nc" id="L90">            StorySettingsDialog(</span>
+<span class="nc" id="L91">                currentLength = storyLength,</span>
+<span class="nc" id="L92">                onDismiss = onDismissStoryLength,</span>
+<span class="nc" id="L93">                onConfirm = onUpdateStoryLength,</span>
+            )
+<span class="nc" id="L95">        }</span>
+<span class="nc" id="L96">    }</span>
+<span class="nc" id="L97">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
