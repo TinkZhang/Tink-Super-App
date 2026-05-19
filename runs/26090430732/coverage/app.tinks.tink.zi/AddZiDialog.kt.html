@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AddZiDialog.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.zi</a> &gt; <span class="el_source">AddZiDialog.kt</span></div><h1>AddZiDialog.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.zi
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import kotlin.time.ExperimentalTime
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
+@Composable
+fun AddZiDialog(
+    onDismiss: () -&gt; Unit,
+    onConfirm: (proficiency: Int?, zis: String) -&gt; Unit
+<span class="nc bnc" id="L28" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L29">    var zis by remember { mutableStateOf(&quot;&quot;) }</span>
+<span class="nc" id="L30">    var proficiency by remember { mutableStateOf(&quot;5&quot;) }</span>
+
+<span class="nc" id="L32">    AlertDialog(</span>
+<span class="nc" id="L33">        onDismissRequest = onDismiss,</span>
+<span class="nc" id="L34">        title = { Text(&quot;添加汉字&quot;) },</span>
+<span class="nc" id="L35">        text = {</span>
+<span class="nc" id="L36">            Column(</span>
+<span class="nc" id="L37">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L38">                verticalArrangement = Arrangement.spacedBy(16.dp)</span>
+            ) {
+<span class="nc" id="L40">                OutlinedTextField(</span>
+<span class="nc" id="L41">                    value = zis,</span>
+<span class="nc" id="L42">                    onValueChange = { zis = it },</span>
+<span class="nc" id="L43">                    label = { Text(&quot;学习的汉字&quot;) },</span>
+<span class="nc" id="L44">                    modifier = Modifier.fillMaxWidth(),</span>
+                )
+
+<span class="nc" id="L47">                OutlinedTextField(</span>
+<span class="nc" id="L48">                    value = proficiency,</span>
+<span class="nc" id="L49">                    onValueChange = { proficiency = it },</span>
+<span class="nc" id="L50">                    label = { Text(&quot;熟练度&quot;) },</span>
+<span class="nc" id="L51">                    modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L52">                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),</span>
+<span class="nc" id="L53">                    singleLine = true</span>
+                )
+<span class="nc" id="L55">            }</span>
+<span class="nc" id="L56">        },</span>
+<span class="nc" id="L57">        confirmButton = {</span>
+<span class="nc" id="L58">            Button(</span>
+<span class="nc" id="L59">                onClick = {</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">                    onConfirm(proficiency.toIntOrNull() ?: 1, zis)</span>
+<span class="nc" id="L61">                },</span>
+<span class="nc bnc" id="L62" title="All 10 branches missed.">                enabled = zis.isNotBlank() &amp;&amp; proficiency.toIntOrNull() != null &amp;&amp; (proficiency.toIntOrNull()</span>
+<span class="nc" id="L63">                    ?: 0) &lt; 6</span>
+<span class="nc" id="L64">            ) {</span>
+<span class="nc" id="L65">                Text(&quot;确定&quot;)</span>
+<span class="nc" id="L66">            }</span>
+<span class="nc" id="L67">        },</span>
+<span class="nc" id="L68">        dismissButton = {</span>
+<span class="nc" id="L69">            TextButton(onClick = onDismiss) {</span>
+<span class="nc" id="L70">                Text(&quot;取消&quot;)</span>
+<span class="nc" id="L71">            }</span>
+<span class="nc" id="L72">        }</span>
+    )
+<span class="nc" id="L74">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

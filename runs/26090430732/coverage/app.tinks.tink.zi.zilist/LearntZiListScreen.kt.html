@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LearntZiListScreen.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.zi.zilist</a> &gt; <span class="el_source">LearntZiListScreen.kt</span></div><h1>LearntZiListScreen.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.zi.zilist
+
+
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tinks.tink.zi.SawtoothCard
+import app.tinks.tink.zi.Zi
+import app.tinks.tink.zi.ZiEvent
+import app.tinks.tink.zi.ZiViewModel
+
+@Composable
+<span class="nc bnc" id="L27" title="All 8 branches missed.">fun LearntZiListScreen(viewModel: ZiViewModel) {</span>
+<span class="nc" id="L28">    val uiState by viewModel.uiState.collectAsStateWithLifecycle()</span>
+<span class="nc" id="L29">    LearntZiListScreen(</span>
+<span class="nc" id="L30">        zis = uiState.allZis,</span>
+<span class="nc" id="L31">        onEvent = viewModel::onEvent,</span>
+    )
+<span class="nc" id="L33">}</span>
+
+@Composable
+private fun LearntZiListScreen(
+<span class="nc bnc" id="L37" title="All 2 branches missed.">    zis: List&lt;Zi&gt; = emptyList(),</span>
+<span class="nc" id="L38">    onEvent: (ZiEvent) -&gt; Unit = {},</span>
+<span class="nc bnc" id="L39" title="All 18 branches missed.">) {</span>
+
+<span class="nc bnc" id="L41" title="All 2 branches missed.">    LaunchedEffect(Unit) {</span>
+<span class="nc" id="L42">        onEvent(ZiEvent.Refresh)</span>
+<span class="nc" id="L43">    }</span>
+
+<span class="nc" id="L45">    LazyVerticalGrid(columns = GridCells.Fixed(3)) {</span>
+<span class="nc" id="L46">        items(zis) { zi -&gt;</span>
+<span class="nc" id="L47">            SawtoothCard(</span>
+<span class="nc" id="L48">                modifier = Modifier</span>
+<span class="nc" id="L49">                    .fillMaxWidth()</span>
+<span class="nc" id="L50">                    .padding(8.dp)</span>
+<span class="nc" id="L51">            ) {</span>
+<span class="nc" id="L52">                Text(</span>
+<span class="nc" id="L53">                    text = zi.zi,</span>
+<span class="nc" id="L54">                    style = MaterialTheme.typography.displayLarge.copy(</span>
+<span class="nc" id="L55">                        fontWeight = FontWeight.Bold,</span>
+<span class="nc" id="L56">                        fontSize = 40.sp</span>
+                    ),
+<span class="nc" id="L58">                    textAlign = TextAlign.Center,</span>
+<span class="nc" id="L59">                    modifier = Modifier</span>
+<span class="nc" id="L60">                        .fillMaxWidth()</span>
+<span class="nc" id="L61">                        .padding(12.dp),</span>
+                )
+<span class="nc" id="L63">            }</span>
+<span class="nc" id="L64">        }</span>
+<span class="nc" id="L65">    }</span>
+<span class="nc" id="L66">}</span>
+
+
+@Preview
+@Composable
+<span class="nc bnc" id="L71" title="All 4 branches missed.">private fun LearntZiListScreenPreview() {</span>
+<span class="nc" id="L72">    LearntZiListScreen()</span>
+<span class="nc" id="L73">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
