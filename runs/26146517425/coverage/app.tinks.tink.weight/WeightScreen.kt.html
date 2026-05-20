@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WeightScreen.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.weight</a> &gt; <span class="el_source">WeightScreen.kt</span></div><h1>WeightScreen.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.weight
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.outlined.MonitorWeight
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tinks.tink.weight.data.Weight
+import app.tinks.tink.weight.ui.TrendChartCard
+import app.tinks.tink.weight.ui.WeightControlCard
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+@Composable
+fun WeightScreen(
+    viewModel: WeightViewModel,
+<span class="nc" id="L52">    onOpenHistory: () -&gt; Unit = {},</span>
+<span class="nc bnc" id="L53" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L54">    val uiState by viewModel.uiState.collectAsStateWithLifecycle()</span>
+<span class="nc" id="L55">    WeightScreen(</span>
+<span class="nc" id="L56">        state = uiState,</span>
+<span class="nc" id="L57">        onEvent = viewModel::onEvent,</span>
+<span class="nc" id="L58">        onOpenHistory = onOpenHistory,</span>
+    )
+<span class="nc" id="L60">}</span>
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+internal fun WeightScreen(
+    state: WeightUiState,
+<span class="nc bnc" id="L66" title="All 2 branches missed.">    onEvent: (WeightEvent) -&gt; Unit = {},</span>
+<span class="nc" id="L67">    onOpenHistory: () -&gt; Unit = {},</span>
+<span class="nc bnc" id="L68" title="All 22 branches missed.">) {</span>
+<span class="nc" id="L69">    val refreshState = rememberPullToRefreshState()</span>
+
+<span class="nc" id="L71">    Box(modifier = Modifier.fillMaxSize()) {</span>
+<span class="nc" id="L72">        PullToRefreshBox(</span>
+<span class="nc" id="L73">            isRefreshing = state.isLoading,</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">            onRefresh = { onEvent(WeightEvent.RefreshWeightList) },</span>
+<span class="nc" id="L75">            modifier = Modifier.fillMaxSize(),</span>
+<span class="nc" id="L76">            state = refreshState,</span>
+<span class="nc" id="L77">            indicator = {</span>
+<span class="nc" id="L78">                Box(</span>
+<span class="nc" id="L79">                    modifier = Modifier</span>
+<span class="nc" id="L80">                        .align(Alignment.TopCenter)</span>
+<span class="nc" id="L81">                        .graphicsLayer {</span>
+<span class="nc" id="L82">                            val scale =</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">                                if (state.isLoading) 1f else refreshState.distanceFraction.coerceIn(</span>
+<span class="nc" id="L84">                                    0f,</span>
+<span class="nc" id="L85">                                    1f</span>
+                                )
+<span class="nc" id="L87">                            scaleX = scale</span>
+<span class="nc" id="L88">                            scaleY = scale</span>
+<span class="nc" id="L89">                            alpha = scale</span>
+<span class="nc" id="L90">                        }</span>
+                ) {
+<span class="nc" id="L92">                    ContainedLoadingIndicator()</span>
+<span class="nc" id="L93">                }</span>
+<span class="nc" id="L94">            }</span>
+<span class="nc" id="L95">        ) {</span>
+<span class="nc" id="L96">            WeightDashboardScreen(</span>
+<span class="nc" id="L97">                state = state,</span>
+<span class="nc" id="L98">                onEvent = onEvent,</span>
+<span class="nc" id="L99">                onOpenHistory = onOpenHistory,</span>
+            )
+<span class="nc" id="L101">        }</span>
+<span class="nc" id="L102">    }</span>
+<span class="nc" id="L103">}</span>
+
+@Composable
+<span class="nc bnc" id="L106" title="All 8 branches missed.">fun WeightHistoryScreen(viewModel: WeightViewModel) {</span>
+<span class="nc" id="L107">    val uiState by viewModel.uiState.collectAsStateWithLifecycle()</span>
+<span class="nc" id="L108">    WeightHistoryScreen(</span>
+<span class="nc" id="L109">        weights = uiState.allWeights,</span>
+<span class="nc" id="L110">        onDelete = { id -&gt; viewModel.onEvent(WeightEvent.DeleteWeight(id)) },</span>
+    )
+<span class="nc" id="L112">}</span>
+
+@Composable
+private fun WeightDashboardScreen(
+    state: WeightUiState,
+    onEvent: (WeightEvent) -&gt; Unit,
+    onOpenHistory: () -&gt; Unit,
+<span class="nc bnc" id="L119" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L120">    LazyColumn(</span>
+<span class="nc" id="L121">        modifier = Modifier</span>
+<span class="nc" id="L122">            .fillMaxSize()</span>
+<span class="nc" id="L123">            .padding(horizontal = 16.dp)</span>
+<span class="nc" id="L124">            .testTag(&quot;weight_dashboard_list&quot;),</span>
+<span class="nc" id="L125">        verticalArrangement = Arrangement.spacedBy(16.dp),</span>
+<span class="nc" id="L126">        contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp),</span>
+<span class="nc bnc" id="L127" title="All 4 branches missed.">    ) {</span>
+<span class="nc" id="L128">        item(&quot;weight_control&quot;) {</span>
+<span class="nc" id="L129">            WeightControlCard(</span>
+<span class="nc" id="L130">                state.weightControlCardUiState,</span>
+<span class="nc" id="L131">                onEvent = onEvent,</span>
+            )
+<span class="nc" id="L133">        }</span>
+
+<span class="nc" id="L135">        item(&quot;trend_chart&quot;) {</span>
+<span class="nc" id="L136">            TrendChartCard(</span>
+<span class="nc" id="L137">                state.trendChartCardUiState,</span>
+<span class="nc" id="L138">                onEvent = onEvent,</span>
+            )
+<span class="nc" id="L140">        }</span>
+
+<span class="nc" id="L142">        item(&quot;history&quot;) {</span>
+<span class="nc" id="L143">            Button(</span>
+<span class="nc" id="L144">                onClick = onOpenHistory,</span>
+<span class="nc" id="L145">                modifier = Modifier</span>
+<span class="nc" id="L146">                    .fillMaxWidth()</span>
+<span class="nc" id="L147">                    .height(56.dp)</span>
+<span class="nc" id="L148">                    .testTag(&quot;weight_history_button&quot;),</span>
+<span class="nc" id="L149">                colors = ButtonDefaults.buttonColors(</span>
+<span class="nc" id="L150">                    containerColor = MaterialTheme.colorScheme.secondaryContainer,</span>
+<span class="nc" id="L151">                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,</span>
+                )
+<span class="nc" id="L153">            ) {</span>
+<span class="nc" id="L154">                Icon(Icons.Filled.History, contentDescription = null)</span>
+<span class="nc" id="L155">                Spacer(Modifier.width(8.dp))</span>
+<span class="nc" id="L156">                Text(&quot;查看所有历史记录&quot;)</span>
+<span class="nc" id="L157">                Spacer(Modifier.weight(1f))</span>
+<span class="nc" id="L158">                Icon(Icons.Filled.ChevronRight, contentDescription = null)</span>
+<span class="nc" id="L159">            }</span>
+<span class="nc" id="L160">        }</span>
+<span class="nc" id="L161">    }</span>
+<span class="nc" id="L162">}</span>
+
+@Composable
+internal fun WeightHistoryScreen(
+    weights: List&lt;Weight&gt;,
+    onDelete: (Int) -&gt; Unit,
+<span class="nc bnc" id="L168" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L169">    LazyColumn(</span>
+<span class="nc" id="L170">        modifier = Modifier</span>
+<span class="nc" id="L171">            .fillMaxSize()</span>
+<span class="nc" id="L172">            .padding(horizontal = 16.dp)</span>
+<span class="nc" id="L173">            .testTag(&quot;weight_history_list&quot;),</span>
+<span class="nc" id="L174">        verticalArrangement = Arrangement.spacedBy(8.dp),</span>
+<span class="nc" id="L175">        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">    ) {</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">        if (weights.isEmpty()) {</span>
+<span class="nc" id="L178">            item(&quot;empty&quot;) {</span>
+<span class="nc" id="L179">                ElevatedCard(</span>
+<span class="nc" id="L180">                    modifier = Modifier</span>
+<span class="nc" id="L181">                        .fillMaxWidth()</span>
+<span class="nc" id="L182">                        .testTag(&quot;weight_history_empty&quot;)</span>
+<span class="nc" id="L183">                ) {</span>
+<span class="nc" id="L184">                    androidx.compose.foundation.layout.Column(</span>
+<span class="nc" id="L185">                        modifier = Modifier.padding(24.dp),</span>
+<span class="nc" id="L186">                        horizontalAlignment = Alignment.CenterHorizontally,</span>
+<span class="nc" id="L187">                        verticalArrangement = Arrangement.spacedBy(8.dp),</span>
+                    ) {
+<span class="nc" id="L189">                        Icon(Icons.Outlined.MonitorWeight, contentDescription = null)</span>
+<span class="nc" id="L190">                        Text(&quot;暂无体重记录&quot;, style = MaterialTheme.typography.titleMedium)</span>
+<span class="nc" id="L191">                        Text(</span>
+<span class="nc" id="L192">                            &quot;返回体重页添加第一条记录。&quot;,</span>
+<span class="nc" id="L193">                            style = MaterialTheme.typography.bodyMedium,</span>
+<span class="nc" id="L194">                            color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+                        )
+<span class="nc" id="L196">                    }</span>
+<span class="nc" id="L197">                }</span>
+<span class="nc" id="L198">            }</span>
+        } else {
+<span class="nc" id="L200">            items(weights, key = { it.id }) { weight -&gt;</span>
+<span class="nc" id="L201">                WeightHistoryItem(weight = weight, onDelete = { onDelete(weight.id) })</span>
+<span class="nc" id="L202">            }</span>
+        }
+<span class="nc" id="L204">    }</span>
+<span class="nc" id="L205">}</span>
+
+@Composable
+<span class="nc bnc" id="L208" title="All 12 branches missed.">private fun WeightHistoryItem(weight: Weight, onDelete: () -&gt; Unit) {</span>
+<span class="nc" id="L209">    ElevatedCard(</span>
+<span class="nc" id="L210">        modifier = Modifier</span>
+<span class="nc" id="L211">            .fillMaxWidth()</span>
+<span class="nc" id="L212">            .testTag(&quot;weight_history_item_${weight.id}&quot;)</span>
+<span class="nc" id="L213">    ) {</span>
+<span class="nc" id="L214">        ListItem(</span>
+<span class="nc" id="L215">            headlineContent = {</span>
+<span class="nc" id="L216">                Text(</span>
+<span class="nc" id="L217">                    text = &quot;%.1f 斤&quot;.format(weight.weight),</span>
+<span class="nc" id="L218">                    style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L219">                    fontWeight = FontWeight.SemiBold,</span>
+                )
+<span class="nc" id="L221">            },</span>
+<span class="nc" id="L222">            supportingContent = { Text(weight.createdTime.toWeightDateText()) },</span>
+<span class="nc" id="L223">            leadingContent = {</span>
+<span class="nc" id="L224">                Icon(Icons.Outlined.MonitorWeight, contentDescription = null)</span>
+<span class="nc" id="L225">            },</span>
+<span class="nc" id="L226">            trailingContent = {</span>
+<span class="nc" id="L227">                IconButton(</span>
+<span class="nc" id="L228">                    onClick = onDelete,</span>
+<span class="nc" id="L229">                    modifier = Modifier.testTag(&quot;weight_delete_button_${weight.id}&quot;)</span>
+<span class="nc" id="L230">                ) {</span>
+<span class="nc" id="L231">                    Icon(Icons.Filled.Delete, contentDescription = &quot;删除&quot;)</span>
+<span class="nc" id="L232">                }</span>
+<span class="nc" id="L233">            },</span>
+<span class="nc" id="L234">            colors = ListItemDefaults.colors(</span>
+<span class="nc" id="L235">                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,</span>
+            )
+        )
+<span class="nc" id="L238">    }</span>
+<span class="nc" id="L239">}</span>
+
+private fun Long.toWeightDateText(): String =
+<span class="nc" id="L242">    Instant.ofEpochMilli(this)</span>
+<span class="nc" id="L243">        .atZone(ZoneId.systemDefault())</span>
+<span class="nc" id="L244">        .format(DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd HH:mm&quot;))</span>
+
+@Preview
+@Composable
+<span class="nc bnc" id="L248" title="All 4 branches missed.">private fun WeightScreenPreview() {</span>
+<span class="nc" id="L249">    WeightScreen(</span>
+<span class="nc" id="L250">        state = WeightUiState(</span>
+<span class="nc" id="L251">            isLoading = false,</span>
+<span class="nc" id="L252">            weightControlCardUiState = WeightControlCardUiState(</span>
+<span class="nc" id="L253">                isTodayRecorded = false,</span>
+<span class="nc" id="L254">                lastDateText = &quot;2023-07-01&quot;,</span>
+<span class="nc" id="L255">                showConfirm = false,</span>
+<span class="nc" id="L256">                newWeight = null,</span>
+            ),
+<span class="nc" id="L258">            trendChartCardUiState = TrendChartCardUiState(</span>
+<span class="nc" id="L259">                selectedIndex = 0,</span>
+<span class="nc" id="L260">                weightList = listOf(</span>
+<span class="nc" id="L261">                    Weight(id = 1, weight = 80.0, createdTime = 1688342400000),</span>
+                ),
+            ),
+<span class="nc" id="L264">            allWeights = listOf(</span>
+<span class="nc" id="L265">                Weight(id = 1, weight = 80.0, createdTime = 1688342400000),</span>
+            ),
+        )
+    )
+<span class="nc" id="L269">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
