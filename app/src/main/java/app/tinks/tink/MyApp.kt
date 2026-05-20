@@ -169,19 +169,23 @@ fun MyApp(
                     // 左上角添加菜单按钮，点击打开抽屉
                     navigationIcon = {
                         if (currentKey in allTopDestinations) {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            IconButton(
+                                onClick = { scope.launch { drawerState.open() } },
+                                modifier = Modifier.testTag("top_bar_menu_button")
+                            ) {
                                 Icon(
                                     Icons.Filled.Menu,
-                                    contentDescription = "打开抽屉",
-                                    modifier = Modifier.testTag("top_bar_menu_button")
+                                    contentDescription = "打开抽屉"
                                 )
                             }
                         } else {
-                            IconButton(onClick = { navigateBack() }) {
+                            IconButton(
+                                onClick = { navigateBack() },
+                                modifier = Modifier.testTag("top_bar_back_button")
+                            ) {
                                 Icon(
                                     Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "返回上级",
-                                    modifier = Modifier.testTag("top_bar_back_button")
+                                    contentDescription = "返回上级"
                                 )
                             }
                         }
