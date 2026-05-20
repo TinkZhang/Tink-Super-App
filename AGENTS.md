@@ -23,6 +23,7 @@ When implementing a feature, update tests at the same time as the production cod
 - Screenshot tests: add or update Compose Preview Screenshot Testing baselines for changed screens, important states, and reusable feature UI components.
 - Navigation tests: when adding or changing destinations, cover top-level destination mapping and back-stack behavior with pure Kotlin tests where possible.
 - CI/reporting: keep `.github/workflows/android.yml` running `testDebugUnitTest`, `jacocoDebugUnitTestReport`, and `validateDebugScreenshotTest`, and keep publishing the HTML reports to GitHub Pages.
+- Black-box Appium handoff: Android CI owns building and uploading the debug APK artifact (`tink-android-debug-apk`). `tink-test` should download this artifact and must not checkout or build the Android project for Appium runs.
 
 If a test category is not applicable, write the reason in the PR/Linear update. Avoid skipping a category silently.
 

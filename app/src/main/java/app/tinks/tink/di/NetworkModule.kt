@@ -1,5 +1,6 @@
 package app.tinks.tink.di
 
+import android.content.Context
 import app.tinks.tink.BuildConfig
 import app.tinks.tink.book.BookApi
 import app.tinks.tink.book.GoogleBooksApi
@@ -15,6 +16,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -27,6 +29,23 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+    private const val DEBUG_API_OVERRIDE_PREFS = "debug_api_base_url_override"
+    private const val KEY_DEBUG_API_BASE_URL = "base_url"
+
+    private fun tinkApiBaseUrl(context: Context): String {
+        val debugOverride = if (BuildConfig.DEBUG) {
+            context.getSharedPreferences(DEBUG_API_OVERRIDE_PREFS, Context.MODE_PRIVATE)
+                .getString(KEY_DEBUG_API_BASE_URL, null)
+                ?.takeIf { it.isNotBlank() }
+        } else {
+            null
+        }
+
+        return (debugOverride ?: BuildConfig.TINK_API_BASE_URL).ensureTrailingSlash()
+    }
+
+    private fun String.ensureTrailingSlash(): String =
+        if (endsWith("/")) this else "$this/"
 
     @Provides
     @Singleton
@@ -40,6 +59,7 @@ object NetworkModule {
     fun provideOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
         appEnvironmentRepository: AppEnvironmentRepository,
+        @Named("tinkApiBaseUrl") tinkApiBaseUrl: String,
     ): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor { chain ->
@@ -48,7 +68,7 @@ object NetworkModule {
                 val shouldUseDevApi =
                     appEnvironmentRepository.currentEnvironment() == ApiEnvironment.Dev &&
                         url.host == "api.tinks.app" &&
-                        BuildConfig.TINK_API_BASE_URL.contains("api.tinks.app") &&
+                        tinkApiBaseUrl.contains("api.tinks.app") &&
                         !url.encodedPath.startsWith("/dev/")
 
                 val updatedRequest = if (shouldUseDevApi) {
@@ -75,11 +95,19 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @Named("tinkApiBaseUrl")
+    fun provideTinkApiBaseUrl(
+        @ApplicationContext context: Context,
+    ): String = tinkApiBaseUrl(context)
+
+    @Provides
+    @Singleton
     fun provideRetrofit(
-        okHttpClient: OkHttpClient
+        okHttpClient: OkHttpClient,
+        @Named("tinkApiBaseUrl") tinkApiBaseUrl: String,
     ): Retrofit =
         Retrofit.Builder()
-            .baseUrl(BuildConfig.TINK_API_BASE_URL)
+            .baseUrl(tinkApiBaseUrl)
             .client(okHttpClient)
             .addConverterFactory(
                 json.asConverterFactory("application/json".toMediaType())

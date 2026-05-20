@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      TINK_ANDROID_APK_ARTIFACT: tink-android-debug-apk
+      TINK_TEST_DISPATCH_TOKEN: ${{ secrets.TINK_TEST_DISPATCH_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,6 +53,17 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
           exit 0
+
+      - name: Build Appium debug APK
+        shell: bash
+        run: ./gradlew assembleDebug
+
+      - name: Upload Appium debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.TINK_ANDROID_APK_ARTIFACT }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
 
       - name: Prepare HTML reports
         if: always()
@@ -145,6 +158,30 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./reports-site
           keep_files: true
+
+      - name: Trigger black-box Android Appium tests
+        if: >-
+          github.event_name == 'push' &&
+          github.ref == 'refs/heads/main' &&
+          env.TINK_TEST_DISPATCH_TOKEN != '' &&
+          steps.gradle.outputs.unit_status == '0' &&
+          steps.gradle.outputs.coverage_status == '0' &&
+          steps.gradle.outputs.screenshot_status == '0'
+        env:
+          GH_TOKEN: ${{ env.TINK_TEST_DISPATCH_TOKEN }}
+        shell: bash
+        run: |
+          gh api repos/TinkZhang/tink-test/dispatches --method POST --input - <<JSON
+          {
+            "event_type": "android-apk-ready",
+            "client_payload": {
+              "android_run_id": "${GITHUB_RUN_ID}",
+              "android_sha": "${GITHUB_SHA}",
+              "android_ref": "${GITHUB_REF_NAME}",
+              "artifact_name": "${TINK_ANDROID_APK_ARTIFACT}"
+            }
+          }
+          JSON
 
       - name: Fail if Android tests failed
         if: always()
