@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MerriamViewModel.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.merriam</a> &gt; <span class="el_source">MerriamViewModel.kt</span></div><h1>MerriamViewModel.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.merriam
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.tinks.tink.merriam.data.Unit
+import app.tinks.tink.merriam.network.RootPostDto
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.ui.components.AppSnackbarBus
+import app.tinks.tink.ui.components.WeeklyRecordData
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+sealed interface MerriamEvent {
+<span class="nc" id="L23">    data class CompleteRoot(val id: Int) : MerriamEvent</span>
+    object Refresh : MerriamEvent
+}
+
+<span class="nc" id="L27">data class MerriamUiState(</span>
+<span class="nc" id="L28">    val isLoading: Boolean,</span>
+<span class="nc" id="L29">    val units: List&lt;Unit&gt;,</span>
+<span class="nc" id="L30">    val latest: Int,</span>
+<span class="nc" id="L31">    val weeklyRecords: WeeklyRecordData,</span>
+)
+
+<span class="nc" id="L34">data class MerriamState(</span>
+<span class="nc" id="L35">    val allUnits: List&lt;Unit&gt; = emptyList(),</span>
+<span class="nc" id="L36">    val isLoading: Boolean = true,</span>
+<span class="nc" id="L37">    val isNetworkError: Boolean = false,</span>
+<span class="nc" id="L38">    val latest: Int = 0,</span>
+<span class="nc" id="L39">    val weeklyRecordData: WeeklyRecordData = WeeklyRecordData(null, emptyList())</span>
+<span class="nc" id="L40">) {</span>
+<span class="nc" id="L41">    fun toUiState(): MerriamUiState = MerriamUiState(</span>
+<span class="nc" id="L42">        isLoading = isLoading,</span>
+<span class="nc" id="L43">        units = allUnits,</span>
+<span class="nc" id="L44">        latest = latest,</span>
+<span class="nc" id="L45">        weeklyRecords = weeklyRecordData,</span>
+<span class="nc" id="L46">    )</span>
+}
+
+<span class="nc" id="L49">@HiltViewModel</span>
+<span class="nc" id="L50">class MerriamViewModel @Inject constructor(</span>
+<span class="nc" id="L51">    private val repository: MerriamRepository</span>
+) : ViewModel() {
+
+<span class="nc" id="L54">    private val _state = MutableStateFlow(MerriamState())</span>
+<span class="nc" id="L55">    val uiState = _state.map { it.toUiState() }</span>
+<span class="nc" id="L56">        .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())</span>
+
+<span class="nc" id="L58">    init {</span>
+<span class="nc" id="L59">        loadStat()</span>
+<span class="nc" id="L60">        observeLocalMerriams()</span>
+<span class="nc" id="L61">    }</span>
+
+    private fun observeLocalMerriams() {
+<span class="nc" id="L64">        viewModelScope.launch {</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">            repository.getAllUnitsFlow().collectLatest { units -&gt;</span>
+<span class="nc" id="L66">                _state.update {</span>
+<span class="nc" id="L67">                    it.copy(</span>
+<span class="nc" id="L68">                        allUnits = units</span>
+<span class="nc" id="L69">                    )</span>
+                }
+<span class="nc" id="L71">            }</span>
+<span class="nc" id="L72">        }</span>
+<span class="nc" id="L73">    }</span>
+
+    private fun loadStat() {
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        repository.getMerriamStat().onEach { result -&gt;</span>
+<span class="nc" id="L77">            when (result) {</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">                is ApiResult.Loading -&gt; _state.update {</span>
+<span class="nc" id="L79">                    it.copy(</span>
+<span class="nc" id="L80">                        isLoading = true, isNetworkError = false</span>
+<span class="nc" id="L81">                    )</span>
+                }
+
+<span class="nc bnc" id="L84" title="All 2 branches missed.">                is ApiResult.Success -&gt; _state.update {</span>
+<span class="nc" id="L85">                    it.copy(</span>
+<span class="nc" id="L86">                        isLoading = false,</span>
+<span class="nc" id="L87">                        isNetworkError = false,</span>
+<span class="nc" id="L88">                        latest = result.data.latest,</span>
+<span class="nc" id="L89">                        weeklyRecordData = WeeklyRecordData.fromWeeklyInt(result.data.weekStats),</span>
+<span class="nc" id="L90">                    )</span>
+                }
+
+<span class="nc" id="L93">                is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L94">                    it.copy(</span>
+<span class="nc" id="L95">                        isLoading = false, isNetworkError = true</span>
+<span class="nc" id="L96">                    )</span>
+<span class="nc" id="L97">                }.also {</span>
+<span class="nc" id="L98">                    AppSnackbarBus.showApiFailure(onRetry = ::loadStat)</span>
+<span class="nc" id="L99">                }</span>
+            }
+<span class="nc" id="L101">        }.launchIn(viewModelScope)</span>
+<span class="nc" id="L102">    }</span>
+
+    private fun addRecords(records: List&lt;RootPostDto&gt;) {
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        repository.addMerriamRecords(records).onEach { result -&gt;</span>
+<span class="nc" id="L106">            when (result) {</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">                is ApiResult.Loading -&gt; _state.update {</span>
+<span class="nc" id="L108">                    it.copy(</span>
+<span class="nc" id="L109">                        isLoading = true, isNetworkError = false</span>
+<span class="nc" id="L110">                    )</span>
+                }
+
+<span class="nc bnc" id="L113" title="All 2 branches missed.">                is ApiResult.Success -&gt; _state.update {</span>
+<span class="nc" id="L114">                    it.copy(</span>
+<span class="nc" id="L115">                        isLoading = false,</span>
+<span class="nc" id="L116">                        isNetworkError = false,</span>
+<span class="nc" id="L117">                    )</span>
+                }
+
+<span class="nc" id="L120">                is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L121">                    it.copy(</span>
+<span class="nc" id="L122">                        isLoading = false, isNetworkError = true</span>
+<span class="nc" id="L123">                    )</span>
+<span class="nc" id="L124">                }.also {</span>
+<span class="nc" id="L125">                    AppSnackbarBus.showApiFailure {</span>
+<span class="nc" id="L126">                        addRecords(records)</span>
+<span class="nc" id="L127">                    }</span>
+<span class="nc" id="L128">                }</span>
+            }
+<span class="nc" id="L130">        }.launchIn(viewModelScope)</span>
+<span class="nc" id="L131">    }</span>
+
+    private fun buildRecordsToComplete(clickedId: Int): List&lt;RootPostDto&gt; {
+<span class="nc" id="L134">        val latest = _state.value.latest</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        if (clickedId &lt;= latest) return emptyList()</span>
+
+<span class="nc" id="L137">        return _state.value.allUnits</span>
+<span class="nc" id="L138">            .flatMap { it.roots }</span>
+<span class="nc" id="L139">            .sortedBy { it.id }</span>
+<span class="nc" id="L140">            .asSequence()</span>
+<span class="nc bnc" id="L141" title="All 4 branches missed.">            .filter { it.id in (latest + 1)..clickedId }</span>
+<span class="nc" id="L142">            .map { RootPostDto(rootId = it.id, root = it.text) }</span>
+<span class="nc" id="L143">            .toList()</span>
+    }
+
+    fun onEvent(event: MerriamEvent) {
+<span class="nc" id="L147">        when (event) {</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">            is MerriamEvent.CompleteRoot -&gt; {</span>
+<span class="nc" id="L149">                val records = buildRecordsToComplete(event.id)</span>
+<span class="nc bnc" id="L150" title="All 4 branches missed.">                if (records.isNotEmpty()) {</span>
+<span class="nc" id="L151">                    addRecords(records)</span>
+<span class="nc" id="L152">                    _state.update { it.copy(latest = records.last().rootId) }</span>
+                }
+            }
+
+<span class="nc" id="L156">            is MerriamEvent.Refresh -&gt; loadStat()</span>
+        }
+<span class="nc" id="L158">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
