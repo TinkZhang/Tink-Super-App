@@ -39,6 +39,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.tooling.preview.Preview
@@ -110,7 +112,11 @@ fun WeightControlCard(
                     weightControlCardUiState.newWeight?.let {
                         Text(
                             text = "%.1f".format(it),
-                            modifier = Modifier.testTag("weight_current_value"),
+                            modifier = Modifier
+                                .testTag("weight_current_value")
+                                .semantics {
+                                    contentDescription = "current weight %.1f".format(it)
+                                },
                             style = MaterialTheme.typography.displayLarge.copy(
                                 fontSize = 80.sp,
                                 fontWeight = FontWeight.Bold,
