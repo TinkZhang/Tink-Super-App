@@ -16,11 +16,8 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.outlined.MonitorWeight
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -33,7 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -59,7 +55,6 @@ fun WeightScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun WeightScreen(
     state: WeightUiState,
@@ -74,24 +69,6 @@ internal fun WeightScreen(
             onRefresh = { onEvent(WeightEvent.RefreshWeightList) },
             modifier = Modifier.fillMaxSize(),
             state = refreshState,
-            indicator = {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .graphicsLayer {
-                            val scale =
-                                if (state.isLoading) 1f else refreshState.distanceFraction.coerceIn(
-                                    0f,
-                                    1f
-                                )
-                            scaleX = scale
-                            scaleY = scale
-                            alpha = scale
-                        }
-                ) {
-                    ContainedLoadingIndicator()
-                }
-            }
         ) {
             WeightDashboardScreen(
                 state = state,
@@ -140,16 +117,12 @@ private fun WeightDashboardScreen(
         }
 
         item("history") {
-            Button(
+            FilledTonalButton(
                 onClick = onOpenHistory,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .testTag("weight_history_button"),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
+                    .testTag("weight_history_button")
             ) {
                 Icon(Icons.Filled.History, contentDescription = null)
                 Spacer(Modifier.width(8.dp))

@@ -1,11 +1,9 @@
 package app.tinks.tink.weight.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,9 +27,11 @@ import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -48,115 +48,133 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.tinks.tink.weight.WeightControlCardUiState
 import app.tinks.tink.weight.WeightEvent
-import app.tinks.tink.weight.data.Weight
 
 @Composable
 fun WeightControlCard(
     weightControlCardUiState: WeightControlCardUiState,
     onEvent: (WeightEvent) -> Unit = {},
 ) {
-    ElevatedCard(
+    OutlinedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("weight_control_card"), colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ), elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+            .testTag("weight_control_card"),
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
     ) {
         Column(
-            modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            // 顶部状态 Chip
-            if (!weightControlCardUiState.isTodayRecorded) {
-                AssistChip(
-                    onClick = {},
-                    label = { Text("上次记录: ${weightControlCardUiState.lastDateText}") },
-                    leadingIcon = {
-                        Icon(Icons.Outlined.Warning, null, tint = MaterialTheme.colorScheme.error)
-                    },
-                    colors = AssistChipDefaults.assistChipColors(
-                        labelColor = MaterialTheme.colorScheme.error
-                    ),
-                    border = AssistChipDefaults.assistChipBorder(
-                        enabled = true, borderColor = MaterialTheme.colorScheme.error
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Outlined.MonitorWeight, contentDescription = null)
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        "当前体重",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
-                )
-            } else {
-                AssistChip(onClick = {}, label = { Text("今日已记录") }, leadingIcon = {
-                    Icon(Icons.Filled.Check, null, tint = MaterialTheme.colorScheme.primary)
-                })
+                    WeightStatusChip(weightControlCardUiState)
+                }
             }
 
-            Spacer(Modifier.height(24.dp))
-
-            // 体重数值显示与滑动交互区
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .height(188.dp)
                     .testTag("weight_drag_area")
-                    // 垂直拖动逻辑
+                    .semantics {
+                        contentDescription = "weight adjustment area"
+                    }
                     .pointerInput(Unit) {
                         detectVerticalDragGestures { change, dragAmount ->
                             change.consume()
-                            // 灵敏度调节: dragAmount / 50 意味着每滑动50px改变0.1
-                            // 负号是因为上滑(负数)应该增加体重
                             val delta = -(dragAmount / 300f)
                             onEvent(WeightEvent.AdjustNewWeight(delta))
                         }
-                    }) {
-                Spacer(modifier = Modifier)
-                // 大字体数值
-                Row(verticalAlignment = Alignment.Bottom) {
-                    weightControlCardUiState.newWeight?.let {
-                        Text(
-                            text = "%.1f".format(it),
-                            modifier = Modifier
-                                .testTag("weight_current_value")
-                                .semantics {
-                                    contentDescription = "current weight %.1f".format(it)
-                                },
-                            style = MaterialTheme.typography.displayLarge.copy(
-                                fontSize = 80.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-                // 背景装饰：模拟滚轮刻度
+                    },
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .alpha(0.2f)
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    Icon(Icons.Filled.KeyboardArrowUp, null, modifier = Modifier.size(32.dp))
-                    Spacer(Modifier.height(8.dp))
-                    // 简单的刻度线
-                    repeat(5) {
-                        Box(
-                            modifier = Modifier
-                                .width(40.dp)
-                                .height(2.dp)
-                                .background(MaterialTheme.colorScheme.onSurface)
-                        )
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        val currentWeight = weightControlCardUiState.newWeight
+                        if (currentWeight == null) {
+                            Spacer(
+                                modifier = Modifier
+                                    .height(96.dp)
+                                    .fillMaxWidth()
+                                    .testTag("weight_current_value")
+                            )
+                        } else {
+                            Text(
+                                text = "%.1f".format(Locale.current.platformLocale, currentWeight),
+                                modifier = Modifier
+                                    .testTag("weight_current_value")
+                                    .semantics {
+                                        contentDescription = "current weight %.1f".format(
+                                            Locale.current.platformLocale,
+                                            currentWeight,
+                                        )
+                                    },
+                                style = MaterialTheme.typography.displayLarge.copy(
+                                    fontSize = 76.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.sp,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                "斤",
+                                modifier = Modifier.padding(bottom = 14.dp),
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
-                    Spacer(Modifier.height(8.dp))
-                    Icon(Icons.Filled.KeyboardArrowDown, null, modifier = Modifier.size(32.dp))
+                    Text(
+                        if (weightControlCardUiState.newWeight == null) {
+                            "还没有体重记录"
+                        } else {
+                            "上下滑动右侧控件调整"
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
+
+                WeightAdjustmentRail(
+                    onIncrease = { onEvent(WeightEvent.AdjustNewWeight(0.1f)) },
+                    onDecrease = { onEvent(WeightEvent.AdjustNewWeight(-0.1f)) },
+                )
             }
 
-            Spacer(Modifier.height(24.dp))
-
-            // 确认按钮 (带动画)
-            AnimatedVisibility(
+            androidx.compose.animation.AnimatedVisibility(
                 visible = weightControlCardUiState.showConfirm,
                 enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
+                exit = shrinkVertically() + fadeOut(),
             ) {
                 Button(
                     onClick = { onEvent(WeightEvent.AddWeight) },
@@ -164,20 +182,97 @@ fun WeightControlCard(
                         .fillMaxWidth()
                         .height(56.dp)
                         .testTag("weight_add_record_button"),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    )
                 ) {
-                    Icon(Icons.Outlined.MonitorWeight, contentDescription = null)
+                    Icon(Icons.Filled.Check, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("添加新记录: %.1f 斤".format(weightControlCardUiState.newWeight))
+                    Text("记录 %.1f 斤".format(weightControlCardUiState.newWeight))
                 }
             }
+        }
+    }
+}
 
-            if (!weightControlCardUiState.showConfirm && weightControlCardUiState.isTodayRecorded) {
-                Text(
-                    "保持这种势头！",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+@Composable
+private fun WeightStatusChip(weightControlCardUiState: WeightControlCardUiState) {
+    if (!weightControlCardUiState.isTodayRecorded) {
+        AssistChip(
+            onClick = {},
+            label = { Text("上次记录: ${weightControlCardUiState.lastDateText}") },
+            leadingIcon = {
+                Icon(Icons.Outlined.Warning, null)
+            },
+            colors = AssistChipDefaults.assistChipColors(
+                labelColor = MaterialTheme.colorScheme.error,
+                leadingIconContentColor = MaterialTheme.colorScheme.error,
+            ),
+            border = AssistChipDefaults.assistChipBorder(
+                enabled = true,
+                borderColor = MaterialTheme.colorScheme.error,
+            ),
+        )
+    } else {
+        AssistChip(
+            onClick = {},
+            label = { Text("今日已记录") },
+            leadingIcon = {
+                Icon(Icons.Filled.Check, null)
+            },
+            colors = AssistChipDefaults.assistChipColors(
+                labelColor = MaterialTheme.colorScheme.primary,
+                leadingIconContentColor = MaterialTheme.colorScheme.primary,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun WeightAdjustmentRail(
+    onIncrease: () -> Unit,
+    onDecrease: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .width(88.dp)
+            .fillMaxHeight(),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 10.dp, horizontal = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            FilledTonalIconButton(onClick = onIncrease) {
+                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "增加体重")
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .alpha(0.42f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                repeat(7) { index ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth(if (index == 3) 0.86f else 0.58f)
+                            .height(3.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        shape = MaterialTheme.shapes.extraSmall,
+                    ) {}
+                    if (index != 6) {
+                        Spacer(Modifier.height(10.dp))
+                    }
+                }
+            }
+            FilledTonalIconButton(onClick = onDecrease) {
+                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "减少体重")
             }
         }
     }

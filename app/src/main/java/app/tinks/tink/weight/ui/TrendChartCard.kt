@@ -16,6 +16,8 @@ import androidx.compose.material.icons.filled.AllInclusive
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.outlined.AllInclusive
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +43,6 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.tinks.tink.ui.components.ContentCard
 import app.tinks.tink.weight.TrendChartCardUiState
 import app.tinks.tink.weight.WeightEvent
 import app.tinks.tink.weight.data.Weight
@@ -59,22 +60,46 @@ fun TrendChartCard(
     trendChartCardUiState: TrendChartCardUiState,
     onEvent: (WeightEvent) -> Unit = {},
 ) {
-    ContentCard(
-        title = "体重趋势",
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("weight_trend_card")
+            .testTag("weight_trend_card"),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            TrendRangeToggle(
-                selectedIndex = trendChartCardUiState.selectedIndex,
-                onSelected = { onEvent(WeightEvent.ChangeSelectedTrendIndex(it)) },
-            )
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        "体重趋势",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        if (trendChartCardUiState.selectedIndex == 0) "本月变化" else "全部记录",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                TrendRangeToggle(
+                    selectedIndex = trendChartCardUiState.selectedIndex,
+                    onSelected = { onEvent(WeightEvent.ChangeSelectedTrendIndex(it)) },
+                )
+            }
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(244.dp)
+                    .height(236.dp)
                     .testTag("weight_trend_chart")
             ) {
                 if (trendChartCardUiState.weightList.isEmpty()) {
@@ -97,31 +122,25 @@ fun TrendChartCard(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TrendRangeToggle(selectedIndex: Int, onSelected: (Int) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            val options = listOf("本月", "全部")
-            val uncheckedIcons = listOf(Icons.Outlined.CalendarMonth, Icons.Outlined.AllInclusive)
-            val checkedIcons = listOf(Icons.Filled.CalendarMonth, Icons.Filled.AllInclusive)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        val options = listOf("本月", "全部")
+        val uncheckedIcons = listOf(Icons.Outlined.CalendarMonth, Icons.Outlined.AllInclusive)
+        val checkedIcons = listOf(Icons.Filled.CalendarMonth, Icons.Filled.AllInclusive)
 
-            options.forEachIndexed { index, label ->
-                ToggleButton(
-                    checked = selectedIndex == index,
-                    onCheckedChange = { onSelected(index) },
-                    modifier = Modifier
-                        .testTag("weight_trend_${if (index == 0) "month" else "all"}")
-                        .semantics { role = Role.RadioButton },
-                ) {
-                    Icon(
-                        imageVector = if (selectedIndex == index) checkedIcons[index] else uncheckedIcons[index],
-                        contentDescription = label,
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(label)
-                }
+        options.forEachIndexed { index, label ->
+            ToggleButton(
+                checked = selectedIndex == index,
+                onCheckedChange = { onSelected(index) },
+                modifier = Modifier
+                    .testTag("weight_trend_${if (index == 0) "month" else "all"}")
+                    .semantics { role = Role.RadioButton },
+            ) {
+                Icon(
+                    imageVector = if (selectedIndex == index) checkedIcons[index] else uncheckedIcons[index],
+                    contentDescription = label,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(label)
             }
         }
     }

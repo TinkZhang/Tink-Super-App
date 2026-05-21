@@ -58,6 +58,19 @@ Run Compose Preview Screenshot Testing:
 
 Use `updateDebugScreenshotTest` to create or intentionally update screenshot baselines before `validateDebugScreenshotTest`.
 
+Build the local debug APK used by black-box Appium tests:
+
+```sh
+scripts/build-appium-debug-apk.sh
+```
+
+After building the APK, run the black-box Appium suites from `../tink-test` before pushing UI or navigation changes that affect covered flows:
+
+```sh
+scripts/run_android_appium_local.sh --suite e2e
+scripts/run_android_appium_local.sh --suite mock
+```
+
 The Android GitHub Actions workflow publishes unit/UI, coverage, and screenshot HTML reports under GitHub Pages run paths. The screenshot report is copied from `app/build/reports/screenshotTest/preview/debug` so rendered screenshot results can be opened directly in the browser.
 
 GitHub Actions installs Java and is the authoritative Android gate when local Java is unavailable.
