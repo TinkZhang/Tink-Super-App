@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.widget.DigitalDetoxMessageResolverTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-05-21T23:24:35.961Z" hostname="runnervmg397c" time="0.003">
+  <properties/>
+  <testcase name="resolve_returnsCountdown_onWeekendAfternoon" classname="app.tinks.tink.widget.DigitalDetoxMessageResolverTest" time="0.002"/>
+  <testcase name="resolve_returnsTimeForTink_onWeekdayNight" classname="app.tinks.tink.widget.DigitalDetoxMessageResolverTest" time="0.0"/>
+  <testcase name="resolve_returnsLaunchAndLearn_betweenLunchBreak" classname="app.tinks.tink.widget.DigitalDetoxMessageResolverTest" time="0.0"/>
+  <testcase name="resolve_returnsWorkFocus_inWorkBlock" classname="app.tinks.tink.widget.DigitalDetoxMessageResolverTest" time="0.0"/>
+  <testcase name="resolve_returnsLogTime_onWeekdayLateAfternoon" classname="app.tinks.tink.widget.DigitalDetoxMessageResolverTest" time="0.001"/>
+  <testcase name="resolve_returnsGoodMorning_betweenSevenAndNine" classname="app.tinks.tink.widget.DigitalDetoxMessageResolverTest" time="0.0"/>
+  <testcase name="resolve_returnsMindEmpty_onWeekdayEvening" classname="app.tinks.tink.widget.DigitalDetoxMessageResolverTest" time="0.0"/>
+  <testcase name="resolve_returnsDetox_onWeekendMorning" classname="app.tinks.tink.widget.DigitalDetoxMessageResolverTest" time="0.0"/>
+  <testcase name="resolve_returnsBedRoom_afterTwentyOne" classname="app.tinks.tink.widget.DigitalDetoxMessageResolverTest" time="0.0"/>
+  <testcase name="resolve_returnsWakeMessage_beforeSeven" classname="app.tinks.tink.widget.DigitalDetoxMessageResolverTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

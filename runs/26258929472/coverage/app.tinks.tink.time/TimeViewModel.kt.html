@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TimeViewModel.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.time</a> &gt; <span class="el_source">TimeViewModel.kt</span></div><h1>TimeViewModel.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.time
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.ui.components.AppSnackbarBus
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import javax.inject.Inject
+
+sealed interface TimeEvent {
+    object Refresh : TimeEvent
+<span class="fc" id="L23">    data class UpdateStartDate(val value: LocalDate) : TimeEvent</span>
+<span class="fc" id="L24">    data class UpdateEndDate(val value: LocalDate) : TimeEvent</span>
+    object OpenAddDialog : TimeEvent
+    object DismissDialog : TimeEvent
+<span class="nc" id="L27">    data class EditEntry(val entry: TimeEntry) : TimeEvent</span>
+<span class="nc" id="L28">    data class DeleteEntry(val id: Long) : TimeEvent</span>
+<span class="fc" id="L29">    data class UpdateTitle(val value: String) : TimeEvent</span>
+<span class="nc" id="L30">    data class UpdateDescription(val value: String) : TimeEvent</span>
+<span class="nc" id="L31">    data class UpdateType(val value: Int) : TimeEvent</span>
+<span class="nc" id="L32">    data class UpdateStartTime(val value: LocalDateTime) : TimeEvent</span>
+<span class="nc" id="L33">    data class UpdateEndTime(val value: LocalDateTime) : TimeEvent</span>
+<span class="nc" id="L34">    data class ApplyDurationMinutes(val value: Long) : TimeEvent</span>
+<span class="fc" id="L35">    data class ApplyLabel(val label: TimeLabel) : TimeEvent</span>
+    object SaveEntry : TimeEvent
+    object OpenLabelManager : TimeEvent
+    object DismissLabelManager : TimeEvent
+<span class="nc" id="L39">    data class UpdateLabelManagerType(val value: Int) : TimeEvent</span>
+<span class="fc" id="L40">    data class UpdateLabelDraft(val value: String) : TimeEvent</span>
+<span class="nc" id="L41">    data class EditLabel(val label: TimeLabel) : TimeEvent</span>
+    object SaveLabel : TimeEvent
+<span class="nc" id="L43">    data class DeleteLabel(val id: Long) : TimeEvent</span>
+}
+
+<span class="fc" id="L46">data class TimeUiState(</span>
+<span class="pc" id="L47">    val isLoading: Boolean,</span>
+<span class="pc" id="L48">    val isSaving: Boolean,</span>
+<span class="pc" id="L49">    val startDate: LocalDate,</span>
+<span class="pc" id="L50">    val endDate: LocalDate,</span>
+<span class="pc" id="L51">    val statistics: List&lt;TimeStatistic&gt;,</span>
+<span class="fc" id="L52">    val entriesByDay: List&lt;TimeDayEntries&gt;,</span>
+<span class="pc" id="L53">    val deletingIds: Set&lt;Long&gt;,</span>
+<span class="fc" id="L54">    val showEditor: Boolean,</span>
+<span class="fc" id="L55">    val editor: TimeEditorState,</span>
+<span class="fc" id="L56">    val labels: List&lt;TimeLabel&gt;,</span>
+<span class="pc" id="L57">    val showLabelManager: Boolean,</span>
+<span class="fc" id="L58">    val labelManager: TimeLabelManagerState,</span>
+)
+
+<span class="fc" id="L61">data class TimeDayEntries(</span>
+<span class="fc" id="L62">    val day: LocalDate,</span>
+<span class="fc" id="L63">    val entries: List&lt;TimeEntry&gt;,</span>
+)
+
+<span class="fc" id="L66">data class TimeEditorState(</span>
+<span class="fc" id="L67">    val editingId: Long? = null,</span>
+<span class="fc" id="L68">    val title: String = &quot;&quot;,</span>
+<span class="fc" id="L69">    val description: String = &quot;&quot;,</span>
+<span class="fc" id="L70">    val type: Int = DEFAULT_TIME_TYPE,</span>
+<span class="fc" id="L71">    val start: LocalDateTime,</span>
+<span class="fc" id="L72">    val end: LocalDateTime,</span>
+<span class="fc" id="L73">) {</span>
+<span class="pc bpc" id="L74" title="3 of 6 branches missed.">    fun isValid(): Boolean = title.isNotBlank() &amp;&amp; end.isAfter(start)</span>
+
+    companion object {
+        fun defaultNow(): TimeEditorState {
+<span class="fc" id="L78">            val end = LocalDateTime.now().withSecond(0).withNano(0)</span>
+<span class="fc" id="L79">            return TimeEditorState(</span>
+<span class="fc" id="L80">                start = end.minusMinutes(30),</span>
+<span class="fc" id="L81">                end = end,</span>
+            )
+        }
+    }
+}
+
+<span class="fc" id="L87">data class TimeLabelManagerState(</span>
+<span class="fc" id="L88">    val selectedType: Int = DEFAULT_TIME_TYPE,</span>
+<span class="fc" id="L89">    val editingId: Long? = null,</span>
+<span class="fc" id="L90">    val draftName: String = &quot;&quot;,</span>
+<span class="pc" id="L91">    val isSaving: Boolean = false,</span>
+<span class="pc" id="L92">    val deletingIds: Set&lt;Long&gt; = emptySet(),</span>
+<span class="fc" id="L93">) {</span>
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">    fun isValid(): Boolean = draftName.isNotBlank()</span>
+}
+
+<span class="fc" id="L97">data class TimeState(</span>
+<span class="pc" id="L98">    val isLoading: Boolean = false,</span>
+<span class="pc" id="L99">    val isSaving: Boolean = false,</span>
+<span class="fc" id="L100">    val startDate: LocalDate = LocalDate.now(),</span>
+<span class="fc" id="L101">    val endDate: LocalDate = LocalDate.now(),</span>
+<span class="pc" id="L102">    val statistics: List&lt;TimeStatistic&gt; = emptyList(),</span>
+<span class="pc" id="L103">    val entriesByDay: List&lt;TimeDayEntries&gt; = emptyList(),</span>
+<span class="pc" id="L104">    val deletingIds: Set&lt;Long&gt; = emptySet(),</span>
+<span class="pc" id="L105">    val showEditor: Boolean = false,</span>
+<span class="fc" id="L106">    val editor: TimeEditorState = TimeEditorState.defaultNow(),</span>
+<span class="fc" id="L107">    val labels: List&lt;TimeLabel&gt; = emptyList(),</span>
+<span class="pc" id="L108">    val showLabelManager: Boolean = false,</span>
+<span class="fc" id="L109">    val labelManager: TimeLabelManagerState = TimeLabelManagerState(),</span>
+<span class="fc" id="L110">) {</span>
+<span class="fc" id="L111">    fun toUiState(): TimeUiState = TimeUiState(</span>
+<span class="fc" id="L112">        isLoading = isLoading,</span>
+<span class="fc" id="L113">        isSaving = isSaving,</span>
+<span class="fc" id="L114">        startDate = startDate,</span>
+<span class="fc" id="L115">        endDate = endDate,</span>
+<span class="fc" id="L116">        statistics = statistics,</span>
+<span class="fc" id="L117">        entriesByDay = entriesByDay,</span>
+<span class="fc" id="L118">        deletingIds = deletingIds,</span>
+<span class="fc" id="L119">        showEditor = showEditor,</span>
+<span class="fc" id="L120">        editor = editor,</span>
+<span class="fc" id="L121">        labels = labels,</span>
+<span class="fc" id="L122">        showLabelManager = showLabelManager,</span>
+<span class="fc" id="L123">        labelManager = labelManager,</span>
+<span class="fc" id="L124">    )</span>
+}
+
+<span class="fc" id="L127">@HiltViewModel</span>
+<span class="fc" id="L128">class TimeViewModel @Inject constructor(</span>
+<span class="fc" id="L129">    private val repository: TimeRepository,</span>
+) : ViewModel() {
+<span class="fc" id="L131">    private val localZone = ZoneId.systemDefault()</span>
+<span class="fc" id="L132">    private val _state = MutableStateFlow(TimeState())</span>
+
+<span class="fc" id="L134">    val uiState = _state.map { it.toUiState() }</span>
+<span class="fc" id="L135">        .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())</span>
+
+    private var refreshJob: Job? = null
+    private var labelsJob: Job? = null
+
+<span class="fc" id="L140">    init {</span>
+<span class="fc" id="L141">        refresh()</span>
+<span class="fc" id="L142">        refreshLabels()</span>
+<span class="fc" id="L143">    }</span>
+
+    fun onEvent(event: TimeEvent) {
+<span class="fc" id="L146">        when (event) {</span>
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">            is TimeEvent.Refresh -&gt; refresh()</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">            is TimeEvent.UpdateStartDate -&gt; updateStartDate(event.value)</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">            is TimeEvent.UpdateEndDate -&gt; updateEndDate(event.value)</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">            is TimeEvent.OpenAddDialog -&gt; openAddDialog()</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">            is TimeEvent.DismissDialog -&gt; closeDialog()</span>
+<span class="pc bpc" id="L152" title="1 of 2 branches missed.">            is TimeEvent.EditEntry -&gt; openEditDialog(event.entry)</span>
+<span class="pc bpc" id="L153" title="1 of 2 branches missed.">            is TimeEvent.DeleteEntry -&gt; deleteEntry(event.id)</span>
+<span class="fc bfc" id="L154" title="All 2 branches covered.">            is TimeEvent.UpdateTitle -&gt; _state.update {</span>
+<span class="fc" id="L155">                it.copy(editor = it.editor.copy(title = event.value))</span>
+            }
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">            is TimeEvent.UpdateDescription -&gt; _state.update {</span>
+<span class="nc" id="L158">                it.copy(editor = it.editor.copy(description = event.value))</span>
+            }
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">            is TimeEvent.UpdateType -&gt; _state.update {</span>
+<span class="nc" id="L161">                it.copy(editor = it.editor.copy(type = event.value))</span>
+            }
+<span class="pc bpc" id="L163" title="1 of 2 branches missed.">            is TimeEvent.UpdateStartTime -&gt; _state.update {</span>
+<span class="nc" id="L164">                it.copy(editor = it.editor.copy(start = event.value))</span>
+            }
+<span class="pc bpc" id="L166" title="1 of 2 branches missed.">            is TimeEvent.UpdateEndTime -&gt; _state.update {</span>
+<span class="nc" id="L167">                it.copy(editor = it.editor.copy(end = event.value))</span>
+            }
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">            is TimeEvent.ApplyDurationMinutes -&gt; _state.update {</span>
+<span class="nc" id="L170">                val end = it.editor.end</span>
+<span class="nc" id="L171">                it.copy(editor = it.editor.copy(start = end.minusMinutes(event.value)))</span>
+            }
+<span class="fc bfc" id="L173" title="All 2 branches covered.">            is TimeEvent.ApplyLabel -&gt; applyLabel(event.label)</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">            is TimeEvent.SaveEntry -&gt; saveEntry()</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">            is TimeEvent.OpenLabelManager -&gt; openLabelManager()</span>
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">            is TimeEvent.DismissLabelManager -&gt; closeLabelManager()</span>
+<span class="pc bpc" id="L177" title="1 of 2 branches missed.">            is TimeEvent.UpdateLabelManagerType -&gt; _state.update {</span>
+<span class="nc" id="L178">                it.copy(labelManager = TimeLabelManagerState(selectedType = event.value))</span>
+            }
+<span class="fc bfc" id="L180" title="All 2 branches covered.">            is TimeEvent.UpdateLabelDraft -&gt; _state.update {</span>
+<span class="fc" id="L181">                it.copy(labelManager = it.labelManager.copy(draftName = event.value))</span>
+            }
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">            is TimeEvent.EditLabel -&gt; _state.update {</span>
+<span class="nc" id="L184">                it.copy(</span>
+<span class="nc" id="L185">                    labelManager = it.labelManager.copy(</span>
+<span class="nc" id="L186">                        selectedType = event.label.type,</span>
+<span class="nc" id="L187">                        editingId = event.label.id,</span>
+<span class="nc" id="L188">                        draftName = event.label.name,</span>
+                    )
+<span class="nc" id="L190">                )</span>
+            }
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">            is TimeEvent.SaveLabel -&gt; saveLabel()</span>
+<span class="nc" id="L193">            is TimeEvent.DeleteLabel -&gt; deleteLabel(event.id)</span>
+        }
+<span class="fc" id="L195">    }</span>
+
+    private fun openAddDialog() {
+<span class="fc" id="L198">        _state.update {</span>
+<span class="fc" id="L199">            it.copy(</span>
+<span class="fc" id="L200">                showEditor = true,</span>
+<span class="fc" id="L201">                editor = TimeEditorState.defaultNow(),</span>
+<span class="fc" id="L202">            )</span>
+        }
+<span class="fc" id="L204">    }</span>
+
+    private fun openEditDialog(entry: TimeEntry) {
+<span class="nc" id="L207">        _state.update {</span>
+<span class="nc" id="L208">            it.copy(</span>
+<span class="nc" id="L209">                showEditor = true,</span>
+<span class="nc" id="L210">                editor = TimeEditorState(</span>
+<span class="nc" id="L211">                    editingId = entry.id,</span>
+<span class="nc" id="L212">                    title = entry.title,</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">                    description = entry.description.orEmpty(),</span>
+<span class="nc" id="L214">                    type = entry.type,</span>
+<span class="nc" id="L215">                    start = entry.start.atZoneSameInstant(localZone).toLocalDateTime(),</span>
+<span class="nc" id="L216">                    end = entry.end.atZoneSameInstant(localZone).toLocalDateTime(),</span>
+                )
+<span class="nc" id="L218">            )</span>
+        }
+<span class="nc" id="L220">    }</span>
+
+    private fun closeDialog() {
+<span class="nc" id="L223">        _state.update {</span>
+<span class="nc" id="L224">            it.copy(</span>
+<span class="nc" id="L225">                showEditor = false,</span>
+<span class="nc" id="L226">                isSaving = false,</span>
+<span class="nc" id="L227">                editor = TimeEditorState.defaultNow(),</span>
+<span class="nc" id="L228">            )</span>
+        }
+<span class="nc" id="L230">    }</span>
+
+    private fun updateStartDate(value: LocalDate) {
+<span class="fc" id="L233">        _state.update {</span>
+<span class="pc bpc" id="L234" title="1 of 2 branches missed.">            val newEnd = if (value &gt; it.endDate) value else it.endDate</span>
+<span class="fc" id="L235">            it.copy(startDate = value, endDate = newEnd)</span>
+        }
+<span class="fc" id="L237">        refresh()</span>
+<span class="fc" id="L238">    }</span>
+
+    private fun updateEndDate(value: LocalDate) {
+<span class="fc" id="L241">        _state.update {</span>
+<span class="pc bpc" id="L242" title="1 of 2 branches missed.">            val newStart = if (value &lt; it.startDate) value else it.startDate</span>
+<span class="fc" id="L243">            it.copy(startDate = newStart, endDate = value)</span>
+        }
+<span class="fc" id="L245">        refresh()</span>
+<span class="fc" id="L246">    }</span>
+
+    private fun refresh() {
+<span class="fc bfc" id="L249" title="All 2 branches covered.">        refreshJob?.cancel()</span>
+<span class="fc" id="L250">        val startDate = _state.value.startDate</span>
+<span class="fc" id="L251">        val endDate = _state.value.endDate</span>
+<span class="fc" id="L252">        refreshJob = repository.getTimeDashboard(startDate = startDate, endDate = endDate)</span>
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="fc" id="L254">                when (result) {</span>
+<span class="fc bfc" id="L255" title="All 2 branches covered.">                    is ApiResult.Loading -&gt; _state.update {</span>
+<span class="fc" id="L256">                        it.copy(isLoading = true)</span>
+                    }
+
+<span class="pc bpc" id="L259" title="1 of 2 branches missed.">                    is ApiResult.Success -&gt; _state.update {</span>
+<span class="fc" id="L260">                        val filteredEntries = result.data.entries.filterInDateRange(</span>
+<span class="fc" id="L261">                            startDate = startDate,</span>
+<span class="fc" id="L262">                            endDate = endDate,</span>
+<span class="fc" id="L263">                            zoneId = localZone,</span>
+                        )
+<span class="fc" id="L265">                        it.copy(</span>
+<span class="fc" id="L266">                            isLoading = false,</span>
+<span class="fc" id="L267">                            statistics = result.data.statistics,</span>
+<span class="fc" id="L268">                            entriesByDay = filteredEntries.toDayEntries(localZone),</span>
+<span class="fc" id="L269">                        )</span>
+                    }
+
+<span class="nc" id="L272">                    is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L273">                        it.copy(isLoading = false)</span>
+<span class="nc" id="L274">                    }.also {</span>
+<span class="nc" id="L275">                        AppSnackbarBus.showApiFailure(onRetry = ::refresh)</span>
+<span class="nc" id="L276">                    }</span>
+                }
+<span class="fc" id="L278">            }</span>
+<span class="fc" id="L279">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L280">    }</span>
+
+    private fun refreshLabels() {
+<span class="pc bpc" id="L283" title="1 of 2 branches missed.">        labelsJob?.cancel()</span>
+<span class="fc" id="L284">        labelsJob = repository.getTimeLabels()</span>
+<span class="pc bpc" id="L285" title="1 of 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="fc" id="L286">                when (result) {</span>
+<span class="fc bfc" id="L287" title="All 2 branches covered.">                    is ApiResult.Loading -&gt; Unit</span>
+<span class="pc bpc" id="L288" title="1 of 2 branches missed.">                    is ApiResult.Success -&gt; _state.update {</span>
+<span class="fc" id="L289">                        it.copy(labels = result.data.sortedForDisplay())</span>
+                    }
+<span class="nc" id="L291">                    is ApiResult.Error -&gt; AppSnackbarBus.showApiFailure(onRetry = ::refreshLabels)</span>
+                }
+<span class="fc" id="L293">            }</span>
+<span class="fc" id="L294">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L295">    }</span>
+
+    private fun applyLabel(label: TimeLabel) {
+<span class="fc" id="L298">        _state.update { state -&gt;</span>
+<span class="fc" id="L299">            val editor = state.editor</span>
+<span class="fc" id="L300">            val knownPrefixes = state.labels</span>
+<span class="pc bpc" id="L301" title="1 of 2 branches missed.">                .filter { it.type == editor.type }</span>
+<span class="fc" id="L302">                .map { &quot;${it.name}:&quot; }</span>
+<span class="fc" id="L303">            val trimmed = editor.title.trim()</span>
+<span class="fc bfc" id="L304" title="All 6 branches covered.">            val titleWithoutExistingLabel = knownPrefixes.firstNotNullOfOrNull { prefix -&gt;</span>
+<span class="fc bfc" id="L305" title="All 2 branches covered.">                trimmed.takeIf { it.startsWith(prefix) }</span>
+<span class="fc bfc" id="L306" title="All 2 branches covered.">                    ?.removePrefix(prefix)</span>
+<span class="pc bpc" id="L307" title="1 of 2 branches missed.">                    ?.trimStart()</span>
+<span class="fc" id="L308">            } ?: trimmed</span>
+<span class="pc bpc" id="L309" title="1 of 2 branches missed.">            val nextTitle = if (titleWithoutExistingLabel.isBlank()) {</span>
+<span class="nc" id="L310">                &quot;${label.name}: &quot;</span>
+            } else {
+<span class="fc" id="L312">                &quot;${label.name}: $titleWithoutExistingLabel&quot;</span>
+            }
+<span class="fc" id="L314">            state.copy(editor = editor.copy(title = nextTitle))</span>
+        }
+<span class="fc" id="L316">    }</span>
+
+    private fun saveEntry() {
+<span class="fc" id="L319">        val currentEditor = _state.value.editor</span>
+<span class="pc bpc" id="L320" title="1 of 2 branches missed.">        if (!currentEditor.isValid()) {</span>
+<span class="nc" id="L321">            AppSnackbarBus.showMessage(&quot;Please enter a title and keep end time after start time.&quot;)</span>
+<span class="nc" id="L322">            return</span>
+        }
+
+<span class="fc" id="L325">        val payload = TimeUpsertRequest(</span>
+<span class="fc" id="L326">            type = currentEditor.type,</span>
+<span class="fc" id="L327">            start = currentEditor.start.atZone(localZone).toInstant().toString(),</span>
+<span class="fc" id="L328">            end = currentEditor.end.atZone(localZone).toInstant().toString(),</span>
+<span class="fc" id="L329">            title = currentEditor.title.trim(),</span>
+<span class="pc bpc" id="L330" title="2 of 4 branches missed.">            description = currentEditor.description.takeIf { it.isNotBlank() },</span>
+        )
+
+<span class="pc bpc" id="L333" title="1 of 2 branches missed.">        val saveFlow = if (currentEditor.editingId == null) {</span>
+<span class="fc" id="L334">            repository.createTimeEntry(payload = payload)</span>
+        } else {
+<span class="nc" id="L336">            repository.updateTimeEntry(timeId = currentEditor.editingId, payload = payload)</span>
+        }
+
+<span class="pc bpc" id="L339" title="1 of 2 branches missed.">        saveFlow.onEach { result -&gt;</span>
+<span class="fc" id="L340">            when (result) {</span>
+<span class="fc bfc" id="L341" title="All 2 branches covered.">                is ApiResult.Loading -&gt; _state.update {</span>
+<span class="fc" id="L342">                    it.copy(isSaving = true)</span>
+                }
+
+<span class="pc bpc" id="L345" title="1 of 2 branches missed.">                is ApiResult.Success -&gt; _state.update {</span>
+<span class="fc" id="L346">                    it.copy(</span>
+<span class="fc" id="L347">                        isSaving = false,</span>
+<span class="fc" id="L348">                        showEditor = false,</span>
+<span class="fc" id="L349">                        editor = TimeEditorState.defaultNow(),</span>
+<span class="fc" id="L350">                    )</span>
+<span class="fc" id="L351">                }.also {</span>
+<span class="fc" id="L352">                    refresh()</span>
+<span class="fc" id="L353">                }</span>
+
+<span class="nc" id="L355">                is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L356">                    it.copy(isSaving = false)</span>
+<span class="nc" id="L357">                }.also {</span>
+<span class="nc" id="L358">                    AppSnackbarBus.showApiFailure(onRetry = ::saveEntry)</span>
+<span class="nc" id="L359">                }</span>
+            }
+<span class="fc" id="L361">        }.launchIn(viewModelScope)</span>
+<span class="fc" id="L362">    }</span>
+
+    private fun openLabelManager() {
+<span class="fc" id="L365">        _state.update {</span>
+<span class="fc" id="L366">            it.copy(</span>
+<span class="fc" id="L367">                showLabelManager = true,</span>
+<span class="fc" id="L368">                labelManager = TimeLabelManagerState(</span>
+<span class="pc bpc" id="L369" title="4 of 8 branches missed.">                    selectedType = it.editor.type.takeIf { type -&gt; type in 1..11 } ?: DEFAULT_TIME_TYPE,</span>
+                ),
+<span class="fc" id="L371">            )</span>
+        }
+<span class="fc" id="L373">    }</span>
+
+    private fun closeLabelManager() {
+<span class="nc" id="L376">        _state.update {</span>
+<span class="nc" id="L377">            it.copy(</span>
+<span class="nc" id="L378">                showLabelManager = false,</span>
+<span class="nc" id="L379">                labelManager = TimeLabelManagerState(),</span>
+<span class="nc" id="L380">            )</span>
+        }
+<span class="nc" id="L382">    }</span>
+
+    private fun saveLabel() {
+<span class="fc" id="L385">        val manager = _state.value.labelManager</span>
+<span class="pc bpc" id="L386" title="1 of 2 branches missed.">        if (!manager.isValid()) {</span>
+<span class="nc" id="L387">            AppSnackbarBus.showMessage(&quot;Please enter a label.&quot;)</span>
+<span class="nc" id="L388">            return</span>
+        }
+
+<span class="pc bpc" id="L391" title="1 of 2 branches missed.">        val saveFlow = if (manager.editingId == null) {</span>
+<span class="fc" id="L392">            repository.createTimeLabel(</span>
+<span class="fc" id="L393">                type = manager.selectedType,</span>
+<span class="fc" id="L394">                name = manager.draftName,</span>
+            )
+        } else {
+<span class="nc" id="L397">            repository.updateTimeLabel(</span>
+<span class="nc" id="L398">                labelId = manager.editingId,</span>
+<span class="nc" id="L399">                type = manager.selectedType,</span>
+<span class="nc" id="L400">                name = manager.draftName,</span>
+            )
+        }
+
+<span class="pc bpc" id="L404" title="1 of 2 branches missed.">        saveFlow.onEach { result -&gt;</span>
+<span class="fc" id="L405">            when (result) {</span>
+<span class="fc bfc" id="L406" title="All 2 branches covered.">                is ApiResult.Loading -&gt; _state.update {</span>
+<span class="fc" id="L407">                    it.copy(labelManager = it.labelManager.copy(isSaving = true))</span>
+                }
+<span class="pc bpc" id="L409" title="1 of 2 branches missed.">                is ApiResult.Success -&gt; _state.update {</span>
+<span class="pc bnc" id="L410" title="All 2 branches missed.">                    val nextLabels = (it.labels.filterNot { label -&gt; label.id == result.data.id } + result.data)</span>
+<span class="fc" id="L411">                        .sortedForDisplay()</span>
+<span class="fc" id="L412">                    it.copy(</span>
+<span class="fc" id="L413">                        labels = nextLabels,</span>
+<span class="fc" id="L414">                        labelManager = TimeLabelManagerState(selectedType = result.data.type),</span>
+<span class="fc" id="L415">                    )</span>
+                }
+<span class="nc" id="L417">                is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L418">                    it.copy(labelManager = it.labelManager.copy(isSaving = false))</span>
+<span class="nc" id="L419">                }.also {</span>
+<span class="nc" id="L420">                    AppSnackbarBus.showApiFailure(onRetry = ::saveLabel)</span>
+<span class="nc" id="L421">                }</span>
+            }
+<span class="fc" id="L423">        }.launchIn(viewModelScope)</span>
+<span class="fc" id="L424">    }</span>
+
+    private fun deleteLabel(id: Long) {
+<span class="nc" id="L427">        val previousLabels = _state.value.labels</span>
+<span class="nc" id="L428">        _state.update {</span>
+<span class="nc" id="L429">            it.copy(</span>
+<span class="nc bnc" id="L430" title="All 2 branches missed.">                labels = it.labels.filterNot { label -&gt; label.id == id },</span>
+<span class="nc" id="L431">                labelManager = it.labelManager.copy(deletingIds = it.labelManager.deletingIds + id),</span>
+<span class="nc" id="L432">            )</span>
+        }
+<span class="nc bnc" id="L434" title="All 2 branches missed.">        repository.deleteTimeLabel(labelId = id).onEach { result -&gt;</span>
+<span class="nc" id="L435">            when (result) {</span>
+<span class="nc bnc" id="L436" title="All 2 branches missed.">                is ApiResult.Loading -&gt; Unit</span>
+<span class="nc bnc" id="L437" title="All 2 branches missed.">                is ApiResult.Success -&gt; _state.update {</span>
+<span class="nc" id="L438">                    it.copy(</span>
+<span class="nc" id="L439">                        labelManager = it.labelManager.copy(deletingIds = it.labelManager.deletingIds - id),</span>
+<span class="nc" id="L440">                    )</span>
+                }
+<span class="nc" id="L442">                is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L443">                    it.copy(</span>
+<span class="nc" id="L444">                        labels = previousLabels,</span>
+<span class="nc" id="L445">                        labelManager = it.labelManager.copy(deletingIds = it.labelManager.deletingIds - id),</span>
+<span class="nc" id="L446">                    )</span>
+<span class="nc" id="L447">                }.also {</span>
+<span class="nc" id="L448">                    AppSnackbarBus.showApiFailure { deleteLabel(id) }</span>
+<span class="nc" id="L449">                }</span>
+            }
+<span class="nc" id="L451">        }.launchIn(viewModelScope)</span>
+<span class="nc" id="L452">    }</span>
+
+    private fun deleteEntry(id: Long) {
+<span class="nc bnc" id="L455" title="All 2 branches missed.">        if (id in _state.value.deletingIds) return</span>
+<span class="nc" id="L456">        val previous = _state.value.entriesByDay</span>
+<span class="nc" id="L457">        _state.update {</span>
+<span class="nc" id="L458">            it.copy(</span>
+<span class="nc" id="L459">                deletingIds = it.deletingIds + id,</span>
+<span class="nc" id="L460">                entriesByDay = it.entriesByDay.removeEntry(id),</span>
+<span class="nc" id="L461">            )</span>
+        }
+<span class="nc bnc" id="L463" title="All 2 branches missed.">        repository.deleteTimeEntry(timeId = id).onEach { result -&gt;</span>
+<span class="nc" id="L464">            when (result) {</span>
+<span class="nc bnc" id="L465" title="All 2 branches missed.">                is ApiResult.Loading -&gt; Unit</span>
+<span class="nc bnc" id="L466" title="All 2 branches missed.">                is ApiResult.Success -&gt; _state.update {</span>
+<span class="nc" id="L467">                    it.copy(deletingIds = it.deletingIds - id)</span>
+                }
+
+<span class="nc" id="L470">                is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L471">                    it.copy(</span>
+<span class="nc" id="L472">                        deletingIds = it.deletingIds - id,</span>
+<span class="nc" id="L473">                        entriesByDay = previous,</span>
+<span class="nc" id="L474">                    )</span>
+<span class="nc" id="L475">                }.also {</span>
+<span class="nc" id="L476">                    AppSnackbarBus.showApiFailure { deleteEntry(id) }</span>
+<span class="nc" id="L477">                }</span>
+            }
+<span class="nc" id="L479">        }.launchIn(viewModelScope)</span>
+<span class="nc" id="L480">    }</span>
+}
+
+private fun List&lt;TimeEntry&gt;.toDayEntries(zoneId: ZoneId): List&lt;TimeDayEntries&gt; {
+<span class="fc" id="L484">    return groupBy { it.start.atZoneSameInstant(zoneId).toLocalDate() }</span>
+<span class="fc" id="L485">        .entries</span>
+<span class="fc" id="L486">        .sortedByDescending { it.key }</span>
+<span class="fc" id="L487">        .map { (day, entries) -&gt;</span>
+<span class="fc" id="L488">            TimeDayEntries(</span>
+<span class="fc" id="L489">                day = day,</span>
+<span class="fc" id="L490">                entries = entries.sortedBy { it.start.toInstant() },</span>
+<span class="fc" id="L491">            )</span>
+        }
+}
+
+internal fun List&lt;TimeEntry&gt;.filterInDateRange(
+    startDate: LocalDate,
+    endDate: LocalDate,
+    zoneId: ZoneId,
+): List&lt;TimeEntry&gt; {
+<span class="fc" id="L500">    return filter { entry -&gt;</span>
+<span class="fc" id="L501">        val day = entry.start.atZoneSameInstant(zoneId).toLocalDate()</span>
+<span class="pc bpc" id="L502" title="1 of 4 branches missed.">        day &gt;= startDate &amp;&amp; day &lt;= endDate</span>
+    }
+}
+
+private fun List&lt;TimeLabel&gt;.sortedForDisplay(): List&lt;TimeLabel&gt; =
+<span class="fc" id="L507">    sortedWith(compareBy&lt;TimeLabel&gt; { it.type }.thenBy { it.sortOrder }.thenBy { it.name })</span>
+
+private fun List&lt;TimeDayEntries&gt;.removeEntry(id: Long): List&lt;TimeDayEntries&gt; {
+<span class="nc" id="L510">    return mapNotNull { section -&gt;</span>
+<span class="nc bnc" id="L511" title="All 2 branches missed.">        val next = section.entries.filterNot { it.id == id }</span>
+<span class="nc bnc" id="L512" title="All 2 branches missed.">        if (next.isEmpty()) {</span>
+<span class="nc" id="L513">            null</span>
+        } else {
+<span class="nc" id="L515">            section.copy(entries = next)</span>
+<span class="nc" id="L516">        }</span>
+    }
+}
+
+const val DEFAULT_TIME_TYPE = 5
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

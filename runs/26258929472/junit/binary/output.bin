@@ -1,0 +1,17 @@
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
++API call failed with exception: no network
+7Exception stack trace: java.io.IOException: no network
+)safeApiCall caught exception: no network
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+#"safeApiCall: calling api
+#$safeApiCall: calling api
+#%safeApiCall: calling api
+#&safeApiCall: calling api
+#&#safeApiCall caught exception: boom
