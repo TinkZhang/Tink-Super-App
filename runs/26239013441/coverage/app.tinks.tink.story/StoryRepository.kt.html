@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StoryRepository.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.story</a> &gt; <span class="el_source">StoryRepository.kt</span></div><h1>StoryRepository.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.story
+
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.network.safeApiCall
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import javax.inject.Inject
+import javax.inject.Singleton
+
+<span class="nc" id="L12">@Singleton</span>
+<span class="nc" id="L13">class StoryRepository @Inject constructor(</span>
+<span class="nc" id="L14">    private val api: StoryApi,</span>
+) {
+<span class="nc bnc" id="L16" title="All 5 branches missed.">    fun getStoryList(page: Int, size: Int): Flow&lt;ApiResult&lt;List&lt;Story&gt;&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L17" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L18" title="All 2 branches missed.">        emit(safeApiCall {</span>
+<span class="nc bnc" id="L19" title="All 2 branches missed.">            api.getStoryList(page = page, size = size).map { it.toDomain() }</span>
+        })
+<span class="nc" id="L21">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L23" title="All 5 branches missed.">    fun getStory(storyId: String): Flow&lt;ApiResult&lt;Story&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L24" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L25" title="All 2 branches missed.">        emit(safeApiCall {</span>
+<span class="nc bnc" id="L26" title="All 2 branches missed.">            api.getStory(storyId = storyId).toDomain()</span>
+        })
+<span class="nc" id="L28">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L30" title="All 5 branches missed.">    fun deleteStory(storyId: String): Flow&lt;ApiResult&lt;Unit&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L31" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">        emit(safeApiCall {</span>
+<span class="nc bnc" id="L33" title="All 2 branches missed.">            api.deleteStory(storyId = storyId)</span>
+<span class="nc" id="L34">        })</span>
+<span class="nc" id="L35">    }.flowOn(Dispatchers.IO)</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
