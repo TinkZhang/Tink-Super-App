@@ -13,10 +13,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class TimeRepository @Inject constructor(
+open class TimeRepository @Inject constructor(
     private val api: TimeApi,
 ) {
-    fun getTimeDashboard(
+    open fun getTimeDashboard(
         startDate: LocalDate,
         endDate: LocalDate,
     ): Flow<ApiResult<TimeDashboard>> = flow {
@@ -43,7 +43,7 @@ class TimeRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    fun createTimeEntry(payload: TimeUpsertRequest): Flow<ApiResult<Unit>> = flow {
+    open fun createTimeEntry(payload: TimeUpsertRequest): Flow<ApiResult<Unit>> = flow {
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
@@ -52,7 +52,7 @@ class TimeRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    fun updateTimeEntry(timeId: Long, payload: TimeUpsertRequest): Flow<ApiResult<Unit>> = flow {
+    open fun updateTimeEntry(timeId: Long, payload: TimeUpsertRequest): Flow<ApiResult<Unit>> = flow {
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
@@ -61,11 +61,60 @@ class TimeRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    fun deleteTimeEntry(timeId: Long): Flow<ApiResult<Unit>> = flow {
+    open fun deleteTimeEntry(timeId: Long): Flow<ApiResult<Unit>> = flow {
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
                 api.deleteTimeEntry(timeId = timeId)
+            }
+        )
+    }.flowOn(Dispatchers.IO)
+
+    open fun getTimeLabels(type: Int? = null): Flow<ApiResult<List<TimeLabel>>> = flow {
+        emit(ApiResult.Loading)
+        emit(
+            safeApiCall {
+                api.getTimeLabels(type = type)
+                    .map { it.toDomain() }
+                    .sortedWith(compareBy<TimeLabel> { it.type }.thenBy { it.sortOrder }.thenBy { it.name })
+            }
+        )
+    }.flowOn(Dispatchers.IO)
+
+    open fun createTimeLabel(type: Int, name: String): Flow<ApiResult<TimeLabel>> = flow {
+        emit(ApiResult.Loading)
+        emit(
+            safeApiCall {
+                api.createTimeLabel(
+                    TimeLabelCreateRequest(
+                        type = type,
+                        name = name.trim(),
+                    )
+                ).toDomain()
+            }
+        )
+    }.flowOn(Dispatchers.IO)
+
+    open fun updateTimeLabel(labelId: Long, type: Int, name: String): Flow<ApiResult<TimeLabel>> = flow {
+        emit(ApiResult.Loading)
+        emit(
+            safeApiCall {
+                api.updateTimeLabel(
+                    labelId = labelId,
+                    payload = TimeLabelUpdateRequest(
+                        type = type,
+                        name = name.trim(),
+                    ),
+                ).toDomain()
+            }
+        )
+    }.flowOn(Dispatchers.IO)
+
+    open fun deleteTimeLabel(labelId: Long): Flow<ApiResult<Unit>> = flow {
+        emit(ApiResult.Loading)
+        emit(
+            safeApiCall {
+                api.deleteTimeLabel(labelId = labelId)
             }
         )
     }.flowOn(Dispatchers.IO)
