@@ -1,0 +1,842 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TimeScreen.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.time</a> &gt; <span class="el_source">TimeScreen.kt</span></div><h1>TimeScreen.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.time
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+
+@Composable
+<span class="nc bnc" id="L79" title="All 8 branches missed.">fun TimeScreen(viewModel: TimeViewModel) {</span>
+<span class="nc" id="L80">    val uiState by viewModel.uiState.collectAsStateWithLifecycle()</span>
+<span class="nc" id="L81">    TimeScreen(</span>
+<span class="nc" id="L82">        state = uiState,</span>
+<span class="nc" id="L83">        onEvent = viewModel::onEvent,</span>
+    )
+<span class="nc" id="L85">}</span>
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun TimeScreen(
+    state: TimeUiState,
+    onEvent: (TimeEvent) -&gt; Unit,
+<span class="nc bnc" id="L92" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L93">    var showStartDatePicker by remember { mutableStateOf(false) }</span>
+<span class="nc" id="L94">    var showEndDatePicker by remember { mutableStateOf(false) }</span>
+
+<span class="nc bnc" id="L96" title="All 2 branches missed.">    if (showStartDatePicker) {</span>
+<span class="nc" id="L97">        DateOnlyPickerDialog(</span>
+<span class="nc" id="L98">            initialDate = state.startDate,</span>
+<span class="nc" id="L99">            onDismiss = { showStartDatePicker = false },</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">            onConfirm = {</span>
+<span class="nc" id="L101">                onEvent(TimeEvent.UpdateStartDate(it))</span>
+<span class="nc" id="L102">                showStartDatePicker = false</span>
+<span class="nc" id="L103">            },</span>
+        )
+<span class="nc" id="L105">    }</span>
+
+<span class="nc bnc" id="L107" title="All 2 branches missed.">    if (showEndDatePicker) {</span>
+<span class="nc" id="L108">        DateOnlyPickerDialog(</span>
+<span class="nc" id="L109">            initialDate = state.endDate,</span>
+<span class="nc" id="L110">            onDismiss = { showEndDatePicker = false },</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">            onConfirm = {</span>
+<span class="nc" id="L112">                onEvent(TimeEvent.UpdateEndDate(it))</span>
+<span class="nc" id="L113">                showEndDatePicker = false</span>
+<span class="nc" id="L114">            },</span>
+        )
+<span class="nc" id="L116">    }</span>
+
+<span class="nc bnc" id="L118" title="All 2 branches missed.">    if (state.showEditor) {</span>
+<span class="nc" id="L119">        val editingId = state.editor.editingId</span>
+<span class="nc" id="L120">        TimeEntryDialog(</span>
+<span class="nc" id="L121">            editor = state.editor,</span>
+<span class="nc" id="L122">            isSaving = state.isSaving,</span>
+<span class="nc bnc" id="L123" title="All 4 branches missed.">            isDeleting = editingId != null &amp;&amp; editingId in state.deletingIds,</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">            onDismiss = { onEvent(TimeEvent.DismissDialog) },</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">            onTitleChange = { onEvent(TimeEvent.UpdateTitle(it)) },</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">            onDescriptionChange = { onEvent(TimeEvent.UpdateDescription(it)) },</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">            onTypeChange = { onEvent(TimeEvent.UpdateType(it)) },</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">            onStartChange = { onEvent(TimeEvent.UpdateStartTime(it)) },</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">            onEndChange = { onEvent(TimeEvent.UpdateEndTime(it)) },</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">            onDurationClick = { onEvent(TimeEvent.ApplyDurationMinutes(it)) },</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">            onSubmit = { onEvent(TimeEvent.SaveEntry) },</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">            onDelete = editingId?.let { id -&gt;</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">                {</span>
+<span class="nc" id="L134">                    onEvent(TimeEvent.DeleteEntry(id))</span>
+<span class="nc" id="L135">                    onEvent(TimeEvent.DismissDialog)</span>
+<span class="nc" id="L136">                }</span>
+<span class="nc" id="L137">            },</span>
+        )
+<span class="nc" id="L139">    }</span>
+
+<span class="nc" id="L141">    Box(modifier = Modifier.fillMaxSize()) {</span>
+<span class="nc" id="L142">        val refreshState = rememberPullToRefreshState()</span>
+<span class="nc" id="L143">        PullToRefreshBox(</span>
+<span class="nc" id="L144">            isRefreshing = state.isLoading,</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">            onRefresh = { onEvent(TimeEvent.Refresh) },</span>
+<span class="nc" id="L146">            modifier = Modifier.fillMaxSize(),</span>
+<span class="nc" id="L147">            state = refreshState,</span>
+<span class="nc" id="L148">            indicator = {</span>
+<span class="nc" id="L149">                Box(</span>
+<span class="nc" id="L150">                    modifier = Modifier</span>
+<span class="nc" id="L151">                        .align(Alignment.TopCenter)</span>
+<span class="nc" id="L152">                        .graphicsLayer {</span>
+<span class="nc" id="L153">                            val scale =</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">                                if (state.isLoading) 1f else refreshState.distanceFraction.coerceIn(</span>
+<span class="nc" id="L155">                                    0f,</span>
+<span class="nc" id="L156">                                    1f</span>
+                                )
+<span class="nc" id="L158">                            scaleX = scale</span>
+<span class="nc" id="L159">                            scaleY = scale</span>
+<span class="nc" id="L160">                            alpha = scale</span>
+<span class="nc" id="L161">                        }</span>
+                ) {
+<span class="nc" id="L163">                    ContainedLoadingIndicator()</span>
+<span class="nc" id="L164">                }</span>
+<span class="nc" id="L165">            }</span>
+<span class="nc" id="L166">        ) {</span>
+<span class="nc" id="L167">            Column(modifier = Modifier.fillMaxSize()) {</span>
+<span class="nc" id="L168">                LazyTimeContent(</span>
+<span class="nc" id="L169">                    state = state,</span>
+<span class="nc" id="L170">                    onStartDateClick = { showStartDatePicker = true },</span>
+<span class="nc" id="L171">                    onEndDateClick = { showEndDatePicker = true },</span>
+<span class="nc" id="L172">                    onEdit = { onEvent(TimeEvent.EditEntry(it)) },</span>
+                )
+<span class="nc" id="L174">            }</span>
+<span class="nc" id="L175">        }</span>
+
+<span class="nc" id="L177">        FloatingActionButton(</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">            onClick = { onEvent(TimeEvent.OpenAddDialog) },</span>
+<span class="nc" id="L179">            containerColor = MaterialTheme.colorScheme.primaryContainer,</span>
+<span class="nc" id="L180">            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,</span>
+<span class="nc" id="L181">            modifier = Modifier</span>
+<span class="nc" id="L182">                .align(Alignment.BottomEnd)</span>
+<span class="nc" id="L183">                .padding(16.dp)</span>
+<span class="nc" id="L184">        ) {</span>
+<span class="nc" id="L185">            Icon(Icons.Filled.Add, contentDescription = &quot;Add time entry&quot;)</span>
+<span class="nc" id="L186">        }</span>
+<span class="nc" id="L187">    }</span>
+<span class="nc" id="L188">}</span>
+
+@Composable
+private fun LazyTimeContent(
+    state: TimeUiState,
+    onStartDateClick: () -&gt; Unit,
+    onEndDateClick: () -&gt; Unit,
+    onEdit: (TimeEntry) -&gt; Unit,
+<span class="nc bnc" id="L196" title="All 20 branches missed.">) {</span>
+<span class="nc" id="L197">    LazyColumn(</span>
+<span class="nc" id="L198">        modifier = Modifier.fillMaxSize(),</span>
+<span class="nc" id="L199">        contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 90.dp),</span>
+<span class="nc" id="L200">        verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+<span class="nc bnc" id="L201" title="All 6 branches missed.">    ) {</span>
+<span class="nc" id="L202">        item(&quot;date_range&quot;) {</span>
+<span class="nc" id="L203">            DateRangeCard(</span>
+<span class="nc" id="L204">                startDate = state.startDate,</span>
+<span class="nc" id="L205">                endDate = state.endDate,</span>
+<span class="nc" id="L206">                onStartDateClick = onStartDateClick,</span>
+<span class="nc" id="L207">                onEndDateClick = onEndDateClick,</span>
+            )
+<span class="nc" id="L209">        }</span>
+
+<span class="nc" id="L211">        item(&quot;statistics&quot;) {</span>
+<span class="nc" id="L212">            StatisticsCard(stats = state.statistics)</span>
+<span class="nc" id="L213">        }</span>
+
+<span class="nc bnc" id="L215" title="All 2 branches missed.">        if (state.entriesByDay.isEmpty()) {</span>
+<span class="nc" id="L216">            item(&quot;empty&quot;) {</span>
+<span class="nc" id="L217">                ElevatedCard(modifier = Modifier.fillMaxWidth()) {</span>
+<span class="nc" id="L218">                    Text(</span>
+<span class="nc" id="L219">                        text = &quot;No time entries in selected range.&quot;,</span>
+<span class="nc" id="L220">                        modifier = Modifier.padding(16.dp),</span>
+<span class="nc" id="L221">                        style = MaterialTheme.typography.bodyMedium,</span>
+                    )
+<span class="nc" id="L223">                }</span>
+<span class="nc" id="L224">            }</span>
+        }
+
+<span class="nc" id="L227">        items(</span>
+<span class="nc" id="L228">            items = state.entriesByDay,</span>
+<span class="nc" id="L229">            key = { it.day.toString() },</span>
+        ) { dayEntries -&gt;
+<span class="nc" id="L231">            DayEntriesCard(</span>
+<span class="nc" id="L232">                dayEntries = dayEntries,</span>
+<span class="nc" id="L233">                deletingIds = state.deletingIds,</span>
+<span class="nc" id="L234">                onEdit = onEdit,</span>
+<span class="nc" id="L235">            )</span>
+<span class="nc" id="L236">        }</span>
+<span class="nc" id="L237">    }</span>
+<span class="nc" id="L238">}</span>
+
+@Composable
+private fun DateRangeCard(
+    startDate: LocalDate,
+    endDate: LocalDate,
+    onStartDateClick: () -&gt; Unit,
+    onEndDateClick: () -&gt; Unit,
+<span class="nc bnc" id="L246" title="All 20 branches missed.">) {</span>
+<span class="nc" id="L247">    Column(</span>
+<span class="nc" id="L248">        modifier = Modifier</span>
+<span class="nc" id="L249">            .fillMaxWidth(),</span>
+<span class="nc" id="L250">        verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+    ) {
+<span class="nc" id="L252">        Row(</span>
+<span class="nc" id="L253">            modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L254">            horizontalArrangement = Arrangement.spacedBy(8.dp),</span>
+        ) {
+<span class="nc" id="L256">            DateRangeTextField(</span>
+<span class="nc" id="L257">                label = &quot;Start&quot;,</span>
+<span class="nc" id="L258">                value = startDate.format(DATE_FORMATTER),</span>
+<span class="nc" id="L259">                onClick = onStartDateClick,</span>
+<span class="nc" id="L260">                modifier = Modifier.weight(1f),</span>
+            )
+<span class="nc" id="L262">            DateRangeTextField(</span>
+<span class="nc" id="L263">                label = &quot;End&quot;,</span>
+<span class="nc" id="L264">                value = endDate.format(DATE_FORMATTER),</span>
+<span class="nc" id="L265">                onClick = onEndDateClick,</span>
+<span class="nc" id="L266">                modifier = Modifier.weight(1f),</span>
+            )
+<span class="nc" id="L268">        }</span>
+<span class="nc" id="L269">    }</span>
+<span class="nc" id="L270">}</span>
+
+@Composable
+private fun DateRangeTextField(
+    label: String,
+    value: String,
+    onClick: () -&gt; Unit,
+<span class="nc" id="L277">    modifier: Modifier = Modifier,</span>
+<span class="nc bnc" id="L278" title="All 24 branches missed.">) {</span>
+<span class="nc" id="L279">    OutlinedTextField(</span>
+<span class="nc" id="L280">        value = value,</span>
+<span class="nc" id="L281">        onValueChange = {},</span>
+<span class="nc" id="L282">        label = { Text(label) },</span>
+<span class="nc" id="L283">        readOnly = true,</span>
+<span class="nc" id="L284">        singleLine = true,</span>
+<span class="nc" id="L285">        modifier = modifier.clickable(onClick = onClick),</span>
+    )
+<span class="nc" id="L287">}</span>
+
+@Composable
+<span class="nc bnc" id="L290" title="All 8 branches missed.">private fun StatisticsCard(stats: List&lt;TimeStatistic&gt;) {</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">    val visibleStats = stats.filter { it.duration &gt; 0 }</span>
+<span class="nc" id="L292">    ElevatedCard(modifier = Modifier.fillMaxWidth()) {</span>
+<span class="nc" id="L293">        Column(</span>
+<span class="nc" id="L294">            modifier = Modifier.padding(16.dp),</span>
+<span class="nc" id="L295">            verticalArrangement = Arrangement.spacedBy(10.dp),</span>
+        ) {
+<span class="nc" id="L297">            Text(</span>
+<span class="nc" id="L298">                text = &quot;Category Duration Statistics&quot;,</span>
+<span class="nc" id="L299">                style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L300">                fontWeight = FontWeight.Bold,</span>
+            )
+<span class="nc bnc" id="L302" title="All 2 branches missed.">            if (visibleStats.isEmpty()) {</span>
+<span class="nc" id="L303">                Text(</span>
+<span class="nc" id="L304">                    text = &quot;No tracked duration in this range.&quot;,</span>
+<span class="nc" id="L305">                    style = MaterialTheme.typography.bodyMedium,</span>
+                )
+<span class="nc" id="L307">            } else {</span>
+<span class="nc" id="L308">                visibleStats.forEach { stat -&gt;</span>
+<span class="nc" id="L309">                    val category = categoryOf(stat.type)</span>
+<span class="nc" id="L310">                    Row(</span>
+<span class="nc" id="L311">                        modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L312">                        verticalAlignment = Alignment.CenterVertically,</span>
+                    ) {
+<span class="nc" id="L314">                        Box(</span>
+<span class="nc" id="L315">                            modifier = Modifier</span>
+<span class="nc" id="L316">                                .size(12.dp)</span>
+<span class="nc" id="L317">                                .clip(CircleShape)</span>
+<span class="nc" id="L318">                                .background(category.color)</span>
+                        )
+<span class="nc" id="L320">                        Column(modifier = Modifier</span>
+<span class="nc" id="L321">                            .weight(1f)</span>
+<span class="nc" id="L322">                            .padding(start = 8.dp)) {</span>
+<span class="nc" id="L323">                            Text(</span>
+<span class="nc" id="L324">                                text = category.categoryName(),</span>
+<span class="nc" id="L325">                                style = MaterialTheme.typography.bodyLarge,</span>
+<span class="nc" id="L326">                                fontWeight = FontWeight.SemiBold,</span>
+                            )
+<span class="nc" id="L328">                        }</span>
+<span class="nc" id="L329">                        Text(</span>
+<span class="nc" id="L330">                            text = formatDuration(stat.duration),</span>
+<span class="nc" id="L331">                            style = MaterialTheme.typography.bodyLarge,</span>
+<span class="nc" id="L332">                            fontWeight = FontWeight.Bold,</span>
+                        )
+<span class="nc" id="L334">                    }</span>
+<span class="nc" id="L335">                }</span>
+            }
+<span class="nc" id="L337">        }</span>
+<span class="nc" id="L338">    }</span>
+<span class="nc" id="L339">}</span>
+
+@Composable
+private fun DayEntriesCard(
+    dayEntries: TimeDayEntries,
+    deletingIds: Set&lt;Long&gt;,
+    onEdit: (TimeEntry) -&gt; Unit,
+<span class="nc bnc" id="L346" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L347">    val dayLabel = dayEntries.day.format(DAY_HEADER_FORMATTER)</span>
+<span class="nc" id="L348">    ElevatedCard(modifier = Modifier.fillMaxWidth()) {</span>
+<span class="nc" id="L349">        Column(</span>
+<span class="nc" id="L350">            modifier = Modifier.padding(16.dp),</span>
+<span class="nc" id="L351">            verticalArrangement = Arrangement.spacedBy(8.dp),</span>
+        ) {
+<span class="nc" id="L353">            Text(</span>
+<span class="nc" id="L354">                text = dayLabel,</span>
+<span class="nc" id="L355">                style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L356">                fontWeight = FontWeight.Bold,</span>
+<span class="nc" id="L357">                modifier = Modifier.align(Alignment.CenterHorizontally),</span>
+            )
+<span class="nc" id="L359">            dayEntries.entries.forEachIndexed { index, entry -&gt;</span>
+<span class="nc" id="L360">                TimeEntryRow(</span>
+<span class="nc" id="L361">                    entry = entry,</span>
+<span class="nc" id="L362">                    isDeleting = entry.id in deletingIds,</span>
+<span class="nc" id="L363">                    onEdit = onEdit,</span>
+                )
+<span class="nc bnc" id="L365" title="All 2 branches missed.">                if (index &lt; dayEntries.entries.lastIndex) {</span>
+<span class="nc" id="L366">                    HorizontalDivider()</span>
+<span class="nc" id="L367">                }</span>
+<span class="nc" id="L368">            }</span>
+<span class="nc" id="L369">        }</span>
+<span class="nc" id="L370">    }</span>
+<span class="nc" id="L371">}</span>
+
+@Composable
+private fun TimeEntryRow(
+    entry: TimeEntry,
+    isDeleting: Boolean,
+    onEdit: (TimeEntry) -&gt; Unit,
+<span class="nc bnc" id="L378" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L379">    val zone = ZoneId.systemDefault()</span>
+<span class="nc" id="L380">    val start = entry.start.atZoneSameInstant(zone)</span>
+<span class="nc" id="L381">    val end = entry.end.atZoneSameInstant(zone)</span>
+<span class="nc" id="L382">    val category = categoryOf(entry.type)</span>
+
+<span class="nc" id="L384">    Row(</span>
+<span class="nc" id="L385">        modifier = Modifier</span>
+<span class="nc" id="L386">            .fillMaxWidth()</span>
+<span class="nc bnc" id="L387" title="All 4 branches missed.">            .clickable(enabled = !isDeleting) { onEdit(entry) }</span>
+<span class="nc" id="L388">            .padding(vertical = 12.dp),</span>
+<span class="nc" id="L389">        horizontalArrangement = Arrangement.spacedBy(12.dp),</span>
+    ) {
+<span class="nc" id="L391">        Column(</span>
+<span class="nc" id="L392">            horizontalAlignment = Alignment.CenterHorizontally,</span>
+        ) {
+<span class="nc" id="L394">            Text(</span>
+<span class="nc" id="L395">                text = start.toLocalTime().format(TIME_FORMATTER),</span>
+<span class="nc" id="L396">                style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L397">                fontWeight = FontWeight.Bold,</span>
+            )
+<span class="nc" id="L399">            Text(</span>
+<span class="nc" id="L400">                text = &quot;|&quot;,</span>
+<span class="nc" id="L401">                style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L402">                fontWeight = FontWeight.Bold,</span>
+            )
+<span class="nc" id="L404">            Text(</span>
+<span class="nc" id="L405">                text = end.toLocalTime().format(TIME_FORMATTER),</span>
+<span class="nc" id="L406">                style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L407">                fontWeight = FontWeight.Bold,</span>
+            )
+<span class="nc" id="L409">        }</span>
+
+<span class="nc" id="L411">        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L412">            Row(</span>
+<span class="nc" id="L413">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L414">                verticalAlignment = Alignment.CenterVertically,</span>
+            ) {
+<span class="nc" id="L416">                Box(</span>
+<span class="nc" id="L417">                    modifier = Modifier</span>
+<span class="nc" id="L418">                        .size(10.dp)</span>
+<span class="nc" id="L419">                        .clip(CircleShape)</span>
+<span class="nc" id="L420">                        .background(category.color)</span>
+                )
+<span class="nc" id="L422">                Text(</span>
+<span class="nc" id="L423">                    text = &quot;  ${category.categoryName()}&quot;,</span>
+<span class="nc" id="L424">                    style = MaterialTheme.typography.labelLarge,</span>
+<span class="nc" id="L425">                    modifier = Modifier.weight(1f),</span>
+                )
+<span class="nc" id="L427">                Text(</span>
+<span class="nc" id="L428">                    text = formatDurationMinutes(</span>
+<span class="nc" id="L429">                        java.time.Duration.between(start, end).toMinutes().coerceAtLeast(0)</span>
+                    ),
+<span class="nc" id="L431">                    style = MaterialTheme.typography.labelLarge,</span>
+                )
+<span class="nc" id="L433">            }</span>
+<span class="nc" id="L434">            Text(</span>
+<span class="nc" id="L435">                text = entry.title,</span>
+<span class="nc" id="L436">                style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L437">                fontWeight = FontWeight.SemiBold,</span>
+            )
+<span class="nc bnc" id="L439" title="All 6 branches missed.">            if (!entry.description.isNullOrBlank()) {</span>
+<span class="nc" id="L440">                Text(</span>
+<span class="nc" id="L441">                    text = entry.description,</span>
+<span class="nc" id="L442">                    style = MaterialTheme.typography.bodyMedium,</span>
+                )
+<span class="nc" id="L444">            }</span>
+<span class="nc" id="L445">        }</span>
+
+<span class="nc bnc" id="L447" title="All 2 branches missed.">        if (isDeleting) {</span>
+<span class="nc" id="L448">            CircularProgressIndicator(</span>
+<span class="nc" id="L449">                modifier = Modifier</span>
+<span class="nc" id="L450">                    .size(20.dp)</span>
+<span class="nc" id="L451">                    .align(Alignment.CenterVertically),</span>
+<span class="nc" id="L452">                strokeWidth = 2.dp,</span>
+            )
+<span class="nc" id="L454">        }</span>
+<span class="nc" id="L455">    }</span>
+<span class="nc" id="L456">}</span>
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TimeEntryDialog(
+    editor: TimeEditorState,
+    isSaving: Boolean,
+    isDeleting: Boolean,
+    onDismiss: () -&gt; Unit,
+    onTitleChange: (String) -&gt; Unit,
+    onDescriptionChange: (String) -&gt; Unit,
+    onTypeChange: (Int) -&gt; Unit,
+    onStartChange: (LocalDateTime) -&gt; Unit,
+    onEndChange: (LocalDateTime) -&gt; Unit,
+    onDurationClick: (Long) -&gt; Unit,
+    onSubmit: () -&gt; Unit,
+    onDelete: (() -&gt; Unit)?,
+<span class="nc bnc" id="L473" title="All 54 branches missed.">) {</span>
+<span class="nc" id="L474">    var showStartPicker by remember { mutableStateOf(false) }</span>
+<span class="nc" id="L475">    var showEndPicker by remember { mutableStateOf(false) }</span>
+<span class="nc" id="L476">    var showTypeMenu by remember { mutableStateOf(false) }</span>
+
+<span class="nc bnc" id="L478" title="All 2 branches missed.">    if (showStartPicker) {</span>
+<span class="nc" id="L479">        DateTimePickerDialog(</span>
+<span class="nc" id="L480">            initialDateTime = editor.start,</span>
+<span class="nc" id="L481">            onDismiss = { showStartPicker = false },</span>
+<span class="nc bnc" id="L482" title="All 2 branches missed.">            onConfirm = {</span>
+<span class="nc" id="L483">                onStartChange(it)</span>
+<span class="nc" id="L484">                showStartPicker = false</span>
+<span class="nc" id="L485">            },</span>
+        )
+<span class="nc" id="L487">    }</span>
+
+<span class="nc bnc" id="L489" title="All 2 branches missed.">    if (showEndPicker) {</span>
+<span class="nc" id="L490">        DateTimePickerDialog(</span>
+<span class="nc" id="L491">            initialDateTime = editor.end,</span>
+<span class="nc" id="L492">            onDismiss = { showEndPicker = false },</span>
+<span class="nc bnc" id="L493" title="All 2 branches missed.">            onConfirm = {</span>
+<span class="nc" id="L494">                onEndChange(it)</span>
+<span class="nc" id="L495">                showEndPicker = false</span>
+<span class="nc" id="L496">            },</span>
+        )
+<span class="nc" id="L498">    }</span>
+
+<span class="nc" id="L500">    Dialog(</span>
+<span class="nc" id="L501">        onDismissRequest = onDismiss,</span>
+<span class="nc" id="L502">        properties = DialogProperties(usePlatformDefaultWidth = false),</span>
+<span class="nc" id="L503">    ) {</span>
+<span class="nc" id="L504">        Surface(modifier = Modifier.fillMaxSize()) {</span>
+<span class="nc" id="L505">            Scaffold(</span>
+<span class="nc" id="L506">                topBar = {</span>
+<span class="nc" id="L507">                    TopAppBar(</span>
+<span class="nc" id="L508">                        title = {</span>
+<span class="nc bnc" id="L509" title="All 2 branches missed.">                            Text(if (editor.editingId == null) &quot;Add Time Entry&quot; else &quot;Edit Time Entry&quot;)</span>
+<span class="nc" id="L510">                        },</span>
+<span class="nc" id="L511">                        navigationIcon = {</span>
+<span class="nc" id="L512">                            IconButton(onClick = onDismiss) {</span>
+<span class="nc" id="L513">                                Icon(Icons.Filled.Close, contentDescription = &quot;Close&quot;)</span>
+<span class="nc" id="L514">                            }</span>
+<span class="nc" id="L515">                        },</span>
+                    )
+<span class="nc" id="L517">                },</span>
+<span class="nc" id="L518">                bottomBar = {</span>
+<span class="nc" id="L519">                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {</span>
+<span class="nc" id="L520">                        Row(</span>
+<span class="nc" id="L521">                            modifier = Modifier</span>
+<span class="nc" id="L522">                                .fillMaxWidth()</span>
+<span class="nc" id="L523">                                .padding(16.dp),</span>
+<span class="nc" id="L524">                            horizontalArrangement = Arrangement.spacedBy(12.dp),</span>
+                        ) {
+<span class="nc bnc" id="L526" title="All 2 branches missed.">                            if (onDelete != null) {</span>
+<span class="nc" id="L527">                                OutlinedButton(</span>
+<span class="nc" id="L528">                                    onClick = onDelete,</span>
+<span class="nc bnc" id="L529" title="All 4 branches missed.">                                    enabled = !isDeleting &amp;&amp; !isSaving,</span>
+<span class="nc" id="L530">                                ) {</span>
+<span class="nc bnc" id="L531" title="All 2 branches missed.">                                    if (isDeleting) {</span>
+<span class="nc" id="L532">                                        CircularProgressIndicator(</span>
+<span class="nc" id="L533">                                            modifier = Modifier.size(16.dp),</span>
+<span class="nc" id="L534">                                            strokeWidth = 2.dp,</span>
+                                        )
+<span class="nc" id="L536">                                    } else {</span>
+<span class="nc" id="L537">                                        Icon(</span>
+<span class="nc" id="L538">                                            Icons.Filled.Delete,</span>
+<span class="nc" id="L539">                                            contentDescription = null,</span>
+<span class="nc" id="L540">                                            modifier = Modifier.size(18.dp),</span>
+                                        )
+<span class="nc" id="L542">                                        Text(&quot;  Delete&quot;)</span>
+                                    }
+<span class="nc" id="L544">                                }</span>
+<span class="nc" id="L545">                            }</span>
+<span class="nc" id="L546">                            Button(</span>
+<span class="nc" id="L547">                                onClick = onSubmit,</span>
+<span class="nc bnc" id="L548" title="All 6 branches missed.">                                enabled = editor.isValid() &amp;&amp; !isSaving &amp;&amp; !isDeleting,</span>
+<span class="nc" id="L549">                                modifier = Modifier.weight(1f),</span>
+<span class="nc" id="L550">                            ) {</span>
+<span class="nc bnc" id="L551" title="All 2 branches missed.">                                if (isSaving) {</span>
+<span class="nc" id="L552">                                    CircularProgressIndicator(</span>
+<span class="nc" id="L553">                                        modifier = Modifier.size(16.dp),</span>
+<span class="nc" id="L554">                                        strokeWidth = 2.dp,</span>
+                                    )
+<span class="nc" id="L556">                                } else {</span>
+<span class="nc bnc" id="L557" title="All 2 branches missed.">                                    Text(if (editor.editingId == null) &quot;Add&quot; else &quot;Save&quot;)</span>
+                                }
+<span class="nc" id="L559">                            }</span>
+<span class="nc" id="L560">                        }</span>
+<span class="nc" id="L561">                    }</span>
+<span class="nc" id="L562">                },</span>
+<span class="nc" id="L563">            ) { paddingValues -&gt;</span>
+<span class="nc" id="L564">                Column(</span>
+<span class="nc" id="L565">                    modifier = Modifier</span>
+<span class="nc" id="L566">                        .fillMaxSize()</span>
+<span class="nc" id="L567">                        .padding(paddingValues)</span>
+<span class="nc" id="L568">                        .padding(horizontal = 16.dp)</span>
+<span class="nc" id="L569">                        .verticalScroll(rememberScrollState()),</span>
+<span class="nc" id="L570">                    verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+                ) {
+<span class="nc" id="L572">                    OutlinedTextField(</span>
+<span class="nc" id="L573">                        value = editor.title,</span>
+<span class="nc" id="L574">                        onValueChange = onTitleChange,</span>
+<span class="nc" id="L575">                        label = { Text(&quot;Title&quot;) },</span>
+<span class="nc" id="L576">                        modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L577">                        singleLine = true,</span>
+                    )
+
+<span class="nc" id="L580">                    Box {</span>
+<span class="nc" id="L581">                        OutlinedTextField(</span>
+<span class="nc" id="L582">                            value = categoryOf(editor.type).categoryName(),</span>
+<span class="nc" id="L583">                            onValueChange = {},</span>
+<span class="nc" id="L584">                            label = { Text(&quot;Type&quot;) },</span>
+<span class="nc" id="L585">                            readOnly = true,</span>
+<span class="nc" id="L586">                            modifier = Modifier</span>
+<span class="nc" id="L587">                                .fillMaxWidth()</span>
+<span class="nc" id="L588">                                .clickable { showTypeMenu = true },</span>
+<span class="nc" id="L589">                            trailingIcon = {</span>
+<span class="nc" id="L590">                                IconButton(onClick = { showTypeMenu = true }) {</span>
+<span class="nc" id="L591">                                    Icon(</span>
+<span class="nc" id="L592">                                        Icons.Filled.ArrowDropDown,</span>
+<span class="nc" id="L593">                                        contentDescription = &quot;Select type&quot;</span>
+                                    )
+<span class="nc" id="L595">                                }</span>
+<span class="nc" id="L596">                            }</span>
+                        )
+<span class="nc" id="L598">                        DropdownMenu(</span>
+<span class="nc" id="L599">                            expanded = showTypeMenu,</span>
+<span class="nc" id="L600">                            onDismissRequest = { showTypeMenu = false },</span>
+<span class="nc" id="L601">                        ) {</span>
+<span class="nc" id="L602">                            TIME_CATEGORIES.forEach { category -&gt;</span>
+<span class="nc" id="L603">                                DropdownMenuItem(</span>
+<span class="nc" id="L604">                                    text = {</span>
+<span class="nc" id="L605">                                        Row(</span>
+<span class="nc" id="L606">                                            verticalAlignment = Alignment.CenterVertically,</span>
+<span class="nc" id="L607">                                            horizontalArrangement = Arrangement.spacedBy(8.dp),</span>
+                                        ) {
+<span class="nc" id="L609">                                            Box(</span>
+<span class="nc" id="L610">                                                modifier = Modifier</span>
+<span class="nc" id="L611">                                                    .size(10.dp)</span>
+<span class="nc" id="L612">                                                    .clip(CircleShape)</span>
+<span class="nc" id="L613">                                                    .background(category.color)</span>
+                                            )
+<span class="nc" id="L615">                                            Text(category.categoryName())</span>
+<span class="nc" id="L616">                                        }</span>
+<span class="nc" id="L617">                                    },</span>
+<span class="nc" id="L618">                                    onClick = {</span>
+<span class="nc" id="L619">                                        onTypeChange(category.id)</span>
+<span class="nc" id="L620">                                        showTypeMenu = false</span>
+<span class="nc" id="L621">                                    },</span>
+                                )
+<span class="nc" id="L623">                            }</span>
+<span class="nc" id="L624">                        }</span>
+<span class="nc" id="L625">                    }</span>
+
+<span class="nc" id="L627">                    OutlinedButton(</span>
+<span class="nc" id="L628">                        onClick = { showStartPicker = true },</span>
+<span class="nc" id="L629">                        modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L630">                    ) {</span>
+<span class="nc" id="L631">                        Icon(Icons.Filled.Schedule, contentDescription = null)</span>
+<span class="nc" id="L632">                        Text(&quot;  Start: ${editor.start.format(DATE_TIME_FORMATTER)}&quot;)</span>
+<span class="nc" id="L633">                    }</span>
+
+<span class="nc" id="L635">                    OutlinedButton(</span>
+<span class="nc" id="L636">                        onClick = { showEndPicker = true },</span>
+<span class="nc" id="L637">                        modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L638">                    ) {</span>
+<span class="nc" id="L639">                        Icon(Icons.Filled.Schedule, contentDescription = null)</span>
+<span class="nc" id="L640">                        Text(&quot;  End: ${editor.end.format(DATE_TIME_FORMATTER)}&quot;)</span>
+<span class="nc" id="L641">                    }</span>
+
+<span class="nc" id="L643">                    Text(</span>
+<span class="nc" id="L644">                        text = &quot;Quick duration (minutes):&quot;,</span>
+<span class="nc" id="L645">                        style = MaterialTheme.typography.labelLarge,</span>
+                    )
+<span class="nc" id="L647">                    Row(</span>
+<span class="nc" id="L648">                        modifier = Modifier.horizontalScroll(rememberScrollState()),</span>
+<span class="nc" id="L649">                        horizontalArrangement = Arrangement.spacedBy(8.dp),</span>
+                    ) {
+<span class="nc" id="L651">                        listOf(30L, 60L, 90L, 120L).forEach { option -&gt;</span>
+<span class="nc" id="L652">                            AssistChip(</span>
+<span class="nc" id="L653">                                onClick = { onDurationClick(option) },</span>
+<span class="nc" id="L654">                                label = { Text(&quot;${option}m&quot;) },</span>
+                            )
+<span class="nc" id="L656">                        }</span>
+<span class="nc" id="L657">                    }</span>
+
+<span class="nc" id="L659">                    OutlinedTextField(</span>
+<span class="nc" id="L660">                        value = editor.description,</span>
+<span class="nc" id="L661">                        onValueChange = onDescriptionChange,</span>
+<span class="nc" id="L662">                        label = { Text(&quot;Description (optional)&quot;) },</span>
+<span class="nc" id="L663">                        modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L664">                        minLines = 5,</span>
+                    )
+
+<span class="nc bnc" id="L667" title="All 2 branches missed.">                    if (!editor.end.isAfter(editor.start)) {</span>
+<span class="nc" id="L668">                        Text(</span>
+<span class="nc" id="L669">                            text = &quot;End time must be after start time.&quot;,</span>
+<span class="nc" id="L670">                            color = MaterialTheme.colorScheme.error,</span>
+<span class="nc" id="L671">                            style = MaterialTheme.typography.bodySmall,</span>
+                        )
+<span class="nc" id="L673">                    }</span>
+<span class="nc" id="L674">                }</span>
+<span class="nc" id="L675">            }</span>
+<span class="nc" id="L676">        }</span>
+<span class="nc" id="L677">    }</span>
+<span class="nc" id="L678">}</span>
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DateOnlyPickerDialog(
+    initialDate: LocalDate,
+    onDismiss: () -&gt; Unit,
+    onConfirm: (LocalDate) -&gt; Unit,
+<span class="nc bnc" id="L686" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L687">    val datePickerState = rememberDatePickerState(</span>
+<span class="nc" id="L688">        initialSelectedDateMillis = initialDate.atStartOfDay(ZoneOffset.UTC)</span>
+<span class="nc" id="L689">            .toInstant()</span>
+<span class="nc" id="L690">            .toEpochMilli()</span>
+    )
+
+<span class="nc" id="L693">    DatePickerDialog(</span>
+<span class="nc" id="L694">        onDismissRequest = onDismiss,</span>
+<span class="nc" id="L695">        confirmButton = {</span>
+<span class="nc" id="L696">            TextButton(onClick = {</span>
+<span class="nc" id="L697">                val millis = datePickerState.selectedDateMillis</span>
+<span class="nc bnc" id="L698" title="All 2 branches missed.">                if (millis != null) {</span>
+<span class="nc" id="L699">                    val selected = Instant.ofEpochMilli(millis)</span>
+<span class="nc" id="L700">                        .atZone(ZoneOffset.UTC)</span>
+<span class="nc" id="L701">                        .toLocalDate()</span>
+<span class="nc" id="L702">                    onConfirm(selected)</span>
+                } else {
+<span class="nc" id="L704">                    onConfirm(initialDate)</span>
+                }
+<span class="nc" id="L706">            }) {</span>
+<span class="nc" id="L707">                Text(&quot;Confirm&quot;)</span>
+<span class="nc" id="L708">            }</span>
+<span class="nc" id="L709">        },</span>
+<span class="nc" id="L710">        dismissButton = {</span>
+<span class="nc" id="L711">            TextButton(onClick = onDismiss) {</span>
+<span class="nc" id="L712">                Text(&quot;Cancel&quot;)</span>
+<span class="nc" id="L713">            }</span>
+<span class="nc" id="L714">        },</span>
+<span class="nc" id="L715">    ) {</span>
+<span class="nc" id="L716">        DatePicker(state = datePickerState)</span>
+<span class="nc" id="L717">    }</span>
+<span class="nc" id="L718">}</span>
+
+private enum class PickerStep {
+<span class="nc" id="L721">    DATE,</span>
+<span class="nc" id="L722">    TIME,</span>
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DateTimePickerDialog(
+    initialDateTime: LocalDateTime,
+    onDismiss: () -&gt; Unit,
+    onConfirm: (LocalDateTime) -&gt; Unit,
+<span class="nc bnc" id="L731" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L732">    var step by remember { mutableStateOf(PickerStep.DATE) }</span>
+<span class="nc" id="L733">    var selectedDate by remember { mutableStateOf(initialDateTime.toLocalDate()) }</span>
+<span class="nc" id="L734">    val datePickerState = rememberDatePickerState(</span>
+<span class="nc" id="L735">        initialSelectedDateMillis = initialDateTime.toLocalDate()</span>
+<span class="nc" id="L736">            .atStartOfDay(ZoneOffset.UTC)</span>
+<span class="nc" id="L737">            .toInstant()</span>
+<span class="nc" id="L738">            .toEpochMilli()</span>
+    )
+<span class="nc" id="L740">    val timePickerState = rememberTimePickerState(</span>
+<span class="nc" id="L741">        initialHour = initialDateTime.hour,</span>
+<span class="nc" id="L742">        initialMinute = initialDateTime.minute,</span>
+<span class="nc" id="L743">        is24Hour = true,</span>
+    )
+
+<span class="nc bnc" id="L746" title="All 2 branches missed.">    if (step == PickerStep.DATE) {</span>
+<span class="nc" id="L747">        DatePickerDialog(</span>
+<span class="nc" id="L748">            onDismissRequest = onDismiss,</span>
+<span class="nc" id="L749">            confirmButton = {</span>
+<span class="nc" id="L750">                TextButton(onClick = {</span>
+<span class="nc" id="L751">                    val millis = datePickerState.selectedDateMillis</span>
+<span class="nc bnc" id="L752" title="All 2 branches missed.">                    if (millis != null) {</span>
+<span class="nc" id="L753">                        selectedDate = Instant.ofEpochMilli(millis)</span>
+<span class="nc" id="L754">                            .atZone(ZoneOffset.UTC)</span>
+<span class="nc" id="L755">                            .toLocalDate()</span>
+                    }
+<span class="nc" id="L757">                    step = PickerStep.TIME</span>
+<span class="nc" id="L758">                }) {</span>
+<span class="nc" id="L759">                    Text(&quot;Next&quot;)</span>
+<span class="nc" id="L760">                }</span>
+<span class="nc" id="L761">            },</span>
+<span class="nc" id="L762">            dismissButton = {</span>
+<span class="nc" id="L763">                TextButton(onClick = onDismiss) {</span>
+<span class="nc" id="L764">                    Text(&quot;Cancel&quot;)</span>
+<span class="nc" id="L765">                }</span>
+<span class="nc" id="L766">            },</span>
+<span class="nc" id="L767">        ) {</span>
+<span class="nc" id="L768">            DatePicker(state = datePickerState)</span>
+<span class="nc" id="L769">        }</span>
+<span class="nc" id="L770">    } else {</span>
+<span class="nc" id="L771">        AlertDialog(</span>
+<span class="nc" id="L772">            onDismissRequest = onDismiss,</span>
+<span class="nc" id="L773">            title = { Text(&quot;Pick Time&quot;) },</span>
+<span class="nc" id="L774">            text = {</span>
+<span class="nc" id="L775">                TimePicker(state = timePickerState)</span>
+<span class="nc" id="L776">            },</span>
+<span class="nc" id="L777">            confirmButton = {</span>
+<span class="nc" id="L778">                TextButton(onClick = {</span>
+<span class="nc" id="L779">                    val localDateTime = LocalDateTime.of(</span>
+<span class="nc" id="L780">                        selectedDate,</span>
+<span class="nc" id="L781">                        LocalTime.of(timePickerState.hour, timePickerState.minute),</span>
+                    )
+<span class="nc" id="L783">                    onConfirm(localDateTime)</span>
+<span class="nc" id="L784">                }) {</span>
+<span class="nc" id="L785">                    Text(&quot;Confirm&quot;)</span>
+<span class="nc" id="L786">                }</span>
+<span class="nc" id="L787">            },</span>
+<span class="nc" id="L788">            dismissButton = {</span>
+<span class="nc" id="L789">                TextButton(onClick = onDismiss) {</span>
+<span class="nc" id="L790">                    Text(&quot;Cancel&quot;)</span>
+<span class="nc" id="L791">                }</span>
+<span class="nc" id="L792">            },</span>
+        )
+    }
+<span class="nc" id="L795">}</span>
+
+<span class="nc" id="L797">private data class TimeCategory(</span>
+<span class="nc" id="L798">    val id: Int,</span>
+<span class="nc" id="L799">    val name: String,</span>
+<span class="nc" id="L800">    val color: Color,</span>
+<span class="nc" id="L801">    val description: String,</span>
+)
+
+<span class="nc" id="L804">private val TIME_CATEGORIES = listOf(</span>
+<span class="nc" id="L805">    TimeCategory(1, &quot;Lavender&quot;, Color(0xFFC7CEFF), &quot;Diary, Personal&quot;),</span>
+<span class="nc" id="L806">    TimeCategory(2, &quot;Sage&quot;, Color(0xFFB7DDB2), &quot;Reading, Study&quot;),</span>
+<span class="nc" id="L807">    TimeCategory(3, &quot;Grape&quot;, Color(0xFFA68AD8), &quot;Calm, Soothing&quot;),</span>
+<span class="nc" id="L808">    TimeCategory(4, &quot;Flamingo&quot;, Color(0xFFFF9CB3), &quot;Freelance&quot;),</span>
+<span class="nc" id="L809">    TimeCategory(5, &quot;Banana&quot;, Color(0xFFFFE082), &quot;Working&quot;),</span>
+<span class="nc" id="L810">    TimeCategory(6, &quot;Tangerine&quot;, Color(0xFFFFB36B), &quot;Game, Fun with Tink&quot;),</span>
+<span class="nc" id="L811">    TimeCategory(7, &quot;Peacock&quot;, Color(0xFF75D7D8), &quot;Parenting&quot;),</span>
+<span class="nc" id="L812">    TimeCategory(8, &quot;Graphite&quot;, Color(0xFF9E9E9E), &quot;Leisure&quot;),</span>
+<span class="nc" id="L813">    TimeCategory(9, &quot;Blueberry&quot;, Color(0xFF4F6FD5), &quot;Deep Thinking, Coding&quot;),</span>
+<span class="nc" id="L814">    TimeCategory(10, &quot;Basil&quot;, Color(0xFF4E8F58), &quot;Outdoors, Nature&quot;),</span>
+<span class="nc" id="L815">    TimeCategory(11, &quot;Tomato&quot;, Color(0xFFE35D5B), &quot;Important, Urgent&quot;),</span>
+)
+
+private fun categoryOf(id: Int): TimeCategory {
+<span class="nc bnc" id="L819" title="All 4 branches missed.">    return TIME_CATEGORIES.firstOrNull { it.id == id }</span>
+<span class="nc" id="L820">        ?: TimeCategory(id = id, name = &quot;Type $id&quot;, color = Color.Gray, description = &quot;Unknown&quot;)</span>
+}
+
+private fun TimeCategory.categoryName(): String {
+<span class="nc bnc" id="L824" title="All 2 branches missed.">    return description.ifBlank { name }</span>
+}
+
+private fun formatDuration(duration: Long): String {
+<span class="nc" id="L828">    return formatDurationMinutes(duration)</span>
+}
+
+private fun formatDurationMinutes(minutes: Long): String {
+<span class="nc" id="L832">    val safeMinutes = minutes.coerceAtLeast(0)</span>
+<span class="nc" id="L833">    val hours = safeMinutes / 60</span>
+<span class="nc" id="L834">    val remain = safeMinutes % 60</span>
+<span class="nc bnc" id="L835" title="All 2 branches missed.">    return if (hours &gt; 0) &quot;${hours}h ${remain}m&quot; else &quot;${remain}m&quot;</span>
+}
+
+<span class="nc" id="L838">private val DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE</span>
+<span class="nc" id="L839">private val DAY_HEADER_FORMATTER = DateTimeFormatter.ofPattern(&quot;EEE, MMM d&quot;)</span>
+<span class="nc" id="L840">private val TIME_FORMATTER = DateTimeFormatter.ofPattern(&quot;HH:mm&quot;)</span>
+<span class="nc" id="L841">private val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd HH:mm&quot;)</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
