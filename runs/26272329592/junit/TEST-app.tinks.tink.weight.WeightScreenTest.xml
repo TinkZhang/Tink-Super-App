@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.weight.WeightScreenTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-22T06:33:46.539Z" hostname="runnervmg397c" time="0.524">
+  <properties/>
+  <testcase name="overview_invokesOpenHistory_whenHistoryButtonClicked" classname="app.tinks.tink.weight.WeightScreenTest" time="0.313"/>
+  <testcase name="historyList_rendersWeightsAndInvokesDelete" classname="app.tinks.tink.weight.WeightScreenTest" time="0.115"/>
+  <testcase name="historyList_rendersEmptyState" classname="app.tinks.tink.weight.WeightScreenTest" time="0.096"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

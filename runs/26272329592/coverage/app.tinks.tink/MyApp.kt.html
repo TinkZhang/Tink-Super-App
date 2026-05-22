@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MyApp.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink</a> &gt; <span class="el_source">MyApp.kt</span></div><h1>MyApp.kt</h1><pre class="source lang-java linenums">package app.tinks.tink
+
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.ui.NavDisplay
+import app.tinks.tink.book.BookScreen
+import app.tinks.tink.haircut.HaircutScreen
+import app.tinks.tink.merriam.MerriamScreen
+import app.tinks.tink.navigation.MyNavKey
+import app.tinks.tink.navigation.ScreenA
+import app.tinks.tink.navigation.ScreenB
+import app.tinks.tink.navigation.ScreenBooks
+import app.tinks.tink.navigation.ScreenHair
+import app.tinks.tink.navigation.ScreenLearntZi
+import app.tinks.tink.navigation.ScreenLeeter
+import app.tinks.tink.navigation.ScreenMerriam
+import app.tinks.tink.navigation.ScreenSettings
+import app.tinks.tink.navigation.ScreenStoryDetail
+import app.tinks.tink.navigation.ScreenStoryList
+import app.tinks.tink.navigation.ScreenTime
+import app.tinks.tink.navigation.ScreenWeight
+import app.tinks.tink.navigation.ScreenWeightHistory
+import app.tinks.tink.navigation.ScreenZi
+import app.tinks.tink.navigation.allTopDestinations
+import app.tinks.tink.navigation.topDestination
+import app.tinks.tink.settings.SettingsScreen
+import app.tinks.tink.story.StoryDetailScreen
+import app.tinks.tink.story.StoryListScreen
+import app.tinks.tink.time.TimeEvent
+import app.tinks.tink.time.TimeScreen
+import app.tinks.tink.time.TimeViewModel
+import app.tinks.tink.ui.components.AppSnackbarBus
+import app.tinks.tink.weight.WeightHistoryScreen
+import app.tinks.tink.weight.WeightScreen
+import app.tinks.tink.zi.ZiScreen
+import app.tinks.tink.zi.zilist.LearntZiListScreen
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MyApp(
+<span class="nc bnc" id="L80" title="All 2 branches missed.">    modifier: Modifier = Modifier,</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">    quickAddRequestId: Int = 0,</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">    openAddFromQuickSettings: Boolean = false,</span>
+<span class="nc" id="L83">    onQuickSettingsRequestConsumed: () -&gt; Unit = {},</span>
+<span class="nc bnc" id="L84" title="All 30 branches missed.">) {</span>
+<span class="nc" id="L85">    val backStack = remember { mutableStateListOf&lt;MyNavKey&gt;(ScreenA) }</span>
+<span class="nc" id="L86">    val currentKey = backStack.lastOrNull()</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">    val currentTopDestination = currentKey?.topDestination()</span>
+<span class="nc" id="L88">    var pendingQuickAddRequestId by remember { mutableStateOf&lt;Int?&gt;(null) }</span>
+<span class="nc" id="L89">    var handledQuickAddRequestId by remember { mutableStateOf&lt;Int?&gt;(null) }</span>
+
+<span class="nc" id="L91">    val onNavigate: (MyNavKey) -&gt; Unit = { destination -&gt;</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (currentKey != destination) {</span>
+<span class="nc bnc" id="L93" title="All 4 branches missed.">            if (backStack.isNotEmpty()) {</span>
+<span class="nc" id="L94">                backStack.removeLast()</span>
+            }
+<span class="nc" id="L96">            backStack.add(destination)</span>
+        }
+<span class="nc" id="L98">    }</span>
+
+    fun navigateBack() {
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (backStack.size &gt; 1) {</span>
+<span class="nc" id="L102">            backStack.removeLast()</span>
+        }
+<span class="nc" id="L104">    }</span>
+
+<span class="nc" id="L106">    val drawerState = rememberDrawerState(DrawerValue.Closed)</span>
+<span class="nc" id="L107">    val snackbarHostState = remember { SnackbarHostState() }</span>
+<span class="nc" id="L108">    var menuExpanded by remember { mutableStateOf(false) }</span>
+
+<span class="nc" id="L110">    val scope = rememberCoroutineScope()</span>
+
+<span class="nc" id="L112">    LaunchedEffect(Unit) {</span>
+<span class="nc" id="L113">        AppSnackbarBus.events.collect { event -&gt;</span>
+<span class="nc" id="L114">            val result = snackbarHostState.showSnackbar(</span>
+<span class="nc" id="L115">                message = event.message,</span>
+<span class="nc" id="L116">                actionLabel = event.actionLabel,</span>
+<span class="nc" id="L117">                duration = SnackbarDuration.Short</span>
+            )
+<span class="nc bnc" id="L119" title="All 2 branches missed.">            if (result == SnackbarResult.ActionPerformed) {</span>
+<span class="nc" id="L120">                event.onAction()</span>
+            }
+<span class="nc" id="L122">        }</span>
+    }
+
+<span class="nc bnc" id="L125" title="All 6 branches missed.">    LaunchedEffect(openAddFromQuickSettings, quickAddRequestId) {</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        if (openAddFromQuickSettings) {</span>
+<span class="nc" id="L127">            onNavigate(ScreenTime)</span>
+<span class="nc" id="L128">            pendingQuickAddRequestId = quickAddRequestId</span>
+<span class="nc" id="L129">            onQuickSettingsRequestConsumed()</span>
+        }
+<span class="nc" id="L131">    }</span>
+
+<span class="nc" id="L133">    ModalNavigationDrawer(</span>
+<span class="nc" id="L134">        drawerContent = {</span>
+<span class="nc" id="L135">            ModalDrawerSheet(Modifier.width(280.dp)) {</span>
+<span class="nc" id="L136">                Text(</span>
+<span class="nc" id="L137">                    &quot;Tink's 2026&quot;,</span>
+<span class="nc" id="L138">                    style = MaterialTheme.typography.headlineSmall,</span>
+<span class="nc" id="L139">                    modifier = Modifier.padding(24.dp)</span>
+                )
+<span class="nc" id="L141">                HorizontalDivider()</span>
+<span class="nc" id="L142">                allTopDestinations.forEach { dest -&gt;</span>
+<span class="nc" id="L143">                    NavigationDrawerItem(</span>
+<span class="nc" id="L144">                        label = { Text(dest.label) },</span>
+<span class="nc" id="L145">                        icon = { Icon(dest.icon, dest.label) },</span>
+<span class="nc" id="L146">                        selected = currentTopDestination == dest,</span>
+<span class="nc" id="L147">                        onClick = {</span>
+<span class="nc" id="L148">                            onNavigate(dest)</span>
+<span class="nc" id="L149">                            scope.launch { drawerState.close() }</span>
+<span class="nc" id="L150">                        },</span>
+<span class="nc" id="L151">                        modifier = Modifier</span>
+<span class="nc" id="L152">                            .padding(NavigationDrawerItemDefaults.ItemPadding)</span>
+<span class="nc" id="L153">                            .testTag(dest.drawerTestTag())</span>
+                    )
+<span class="nc" id="L155">                }</span>
+<span class="nc" id="L156">            }</span>
+<span class="nc" id="L157">        },</span>
+<span class="nc" id="L158">        drawerState = drawerState,</span>
+<span class="nc" id="L159">        gesturesEnabled = true</span>
+<span class="nc" id="L160">    ) {</span>
+<span class="nc" id="L161">        Scaffold(</span>
+<span class="nc" id="L162">            modifier = modifier.fillMaxSize(),</span>
+<span class="nc" id="L163">            snackbarHost = {</span>
+<span class="nc" id="L164">                SnackbarHost(hostState = snackbarHostState)</span>
+<span class="nc" id="L165">            },</span>
+<span class="nc" id="L166">            topBar = {</span>
+<span class="nc" id="L167">                TopAppBar(</span>
+<span class="nc bnc" id="L168" title="All 4 branches missed.">                    title = { Text(currentKey?.label ?: &quot;响应式应用&quot;) },</span>
+                    // 左上角添加菜单按钮，点击打开抽屉
+<span class="nc" id="L170">                    navigationIcon = {</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">                        if (currentKey in allTopDestinations) {</span>
+<span class="nc" id="L172">                            IconButton(</span>
+<span class="nc" id="L173">                                onClick = { scope.launch { drawerState.open() } },</span>
+<span class="nc" id="L174">                                modifier = Modifier.testTag(&quot;top_bar_menu_button&quot;)</span>
+<span class="nc" id="L175">                            ) {</span>
+<span class="nc" id="L176">                                Icon(</span>
+<span class="nc" id="L177">                                    Icons.Filled.Menu,</span>
+<span class="nc" id="L178">                                    contentDescription = &quot;打开抽屉&quot;</span>
+                                )
+<span class="nc" id="L180">                            }</span>
+<span class="nc" id="L181">                        } else {</span>
+<span class="nc" id="L182">                            IconButton(</span>
+<span class="nc" id="L183">                                onClick = { navigateBack() },</span>
+<span class="nc" id="L184">                                modifier = Modifier.testTag(&quot;top_bar_back_button&quot;)</span>
+<span class="nc" id="L185">                            ) {</span>
+<span class="nc" id="L186">                                Icon(</span>
+<span class="nc" id="L187">                                    Icons.AutoMirrored.Filled.ArrowBack,</span>
+<span class="nc" id="L188">                                    contentDescription = &quot;返回上级&quot;</span>
+                                )
+<span class="nc" id="L190">                            }</span>
+                        }
+<span class="nc" id="L192">                    },</span>
+<span class="nc" id="L193">                    actions = {</span>
+<span class="nc" id="L194">                        IconButton(onClick = { menuExpanded = true }) {</span>
+<span class="nc" id="L195">                            Icon(Icons.Filled.MoreVert, contentDescription = &quot;更多&quot;)</span>
+<span class="nc" id="L196">                        }</span>
+<span class="nc" id="L197">                        DropdownMenu(</span>
+<span class="nc" id="L198">                            expanded = menuExpanded,</span>
+<span class="nc" id="L199">                            onDismissRequest = { menuExpanded = false }</span>
+<span class="nc" id="L200">                        ) {</span>
+<span class="nc" id="L201">                            DropdownMenuItem(</span>
+<span class="nc" id="L202">                                text = { Text(&quot;设置&quot;) },</span>
+<span class="nc" id="L203">                                onClick = {</span>
+<span class="nc" id="L204">                                    menuExpanded = false</span>
+<span class="nc" id="L205">                                    backStack.add(ScreenSettings)</span>
+<span class="nc" id="L206">                                }</span>
+                            )
+<span class="nc" id="L208">                        }</span>
+<span class="nc" id="L209">                    }</span>
+                )
+<span class="nc" id="L211">            }</span>
+<span class="nc" id="L212">        ) { paddingValues -&gt;</span>
+<span class="nc" id="L213">            NavDisplay(</span>
+<span class="nc" id="L214">                backStack = backStack,</span>
+<span class="nc" id="L215">                modifier = Modifier</span>
+<span class="nc" id="L216">                    .padding(paddingValues)</span>
+<span class="nc" id="L217">                    .fillMaxSize(),</span>
+<span class="nc" id="L218">                onBack = { navigateBack() },</span>
+<span class="nc" id="L219">            ) { key -&gt;</span>
+<span class="nc" id="L220">                NavEntry(key) {</span>
+<span class="nc" id="L221">                    when (key) {</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">                        is ScreenA -&gt; TimeScreen(hiltViewModel())</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">                        is ScreenB -&gt; WeightScreen(</span>
+<span class="nc" id="L224">                            hiltViewModel(),</span>
+<span class="nc" id="L225">                            onOpenHistory = { backStack.add(ScreenWeightHistory) },</span>
+                        )
+<span class="nc bnc" id="L227" title="All 2 branches missed.">                        is ScreenWeight -&gt; WeightScreen(</span>
+<span class="nc" id="L228">                            hiltViewModel(),</span>
+<span class="nc" id="L229">                            onOpenHistory = { backStack.add(ScreenWeightHistory) },</span>
+                        )
+<span class="nc bnc" id="L231" title="All 2 branches missed.">                        is ScreenWeightHistory -&gt; WeightHistoryScreen(hiltViewModel())</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">                        is ScreenHair -&gt; HaircutScreen(hiltViewModel())</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">                        is ScreenLeeter -&gt; HaircutScreen(hiltViewModel())</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">                        is ScreenZi -&gt; ZiScreen(</span>
+<span class="nc" id="L235">                            hiltViewModel(),</span>
+<span class="nc" id="L236">                            onNavigationEvent = { backStack.add(ScreenLearntZi) },</span>
+<span class="nc" id="L237">                            onStoryListNavigation = { backStack.add(ScreenStoryList) }</span>
+                        )
+<span class="nc bnc" id="L239" title="All 2 branches missed.">                        is ScreenLearntZi -&gt; LearntZiListScreen(hiltViewModel())</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">                        is ScreenMerriam -&gt; MerriamScreen(hiltViewModel())</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">                        is ScreenTime -&gt; {</span>
+<span class="nc" id="L242">                            val timeViewModel = hiltViewModel&lt;TimeViewModel&gt;()</span>
+<span class="nc" id="L243">                            LaunchedEffect(pendingQuickAddRequestId) {</span>
+<span class="nc" id="L244">                                val requestId = pendingQuickAddRequestId</span>
+<span class="nc bnc" id="L245" title="All 6 branches missed.">                                if (requestId != null &amp;&amp; requestId != handledQuickAddRequestId) {</span>
+<span class="nc" id="L246">                                    timeViewModel.onEvent(TimeEvent.OpenAddDialog)</span>
+<span class="nc" id="L247">                                    handledQuickAddRequestId = requestId</span>
+                                }
+<span class="nc" id="L249">                            }</span>
+<span class="nc" id="L250">                            TimeScreen(timeViewModel)</span>
+                        }
+<span class="nc bnc" id="L252" title="All 2 branches missed.">                        is ScreenSettings -&gt; SettingsScreen(hiltViewModel())</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">                        is ScreenBooks -&gt; BookScreen(hiltViewModel())</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">                        is ScreenStoryList -&gt; StoryListScreen(</span>
+<span class="nc" id="L255">                            hiltViewModel(),</span>
+<span class="nc" id="L256">                            onStoryClick = { story -&gt;</span>
+<span class="nc" id="L257">                                backStack.add(ScreenStoryDetail(story.id))</span>
+<span class="nc" id="L258">                            }</span>
+                        )
+<span class="nc bnc" id="L260" title="All 2 branches missed.">                        is ScreenStoryDetail -&gt; StoryDetailScreen(</span>
+<span class="nc" id="L261">                            hiltViewModel(),</span>
+<span class="nc" id="L262">                            storyId = key.storyId</span>
+                        )
+<span class="nc" id="L264">                    }</span>
+<span class="nc" id="L265">                }</span>
+            }
+<span class="nc" id="L267">        }</span>
+<span class="nc" id="L268">    }</span>
+<span class="nc" id="L269">}</span>
+
+<span class="nc" id="L271">private fun MyNavKey.drawerTestTag(): String = when (this) {</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">    ScreenA -&gt; &quot;drawer_destination_home&quot;</span>
+<span class="nc bnc" id="L273" title="All 4 branches missed.">    ScreenB, ScreenWeight -&gt; &quot;drawer_destination_weight&quot;</span>
+<span class="nc bnc" id="L274" title="All 2 branches missed.">    ScreenHair -&gt; &quot;drawer_destination_hair&quot;</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">    ScreenLeeter -&gt; &quot;drawer_destination_leeter&quot;</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">    ScreenZi -&gt; &quot;drawer_destination_zi&quot;</span>
+<span class="nc bnc" id="L277" title="All 2 branches missed.">    ScreenMerriam -&gt; &quot;drawer_destination_merriam&quot;</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">    ScreenTime -&gt; &quot;drawer_destination_time&quot;</span>
+<span class="nc bnc" id="L279" title="All 2 branches missed.">    ScreenBooks -&gt; &quot;drawer_destination_books&quot;</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">    ScreenSettings -&gt; &quot;drawer_destination_settings&quot;</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">    ScreenLearntZi -&gt; &quot;drawer_destination_learnt_zi&quot;</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">    ScreenStoryList -&gt; &quot;drawer_destination_story_list&quot;</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">    is ScreenStoryDetail -&gt; &quot;drawer_destination_story_detail&quot;</span>
+<span class="nc" id="L284">    ScreenWeightHistory -&gt; &quot;drawer_destination_weight_history&quot;</span>
+<span class="nc" id="L285">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

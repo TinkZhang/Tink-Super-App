@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.haircut.HaircutViewModelTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-05-22T06:33:46.197Z" hostname="runnervmg397c" time="0.062">
+  <properties/>
+  <testcase name="addHaircutFabClick_showsDialogAndDismissHidesIt" classname="app.tinks.tink.haircut.HaircutViewModelTest" time="0.041"/>
+  <testcase name="submitHaircut_postsAndRefreshesHistory" classname="app.tinks.tink.haircut.HaircutViewModelTest" time="0.013"/>
+  <testcase name="deleteHaircut_deletesAndRefreshesHistory" classname="app.tinks.tink.haircut.HaircutViewModelTest" time="0.005"/>
+  <testcase name="init_loadsHistoryAndCalculatesDaysSinceLatestHaircut" classname="app.tinks.tink.haircut.HaircutViewModelTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
