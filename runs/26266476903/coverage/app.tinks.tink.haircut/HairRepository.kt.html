@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HairRepository.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.haircut</a> &gt; <span class="el_source">HairRepository.kt</span></div><h1>HairRepository.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.haircut
+
+import app.tinks.tink.haircut.data.Haircut
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.network.safeApiCall
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.datetime.LocalDate
+import javax.inject.Inject
+import javax.inject.Singleton
+
+<span class="nc" id="L14">@Singleton</span>
+<span class="nc" id="L15">class HaircutRepository @Inject constructor(</span>
+<span class="nc" id="L16">    private val api: HaircutApi,</span>
+) {
+<span class="nc bnc" id="L18" title="All 5 branches missed.">    fun getHaircuts(): Flow&lt;ApiResult&lt;List&lt;Haircut&gt;&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L19" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L20" title="All 2 branches missed.">        emit(</span>
+<span class="nc" id="L21">            safeApiCall {</span>
+<span class="nc bnc" id="L22" title="All 2 branches missed.">                api.getHaircuts()</span>
+<span class="nc" id="L23">                    .map { it.toDomain() }</span>
+<span class="nc" id="L24">                    .sortedByDescending { it.date }</span>
+            }
+        )
+<span class="nc" id="L27">    }.flowOn(Dispatchers.IO)</span>
+
+    fun addHaircut(
+        price: Int,
+        shopName: String,
+        date: LocalDate,
+<span class="nc bnc" id="L33" title="All 5 branches missed.">    ): Flow&lt;ApiResult&lt;Haircut&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        emit(</span>
+<span class="nc" id="L36">            safeApiCall {</span>
+<span class="nc bnc" id="L37" title="All 2 branches missed.">                api.createHaircut(</span>
+<span class="nc" id="L38">                    payload = HaircutCreateRequest(</span>
+<span class="nc" id="L39">                        shopName = shopName,</span>
+<span class="nc" id="L40">                        price = price,</span>
+<span class="nc" id="L41">                        createdAt = date,</span>
+                    )
+<span class="nc" id="L43">                ).toDomain()</span>
+            }
+        )
+<span class="nc" id="L46">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L48" title="All 5 branches missed.">    fun deleteHaircut(id: Int): Flow&lt;ApiResult&lt;Unit&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        emit(</span>
+<span class="nc" id="L51">            safeApiCall {</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">                api.deleteHaircut(haircutId = id)</span>
+<span class="nc" id="L53">            }</span>
+        )
+<span class="nc" id="L55">    }.flowOn(Dispatchers.IO)</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

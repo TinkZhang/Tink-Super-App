@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StoryApi.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.story</a> &gt; <span class="el_source">StoryApi.kt</span></div><h1>StoryApi.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.story
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.Path
+import retrofit2.http.Query
+
+interface StoryApi {
+    @GET(&quot;story/story_list&quot;)
+    suspend fun getStoryList(
+        @Query(&quot;page&quot;) page: Int,
+        @Query(&quot;size&quot;) size: Int,
+    ): List&lt;StoryDto&gt;
+
+    @GET(&quot;story/{storyId}&quot;)
+    suspend fun getStory(@Path(&quot;storyId&quot;) storyId: String): StoryDto
+
+    @DELETE(&quot;story/{storyId}&quot;)
+    suspend fun deleteStory(@Path(&quot;storyId&quot;) storyId: String)
+}
+
+<span class="nc bnc" id="L24" title="All 10 branches missed.">@Serializable</span>
+<span class="nc" id="L25">data class StoryDto(</span>
+<span class="nc" id="L26">    val title: String,</span>
+<span class="nc" id="L27">    val content: String? = null,</span>
+<span class="nc" id="L28">    val id: String,</span>
+<span class="nc" id="L29">    @SerialName(&quot;created_at&quot;)</span>
+<span class="nc" id="L30">    val createdAt: String,</span>
+<span class="nc" id="L31">    val length: Int,</span>
+<span class="nc" id="L32">    @SerialName(&quot;unique_char&quot;)</span>
+<span class="nc" id="L33">    val uniqueChar: Int,</span>
+<span class="nc" id="L34">)</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

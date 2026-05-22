@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.weight.WeightViewModelTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:21:42.470Z" hostname="runnervmg397c" time="0.018">
+  <properties/>
+  <testcase name="init_loadsWeightsAndUsesLatestAsDraft" classname="app.tinks.tink.weight.WeightViewModelTest" time="0.006"/>
+  <testcase name="deleteWeight_deletesAndRefreshesWeights" classname="app.tinks.tink.weight.WeightViewModelTest" time="0.004"/>
+  <testcase name="changeSelectedTrendIndex_updatesUiState" classname="app.tinks.tink.weight.WeightViewModelTest" time="0.003"/>
+  <testcase name="addWeight_postsDraftAndRefreshesWeights" classname="app.tinks.tink.weight.WeightViewModelTest" time="0.003"/>
+  <testcase name="adjustWeight_marksDraftChanged" classname="app.tinks.tink.weight.WeightViewModelTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

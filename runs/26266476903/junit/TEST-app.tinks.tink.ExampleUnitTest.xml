@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.ExampleUnitTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:21:28.748Z" hostname="runnervmg397c" time="0.005">
+  <properties/>
+  <testcase name="addition_isCorrect" classname="app.tinks.tink.ExampleUnitTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

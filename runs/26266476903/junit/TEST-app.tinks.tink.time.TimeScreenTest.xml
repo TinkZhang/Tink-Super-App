@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.time.TimeScreenTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:21:39.935Z" hostname="runnervmg397c" time="2.096">
+  <properties/>
+  <testcase name="editorEditLabelsButton_requestsLabelManager" classname="app.tinks.tink.time.TimeScreenTest" time="0.839"/>
+  <testcase name="dashboard_rendersEmptySelectedRange" classname="app.tinks.tink.time.TimeScreenTest" time="0.157"/>
+  <testcase name="dateFields_openDatePickerDialog" classname="app.tinks.tink.time.TimeScreenTest" time="0.86"/>
+  <testcase name="editorLabelChip_appliesLabel" classname="app.tinks.tink.time.TimeScreenTest" time="0.24"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
