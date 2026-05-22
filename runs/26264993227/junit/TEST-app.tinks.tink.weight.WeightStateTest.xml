@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.weight.WeightStateTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-22T02:33:21.816Z" hostname="runnervmg397c" time="0.004">
+  <properties/>
+  <testcase name="toUiState_filtersTrendWeightsToCurrentMonthByDefault" classname="app.tinks.tink.weight.WeightStateTest" time="0.004"/>
+  <testcase name="toUiState_returnsAllTrendWeightsSortedByDate_whenAllRangeSelected" classname="app.tinks.tink.weight.WeightStateTest" time="0.0"/>
+  <testcase name="toUiState_mapsCurrentWeightAndHistory" classname="app.tinks.tink.weight.WeightStateTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

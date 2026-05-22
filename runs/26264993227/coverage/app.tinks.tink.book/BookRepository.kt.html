@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookRepository.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.book</a> &gt; <span class="el_source">BookRepository.kt</span></div><h1>BookRepository.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.book
+
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.network.safeApiCall
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import javax.inject.Inject
+import javax.inject.Singleton
+
+<span class="nc" id="L12">@Singleton</span>
+<span class="nc" id="L13">class BookRepository @Inject constructor(</span>
+<span class="nc" id="L14">    private val bookApi: BookApi,</span>
+<span class="nc" id="L15">    private val googleBooksApi: GoogleBooksApi,</span>
+) {
+<span class="nc bnc" id="L17" title="All 7 branches missed.">    fun getBooks(state: BookState): Flow&lt;ApiResult&lt;List&lt;Book&gt;&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L18" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L19" title="All 2 branches missed.">        emit(</span>
+<span class="nc" id="L20">            safeApiCall {</span>
+<span class="nc bnc" id="L21" title="All 3 branches missed.">                when (state) {</span>
+<span class="nc bnc" id="L22" title="All 2 branches missed.">                    BookState.Wish -&gt; bookApi.getWishlist()</span>
+<span class="nc bnc" id="L23" title="All 2 branches missed.">                    BookState.Reading -&gt; bookApi.getReading()</span>
+<span class="nc bnc" id="L24" title="All 2 branches missed.">                    BookState.Archived -&gt; bookApi.getArchived()</span>
+<span class="nc" id="L25">                }.map { it.toDomain() }</span>
+            }
+        )
+<span class="nc" id="L28">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L30" title="All 5 branches missed.">    fun getBook(bookId: Long): Flow&lt;ApiResult&lt;Book&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L31" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L32" title="All 4 branches missed.">        emit(safeApiCall { bookApi.getBook(bookId).toDomain() })</span>
+<span class="nc" id="L33">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L35" title="All 5 branches missed.">    fun addToWishlist(draft: BookDraft): Flow&lt;ApiResult&lt;Book&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L37" title="All 4 branches missed.">        emit(safeApiCall { bookApi.createWishlistBook(draft.toCreateRequest()).toDomain() })</span>
+<span class="nc" id="L38">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc" id="L40">    fun addToReading(</span>
+        draft: BookDraft,
+<span class="nc" id="L42">        platform: String = &quot;General&quot;,</span>
+<span class="nc bnc" id="L43" title="All 6 branches missed.">    ): Flow&lt;ApiResult&lt;Book&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        emit(</span>
+<span class="nc" id="L46">            safeApiCall {</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">                val created = bookApi.createWishlistBook(draft.toCreateRequest())</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">                bookApi.startReading(</span>
+<span class="nc" id="L49">                    bookId = created.id,</span>
+<span class="nc" id="L50">                    payload = BookStartReadingRequest(</span>
+<span class="nc" id="L51">                        platform = platform,</span>
+<span class="nc" id="L52">                        currentPage = 0,</span>
+<span class="nc" id="L53">                        progressPercentage = 0.0,</span>
+                    )
+<span class="nc" id="L55">                ).toDomain()</span>
+            }
+        )
+<span class="nc" id="L58">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc" id="L60">    fun moveToReading(</span>
+        bookId: Long,
+        platform: String,
+<span class="nc" id="L63">        currentPage: Int? = null,</span>
+<span class="nc" id="L64">        progressPercentage: Double? = null,</span>
+<span class="nc bnc" id="L65" title="All 5 branches missed.">    ): Flow&lt;ApiResult&lt;Book&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        emit(</span>
+<span class="nc" id="L68">            safeApiCall {</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">                bookApi.startReading(</span>
+<span class="nc" id="L70">                    bookId = bookId,</span>
+<span class="nc" id="L71">                    payload = BookStartReadingRequest(</span>
+<span class="nc" id="L72">                        platform = platform,</span>
+<span class="nc" id="L73">                        currentPage = currentPage,</span>
+<span class="nc" id="L74">                        progressPercentage = progressPercentage,</span>
+                    )
+<span class="nc" id="L76">                ).toDomain()</span>
+            }
+        )
+<span class="nc" id="L79">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L81" title="All 5 branches missed.">    fun updateBook(bookId: Long, payload: BookUpdateRequest): Flow&lt;ApiResult&lt;Book&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L83" title="All 4 branches missed.">        emit(safeApiCall { bookApi.updateBook(bookId, payload).toDomain() })</span>
+<span class="nc" id="L84">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc" id="L86">    fun archiveBook(</span>
+        bookId: Long,
+<span class="nc" id="L88">        status: ArchiveStatus = ArchiveStatus.Done,</span>
+<span class="nc bnc" id="L89" title="All 5 branches missed.">    ): Flow&lt;ApiResult&lt;Book&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        emit(</span>
+<span class="nc" id="L92">            safeApiCall {</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">                bookApi.archiveBook(</span>
+<span class="nc" id="L94">                    bookId = bookId,</span>
+<span class="nc" id="L95">                    payload = BookArchiveRequest(status = status.wireValue),</span>
+<span class="nc" id="L96">                ).toDomain()</span>
+            }
+        )
+<span class="nc" id="L99">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L101" title="All 5 branches missed.">    fun deleteBook(bookId: Long): Flow&lt;ApiResult&lt;Unit&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L103" title="All 4 branches missed.">        emit(safeApiCall { bookApi.deleteBook(bookId) })</span>
+<span class="nc" id="L104">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L106" title="All 5 branches missed.">    fun getNotes(bookId: Long): Flow&lt;ApiResult&lt;List&lt;BookNote&gt;&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L108" title="All 4 branches missed.">        emit(safeApiCall { bookApi.getNotes(bookId).map { it.toDomain() } })</span>
+<span class="nc" id="L109">    }.flowOn(Dispatchers.IO)</span>
+
+    fun saveNote(
+        bookId: Long,
+        noteId: Long?,
+        content: String,
+        page: Int?,
+        progressPercentage: Double?,
+<span class="nc bnc" id="L117" title="All 6 branches missed.">    ): Flow&lt;ApiResult&lt;BookNote&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        emit(</span>
+<span class="nc" id="L120">            safeApiCall {</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">                if (noteId == null) {</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">                    bookApi.createNote(</span>
+<span class="nc" id="L123">                        bookId = bookId,</span>
+<span class="nc" id="L124">                        payload = BookNoteCreateRequest(</span>
+<span class="nc" id="L125">                            content = content,</span>
+<span class="nc" id="L126">                            page = page,</span>
+<span class="nc" id="L127">                            progressPercentage = progressPercentage,</span>
+                        ),
+                    )
+                } else {
+<span class="nc bnc" id="L131" title="All 2 branches missed.">                    bookApi.updateNote(</span>
+<span class="nc" id="L132">                        bookId = bookId,</span>
+<span class="nc" id="L133">                        noteId = noteId,</span>
+<span class="nc" id="L134">                        payload = BookNoteUpdateRequest(</span>
+<span class="nc" id="L135">                            content = content,</span>
+<span class="nc" id="L136">                            page = page,</span>
+<span class="nc" id="L137">                            progressPercentage = progressPercentage,</span>
+                        ),
+                    )
+<span class="nc" id="L140">                }.toDomain()</span>
+            }
+        )
+<span class="nc" id="L143">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L145" title="All 5 branches missed.">    fun deleteNote(bookId: Long, noteId: Long): Flow&lt;ApiResult&lt;Unit&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L147" title="All 4 branches missed.">        emit(safeApiCall { bookApi.deleteNote(bookId, noteId) })</span>
+<span class="nc" id="L148">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L150" title="All 5 branches missed.">    fun searchGoogleBooks(keyword: String): Flow&lt;ApiResult&lt;List&lt;BookDraft&gt;&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        emit(</span>
+<span class="nc" id="L153">            safeApiCall {</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">                googleBooksApi.search(keyword = keyword.trim())</span>
+<span class="nc" id="L155">                    .items</span>
+<span class="nc" id="L156">                    .map { it.toDraft() }</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">                    .filter { it.title.isNotBlank() }</span>
+            }
+        )
+<span class="nc" id="L160">    }.flowOn(Dispatchers.IO)</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
