@@ -1,6 +1,7 @@
 package app.tinks.tink.time
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -40,13 +39,11 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
@@ -69,9 +66,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -194,7 +196,6 @@ internal fun TimeScreen(
                     state = state,
                     onStartDateClick = { showStartDatePicker = true },
                     onEndDateClick = { showEndDatePicker = true },
-                    onManageLabels = { onEvent(TimeEvent.OpenLabelManager) },
                     onEdit = { onEvent(TimeEvent.EditEntry(it)) },
                 )
             }
@@ -218,7 +219,6 @@ private fun LazyTimeContent(
     state: TimeUiState,
     onStartDateClick: () -> Unit,
     onEndDateClick: () -> Unit,
-    onManageLabels: () -> Unit,
     onEdit: (TimeEntry) -> Unit,
 ) {
     LazyColumn(
@@ -232,7 +232,6 @@ private fun LazyTimeContent(
                 endDate = state.endDate,
                 onStartDateClick = onStartDateClick,
                 onEndDateClick = onEndDateClick,
-                onManageLabels = onManageLabels,
             )
         }
 
@@ -271,53 +270,23 @@ private fun DateRangeCard(
     endDate: LocalDate,
     onStartDateClick: () -> Unit,
     onEndDateClick: () -> Unit,
-    onManageLabels: () -> Unit,
 ) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Time range",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "Filter statistics and entries",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                FilledTonalButton(onClick = onManageLabels) {
-                    Icon(Icons.Filled.Label, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Labels")
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                DateRangeTextField(
-                    label = "Start",
-                    value = startDate.format(DATE_FORMATTER),
-                    onClick = onStartDateClick,
-                    modifier = Modifier.weight(1f),
-                )
-                DateRangeTextField(
-                    label = "End",
-                    value = endDate.format(DATE_FORMATTER),
-                    onClick = onEndDateClick,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        DateRangeTextField(
+            label = "Start",
+            value = startDate.format(DATE_FORMATTER),
+            onClick = onStartDateClick,
+            modifier = Modifier.weight(1f),
+        )
+        DateRangeTextField(
+            label = "End",
+            value = endDate.format(DATE_FORMATTER),
+            onClick = onEndDateClick,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
@@ -341,81 +310,131 @@ private fun DateRangeTextField(
 @Composable
 private fun StatisticsCard(stats: List<TimeStatistic>) {
     val visibleStats = stats.filter { it.duration > 0 }.sortedByDescending { it.duration }
-    val total = visibleStats.sumOf { it.duration }.coerceAtLeast(1)
+    val total = visibleStats.sumOf { it.duration }
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Duration by type",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "Selected range total",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Text(
-                    text = formatDuration(total.takeIf { visibleStats.isNotEmpty() } ?: 0),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-            if (visibleStats.isEmpty()) {
+        if (visibleStats.isEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                DonutChart(stats = emptyList(), total = 0L)
                 Text(
                     text = "No tracked duration in this range.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            } else {
-                visibleStats.forEach { stat ->
-                    val category = categoryOf(stat.type)
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .clip(CircleShape)
-                                    .background(category.color)
-                            )
-                            Text(
-                                text = category.categoryName(),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(start = 8.dp),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                text = formatDuration(stat.duration),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                        LinearProgressIndicator(
-                            progress = { stat.duration.toFloat() / total.toFloat() },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp),
-                            color = category.color,
-                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    DonutChart(stats = visibleStats, total = total)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Filled.Schedule,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(
+                            text = formatDuration(total),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    visibleStats.take(4).forEach { stat ->
+                        CompactStatLegend(stat = stat)
+                    }
+                    if (visibleStats.size > 4) {
+                        Text(
+                            text = "+${visibleStats.size - 4}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DonutChart(
+    stats: List<TimeStatistic>,
+    total: Long,
+) {
+    val trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    Canvas(modifier = Modifier.size(120.dp)) {
+        val strokeWidth = 18.dp.toPx()
+        val inset = strokeWidth / 2
+        val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
+        drawArc(
+            color = trackColor,
+            startAngle = 0f,
+            sweepAngle = 360f,
+            useCenter = false,
+            topLeft = Offset(inset, inset),
+            size = arcSize,
+            style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
+        )
+        if (total <= 0L) return@Canvas
+
+        var startAngle = -90f
+        stats.forEach { stat ->
+            val sweep = (stat.duration.toFloat() / total.toFloat()) * 360f
+            drawArc(
+                color = categoryOf(stat.type).color,
+                startAngle = startAngle,
+                sweepAngle = sweep,
+                useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = arcSize,
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Butt),
+            )
+            startAngle += sweep
+        }
+    }
+}
+
+@Composable
+private fun CompactStatLegend(stat: TimeStatistic) {
+    val category = categoryOf(stat.type)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(14.dp)
+                .clip(CircleShape)
+                .background(category.color)
+        )
+        Text(
+            text = category.categoryName(),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.labelLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = formatDuration(stat.duration),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 

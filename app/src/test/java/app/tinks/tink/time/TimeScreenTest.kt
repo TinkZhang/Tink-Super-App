@@ -32,25 +32,26 @@ class TimeScreenTest {
             }
         }
 
-        composeRule.onNodeWithText("Time range").assertIsDisplayed()
+        composeRule.onNodeWithText("Start").assertIsDisplayed()
+        composeRule.onNodeWithText("End").assertIsDisplayed()
         composeRule.onNodeWithText("No tracked duration in this range.").assertIsDisplayed()
         composeRule.onNodeWithText("No time entries in selected range.").assertIsDisplayed()
     }
 
     @Test
-    fun labelsButton_requestsLabelManager() {
+    fun editorEditLabelsButton_requestsLabelManager() {
         val events = mutableListOf<TimeEvent>()
 
         composeRule.setContent {
             TinkTheme(dynamicColor = false) {
                 TimeScreen(
-                    state = sampleUiState(),
+                    state = sampleUiState(showEditor = true),
                     onEvent = events::add,
                 )
             }
         }
 
-        composeRule.onNodeWithText("Labels").performClick()
+        composeRule.onNodeWithText("Edit").performClick()
 
         assertTrue(events.contains(TimeEvent.OpenLabelManager))
     }
