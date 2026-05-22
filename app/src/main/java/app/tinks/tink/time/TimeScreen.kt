@@ -72,6 +72,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -279,12 +280,14 @@ private fun DateRangeCard(
             label = "Start",
             value = startDate.format(DATE_FORMATTER),
             onClick = onStartDateClick,
+            testTag = "time_start_date_field",
             modifier = Modifier.weight(1f),
         )
         DateRangeTextField(
             label = "End",
             value = endDate.format(DATE_FORMATTER),
             onClick = onEndDateClick,
+            testTag = "time_end_date_field",
             modifier = Modifier.weight(1f),
         )
     }
@@ -295,16 +298,24 @@ private fun DateRangeTextField(
     label: String,
     value: String,
     onClick: () -> Unit,
+    testTag: String,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = {},
-        label = { Text(label) },
-        readOnly = true,
-        singleLine = true,
-        modifier = modifier.clickable(onClick = onClick),
-    )
+    Box(modifier = modifier.testTag(testTag)) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            label = { Text(label) },
+            readOnly = true,
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable(onClick = onClick)
+        )
+    }
 }
 
 @Composable

@@ -3,6 +3,7 @@ package app.tinks.tink.time
 import android.app.Application
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.tinks.tink.ui.theme.TinkTheme
@@ -36,6 +37,22 @@ class TimeScreenTest {
         composeRule.onNodeWithText("End").assertIsDisplayed()
         composeRule.onNodeWithText("No tracked duration in this range.").assertIsDisplayed()
         composeRule.onNodeWithText("No time entries in selected range.").assertIsDisplayed()
+    }
+
+    @Test
+    fun dateFields_openDatePickerDialog() {
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                TimeScreen(
+                    state = sampleUiState(),
+                    onEvent = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("time_start_date_field").performClick()
+
+        composeRule.onNodeWithText("Confirm").assertIsDisplayed()
     }
 
     @Test
