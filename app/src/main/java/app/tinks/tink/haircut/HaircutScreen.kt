@@ -80,7 +80,7 @@ fun HaircutScreen(viewModel: HaircutViewModel) {
 }
 
 @Composable
-private fun HaircutScreen(
+internal fun HaircutScreen(
     days: Int,
     history: List<Haircut>,
     isLoading: Boolean = false,
