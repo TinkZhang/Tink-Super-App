@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AppEnvironmentRepository.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.settings</a> &gt; <span class="el_source">AppEnvironmentRepository.kt</span></div><h1>AppEnvironmentRepository.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.settings
+
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
+
+enum class ApiEnvironment {
+<span class="nc" id="L14">    Dev,</span>
+<span class="nc" id="L15">    Prod,</span>
+}
+
+<span class="nc" id="L18">@Singleton</span>
+<span class="nc" id="L19">class AppEnvironmentRepository @Inject constructor(</span>
+    @ApplicationContext context: Context,
+) {
+<span class="nc" id="L22">    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)</span>
+<span class="nc" id="L23">    private val environment = MutableStateFlow(loadEnvironment())</span>
+
+<span class="nc" id="L25">    fun observeEnvironment(): Flow&lt;ApiEnvironment&gt; = environment.asStateFlow()</span>
+
+<span class="nc" id="L27">    fun currentEnvironment(): ApiEnvironment = environment.value</span>
+
+<span class="nc" id="L29">    suspend fun setEnvironment(value: ApiEnvironment) = withContext(Dispatchers.IO) {</span>
+<span class="nc" id="L30">        prefs.edit().putString(KEY_API_ENVIRONMENT, value.name).apply()</span>
+<span class="nc" id="L31">        environment.value = value</span>
+<span class="nc" id="L32">    }</span>
+
+    private fun loadEnvironment(): ApiEnvironment {
+<span class="nc" id="L35">        val stored = prefs.getString(KEY_API_ENVIRONMENT, null)</span>
+<span class="nc bnc" id="L36" title="All 6 branches missed.">        return runCatching { stored?.let(ApiEnvironment::valueOf) }.getOrNull()</span>
+<span class="nc" id="L37">            ?: DEFAULT_ENVIRONMENT</span>
+    }
+
+    private companion object {
+        const val PREFS_NAME = &quot;app_environment&quot;
+        const val KEY_API_ENVIRONMENT = &quot;api_environment&quot;
+<span class="nc" id="L43">        val DEFAULT_ENVIRONMENT = ApiEnvironment.Dev</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

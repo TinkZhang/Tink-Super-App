@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.merriam.MerriamScreenTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-23T00:22:22.736Z" hostname="runnervmg397c" time="7.502">
+  <properties/>
+  <testcase name="collapsedUnit_canBeExpanded" classname="app.tinks.tink.merriam.MerriamScreenTest" time="7.097"/>
+  <testcase name="screen_rendersSummaryAndUnits" classname="app.tinks.tink.merriam.MerriamScreenTest" time="0.178"/>
+  <testcase name="longClickRoot_invokesCompleteRoot" classname="app.tinks.tink.merriam.MerriamScreenTest" time="0.227"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

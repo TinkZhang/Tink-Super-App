@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WeeklyDotMap.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.ui.components</a> &gt; <span class="el_source">WeeklyDotMap.kt</span></div><h1>WeeklyDotMap.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.ui.components
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.time.temporal.TemporalAdjusters
+import java.time.temporal.WeekFields
+import java.util.Locale
+
+enum class RecordType {
+<span class="fc" id="L55">    DONE_PAST, MISSED_PAST, DONE_TODAY, TODO_TODAY, FUTURE</span>
+}
+
+<span class="fc" id="L58">data class DailyRecord(</span>
+<span class="pc" id="L59">    val date: LocalDate,</span>
+<span class="pc" id="L60">    val status: RecordType</span>
+)
+
+<span class="fc" id="L63">data class WeeklyRecordData(</span>
+<span class="pc" id="L64">    val hasWeekSummary: Boolean? = null,</span>
+<span class="fc" id="L65">    val records: List&lt;DailyRecord&gt;,</span>
+<span class="fc" id="L66">) {</span>
+    companion object {
+<span class="fc" id="L68">        fun fromWeeklyInt(list: List&lt;Int?&gt;) = WeeklyRecordData(records = mapToDailyRecords(list))</span>
+    }
+}
+
+private fun mapToDailyRecords(values: List&lt;Int?&gt;): List&lt;DailyRecord&gt; {
+<span class="pc bpc" id="L73" title="2 of 4 branches missed.">    require(values.size == 7)</span>
+
+<span class="fc" id="L75">    val today = LocalDate.now()</span>
+<span class="fc" id="L76">    val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))</span>
+
+<span class="fc" id="L78">    return values.mapIndexed { index, value -&gt;</span>
+<span class="fc" id="L79">        val date = startOfWeek.plusDays(index.toLong())</span>
+
+<span class="fc" id="L81">        val status = when {</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">            value == null -&gt;</span>
+<span class="fc" id="L83">                RecordType.FUTURE</span>
+
+<span class="pc bpc" id="L85" title="1 of 4 branches missed.">            date.isEqual(today) &amp;&amp; value &gt; 0 -&gt;</span>
+<span class="nc" id="L86">                RecordType.DONE_TODAY</span>
+
+<span class="pc bpc" id="L88" title="1 of 4 branches missed.">            date.isEqual(today) &amp;&amp; value == 0 -&gt;</span>
+<span class="fc" id="L89">                RecordType.TODO_TODAY</span>
+
+<span class="pc bpc" id="L91" title="1 of 4 branches missed.">            date.isBefore(today) &amp;&amp; value &gt; 0 -&gt;</span>
+<span class="fc" id="L92">                RecordType.DONE_PAST</span>
+
+<span class="pc bpc" id="L94" title="2 of 4 branches missed.">            date.isBefore(today) &amp;&amp; value == 0 -&gt;</span>
+<span class="fc" id="L95">                RecordType.MISSED_PAST</span>
+
+            else -&gt;
+<span class="nc" id="L98">                RecordType.FUTURE</span>
+        }
+
+<span class="fc" id="L101">        DailyRecord(date, status)</span>
+    }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+<span class="nc bnc" id="L107" title="All 2 branches missed.">fun WeeklyRecordMap(</span>
+    data: WeeklyRecordData,
+<span class="nc bnc" id="L109" title="All 2 branches missed.">    modifier: Modifier = Modifier,</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">    swipeOnMap: (Int) -&gt; Unit = {},</span>
+<span class="nc" id="L111">    locale: Locale = Locale.getDefault()</span>
+<span class="nc bnc" id="L112" title="All 32 branches missed.">) {</span>
+<span class="nc" id="L113">    var weekOffset by remember { mutableIntStateOf(0) }</span>
+
+<span class="nc" id="L115">    val swipeThreshold = 100f</span>
+<span class="nc" id="L116">    val dragAmount = remember { mutableFloatStateOf(0f) }</span>
+<span class="nc" id="L117">    val transitionDirection = remember { mutableIntStateOf(0) }</span>
+
+<span class="nc bnc" id="L119" title="All 6 branches missed.">    val currentWeekRange = remember(weekOffset, locale) {</span>
+<span class="nc" id="L120">        getWeekRangeLabel(weekOffset = weekOffset, locale = locale)</span>
+    }
+<span class="nc bnc" id="L122" title="All 2 branches missed.">    LaunchedEffect(true) { swipeOnMap(0) }</span>
+
+<span class="nc" id="L124">    Box(</span>
+<span class="nc" id="L125">        modifier = modifier</span>
+<span class="nc" id="L126">            .fillMaxWidth()</span>
+<span class="nc" id="L127">            .background(MaterialTheme.colorScheme.background)</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">            .pointerInput(Unit) {</span>
+<span class="nc" id="L129">                detectHorizontalDragGestures(</span>
+                    onDragEnd = {
+<span class="nc" id="L131">                        when {</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">                            dragAmount.floatValue &gt; swipeThreshold -&gt; {</span>
+<span class="nc" id="L133">                                transitionDirection.intValue = 1</span>
+<span class="nc" id="L134">                                weekOffset -= 1</span>
+                            }
+
+<span class="nc bnc" id="L137" title="All 2 branches missed.">                            dragAmount.floatValue &lt; -swipeThreshold -&gt; {</span>
+<span class="nc" id="L138">                                transitionDirection.intValue = -1</span>
+<span class="nc" id="L139">                                weekOffset += 1</span>
+                            }
+                        }
+<span class="nc" id="L142">                        dragAmount.floatValue = 0f</span>
+<span class="nc" id="L143">                        swipeOnMap(weekOffset)</span>
+<span class="nc" id="L144">                    },</span>
+                    onHorizontalDrag = { _, dragDistance -&gt;
+<span class="nc" id="L146">                        dragAmount.floatValue += dragDistance</span>
+<span class="nc" id="L147">                    }</span>
+                )
+<span class="nc" id="L149">            }</span>
+    ) {
+<span class="nc" id="L151">        Column(modifier = Modifier.fillMaxWidth()) {</span>
+<span class="nc" id="L152">            Text(</span>
+<span class="nc" id="L153">                text = currentWeekRange,</span>
+<span class="nc" id="L154">                style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L155">                modifier = Modifier</span>
+<span class="nc" id="L156">                    .align(Alignment.CenterHorizontally)</span>
+<span class="nc" id="L157">                    .padding(top = 8.dp, bottom = 8.dp)</span>
+            )
+
+<span class="nc" id="L160">            AnimatedContent(</span>
+<span class="nc" id="L161">                targetState = weekOffset,</span>
+<span class="nc" id="L162">                transitionSpec = {</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">                    if (transitionDirection.intValue == -1) {</span>
+<span class="nc" id="L164">                        (slideInHorizontally { it } + fadeIn()).togetherWith(slideOutHorizontally { -it } + fadeOut())</span>
+                    } else {
+<span class="nc" id="L166">                        (slideInHorizontally { -it } + fadeIn()).togetherWith(slideOutHorizontally { it } + fadeOut())</span>
+<span class="nc" id="L167">                    }.using(SizeTransform(clip = false))</span>
+                }
+<span class="nc" id="L169">            ) { offset -&gt;</span>
+<span class="nc" id="L170">                WeeklyRecordMap(data = data, offset = offset)</span>
+<span class="nc" id="L171">            }</span>
+<span class="nc" id="L172">        }</span>
+<span class="nc" id="L173">    }</span>
+<span class="nc" id="L174">}</span>
+
+@Composable
+<span class="nc bnc" id="L177" title="All 2 branches missed.">fun WeeklyRecordMap(</span>
+    data: WeeklyRecordData,
+    offset: Int,
+<span class="nc bnc" id="L180" title="All 2 branches missed.">    modifier: Modifier = Modifier,</span>
+<span class="nc" id="L181">    locale: Locale = Locale.getDefault()</span>
+<span class="nc bnc" id="L182" title="All 26 branches missed.">) {</span>
+
+<span class="nc bnc" id="L184" title="All 6 branches missed.">    val dayLabels = remember(locale) { getLocalizedWeekdayLabels(locale) }</span>
+
+<span class="nc" id="L186">    Row(</span>
+<span class="nc" id="L187">        modifier = modifier</span>
+<span class="nc" id="L188">            .fillMaxWidth()</span>
+<span class="nc" id="L189">            .then(</span>
+<span class="nc" id="L190">                other = when (data.hasWeekSummary) {</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">                    true -&gt; Modifier.border(</span>
+<span class="nc" id="L192">                        width = 4.dp,</span>
+<span class="nc" id="L193">                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),</span>
+<span class="nc" id="L194">                        shape = RoundedCornerShape(8.dp)</span>
+                    )
+
+<span class="nc bnc" id="L197" title="All 2 branches missed.">                    false -&gt; Modifier.border(</span>
+<span class="nc" id="L198">                        width = 2.dp,</span>
+<span class="nc" id="L199">                        color = MaterialTheme.colorScheme.error,</span>
+<span class="nc" id="L200">                        shape = RoundedCornerShape(8.dp),</span>
+                    )
+
+<span class="nc bnc" id="L203" title="All 2 branches missed.">                    null -&gt; Modifier</span>
+<span class="nc" id="L204">                }</span>
+            )
+<span class="nc" id="L206">            .padding(horizontal = 8.dp, vertical = 8.dp),</span>
+<span class="nc" id="L207">        horizontalArrangement = Arrangement.SpaceEvenly,</span>
+<span class="nc" id="L208">        verticalAlignment = Alignment.CenterVertically,</span>
+    ) {
+<span class="nc" id="L210">        data.records.forEachIndexed { index, record -&gt;</span>
+<span class="nc" id="L211">            Column(horizontalAlignment = Alignment.CenterHorizontally) {</span>
+<span class="nc bnc" id="L212" title="All 6 branches missed.">                when (record.status) {</span>
+<span class="nc" id="L213">                    RecordType.DONE_PAST -&gt; DoneDot()</span>
+<span class="nc" id="L214">                    RecordType.MISSED_PAST -&gt; MissedCross()</span>
+<span class="nc" id="L215">                    RecordType.DONE_TODAY -&gt; DoneToday()</span>
+<span class="nc" id="L216">                    RecordType.TODO_TODAY -&gt; TodoToday()</span>
+<span class="nc" id="L217">                    RecordType.FUTURE -&gt; TodoCircle()</span>
+<span class="nc" id="L218">                }</span>
+<span class="nc" id="L219">                Spacer(modifier = Modifier.height(4.dp))</span>
+<span class="nc" id="L220">                Text(</span>
+<span class="nc" id="L221">                    text = dayLabels[index],</span>
+<span class="nc" id="L222">                    style = MaterialTheme.typography.bodySmall,</span>
+<span class="nc" id="L223">                    color = Color.Gray</span>
+                )
+<span class="nc" id="L225">            }</span>
+<span class="nc" id="L226">        }</span>
+<span class="nc" id="L227">    }</span>
+<span class="nc" id="L228">}</span>
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+<span class="nc bnc" id="L232" title="All 12 branches missed.">fun DoneToday(size: Dp = 32.dp) {</span>
+<span class="nc" id="L233">    Box(</span>
+<span class="nc" id="L234">        modifier = Modifier</span>
+<span class="nc" id="L235">            .size(size)</span>
+<span class="nc" id="L236">            .background(</span>
+<span class="nc" id="L237">                color = MaterialTheme.colorScheme.primary, shape = MaterialShapes.Sunny.toShape()</span>
+            )
+    )
+<span class="nc" id="L240">}</span>
+
+@Composable
+<span class="nc bnc" id="L243" title="All 12 branches missed.">fun MissedCross(size: Dp = 24.dp) {</span>
+<span class="nc" id="L244">    val color = MaterialTheme.colorScheme.error</span>
+<span class="nc" id="L245">    Box(</span>
+<span class="nc" id="L246">        modifier = Modifier.size(size), contentAlignment = Alignment.Center</span>
+    ) {
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        Canvas(modifier = Modifier.fillMaxSize()) {</span>
+<span class="nc" id="L249">            val strokeWidth = size.toPx() * 0.1f</span>
+<span class="nc" id="L250">            val length = size.toPx()</span>
+<span class="nc" id="L251">            drawLine(color, Offset(0f, 0f), Offset(length, length), strokeWidth)</span>
+<span class="nc" id="L252">            drawLine(color, Offset(length, 0f), Offset(0f, length), strokeWidth)</span>
+<span class="nc" id="L253">        }</span>
+<span class="nc" id="L254">    }</span>
+<span class="nc" id="L255">}</span>
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+<span class="nc bnc" id="L259" title="All 12 branches missed.">fun TodoToday(size: Dp = 32.dp) {</span>
+<span class="nc" id="L260">    Box(</span>
+<span class="nc" id="L261">        modifier = Modifier</span>
+<span class="nc" id="L262">            .size(size)</span>
+<span class="nc" id="L263">            .border(</span>
+<span class="nc" id="L264">                width = 2.dp,</span>
+<span class="nc" id="L265">                color = MaterialTheme.colorScheme.tertiary,</span>
+<span class="nc" id="L266">                shape = MaterialShapes.Sunny.toShape()</span>
+            )
+    )
+<span class="nc" id="L269">}</span>
+
+@Composable
+<span class="nc bnc" id="L272" title="All 12 branches missed.">fun TodoCircle(size: Dp = 24.dp) {</span>
+<span class="nc" id="L273">    Box(</span>
+<span class="nc" id="L274">        modifier = Modifier</span>
+<span class="nc" id="L275">            .size(size)</span>
+<span class="nc" id="L276">            .border(</span>
+<span class="nc" id="L277">                width = 2.dp, color = MaterialTheme.colorScheme.tertiary, shape = CircleShape</span>
+            )
+    )
+<span class="nc" id="L280">}</span>
+
+@Composable
+<span class="nc bnc" id="L283" title="All 12 branches missed.">fun DoneDot(size: Dp = 24.dp) {</span>
+<span class="nc" id="L284">    Box(</span>
+<span class="nc" id="L285">        modifier = Modifier</span>
+<span class="nc" id="L286">            .size(size)</span>
+<span class="nc" id="L287">            .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape)</span>
+    )
+<span class="nc" id="L289">}</span>
+
+<span class="nc" id="L291">fun getWeekRangeLabel(</span>
+<span class="nc" id="L292">    date: LocalDate = LocalDate.now(),</span>
+<span class="nc" id="L293">    weekOffset: Int = 0,</span>
+<span class="nc" id="L294">    locale: Locale = Locale.getDefault(),</span>
+): String {
+<span class="nc" id="L296">    val firstDayOfWeek = WeekFields.of(locale).firstDayOfWeek</span>
+
+    // Apply week offset if provided
+<span class="nc" id="L299">    val targetDate = date.plusWeeks(weekOffset.toLong())</span>
+
+    // Get start and end of the week
+<span class="nc" id="L302">    val weekStart = targetDate.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))</span>
+<span class="nc" id="L303">    val weekEnd = weekStart.plusDays(6)</span>
+
+<span class="nc" id="L305">    val formatter = DateTimeFormatter.ofPattern(&quot;MMM d&quot;, locale)</span>
+
+<span class="nc" id="L307">    return when {</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">        weekStart.year != weekEnd.year -&gt; {</span>
+            // Different years → show year for both
+<span class="nc" id="L310">            &quot;${weekStart.format(formatter)}, ${weekStart.year} – ${weekEnd.format(formatter)}, ${weekEnd.year}&quot;</span>
+        }
+
+<span class="nc bnc" id="L313" title="All 2 branches missed.">        weekStart.month == weekEnd.month -&gt; {</span>
+            // Same month, same year → avoid repeating month name
+<span class="nc" id="L315">            &quot;${weekStart.format(formatter)} – ${weekEnd.dayOfMonth}, ${weekEnd.year}&quot;</span>
+        }
+
+        else -&gt; {
+            // Same year but different months
+<span class="nc" id="L320">            &quot;${weekStart.format(formatter)} – ${weekEnd.format(formatter)}, ${weekEnd.year}&quot;</span>
+        }
+    }
+}
+
+<span class="nc" id="L325">fun getLocalizedWeekdayLabels(locale: Locale = Locale.getDefault()): List&lt;String&gt; {</span>
+<span class="nc" id="L326">    val firstDay = WeekFields.of(locale).firstDayOfWeek</span>
+<span class="nc" id="L327">    val days = DayOfWeek.entries</span>
+
+<span class="nc" id="L329">    val startIndex = days.indexOf(firstDay)</span>
+<span class="nc" id="L330">    val orderedDays = (days.subList(startIndex, days.size) + days.subList(0, startIndex))</span>
+
+<span class="nc" id="L332">    return orderedDays.map { dayOfWeek -&gt;</span>
+<span class="nc" id="L333">        dayOfWeek.getDisplayName(TextStyle.SHORT, locale) // e.g., &quot;Mon&quot;, &quot;Tue&quot;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

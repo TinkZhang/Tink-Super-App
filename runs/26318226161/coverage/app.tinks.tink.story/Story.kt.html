@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Story.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.story</a> &gt; <span class="el_source">Story.kt</span></div><h1>Story.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.story
+
+<span class="nc" id="L3">data class Story(</span>
+<span class="nc" id="L4">    val title: String,</span>
+<span class="nc" id="L5">    val content: String?,</span>
+<span class="nc" id="L6">    val id: String,</span>
+<span class="nc" id="L7">    val createdAt: String,</span>
+<span class="nc" id="L8">    val length: Int,</span>
+<span class="nc" id="L9">    val uniqueChar: Int,</span>
+)
+
+<span class="nc" id="L12">fun StoryDto.toDomain() = Story(</span>
+<span class="nc" id="L13">    title = title,</span>
+<span class="nc" id="L14">    content = content,</span>
+<span class="nc" id="L15">    id = id,</span>
+<span class="nc" id="L16">    createdAt = createdAt,</span>
+<span class="nc" id="L17">    length = length,</span>
+<span class="nc" id="L18">    uniqueChar = uniqueChar,</span>
+<span class="nc" id="L19">)</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
