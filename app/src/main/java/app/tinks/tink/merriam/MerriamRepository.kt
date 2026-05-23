@@ -18,13 +18,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class MerriamRepository @Inject constructor(
+open class MerriamRepository @Inject constructor(
     private val dao: MerriamDao,
     private val api: MerriamApi,
 ) {
-    fun getAllMerriamsFlow(): Flow<List<RootEntity>> = dao.getAllRootsFlow()
+    open fun getAllMerriamsFlow(): Flow<List<RootEntity>> = dao.getAllRootsFlow()
 
-    fun getAllUnitsFlow(): Flow<List<MerriamUnit>> = dao.getAllRootsFlow().map { roots ->
+    open fun getAllUnitsFlow(): Flow<List<MerriamUnit>> = dao.getAllRootsFlow().map { roots ->
         roots.groupBy { it.unit }
             .map { (unitId, group) ->
                 MerriamUnit(
@@ -34,23 +34,15 @@ class MerriamRepository @Inject constructor(
             }
     }
 
-    fun addMerriamRecords(records: List<RootPostDto>): Flow<ApiResult<Unit>> = flow {
+    open fun addMerriamRecords(records: List<RootPostDto>): Flow<ApiResult<Unit>> = flow {
         emit(ApiResult.Loading)
         emit(safeApiCall { api.postMerriam(records) })
     }.flowOn(Dispatchers.IO)
 
-    fun getMerriamStat(): Flow<ApiResult<Stat>> = flow {
+    open fun getMerriamStat(): Flow<ApiResult<Stat>> = flow {
         emit(ApiResult.Loading)
         emit(safeApiCall {
-            try {
-
-                val result = api.getStat()
-                result.toDomain()
-            } catch (e: Exception) {
-                println("API call failed with exception: ${e.message}")
-                println("Exception stack trace: $e")
-                throw e
-            }
+            api.getStat().toDomain()
         })
     }.flowOn(Dispatchers.IO)
 }

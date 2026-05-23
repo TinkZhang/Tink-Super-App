@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -35,10 +36,12 @@ fun RootCard(
 ) {
     var isCompleted by remember(latest) { mutableStateOf(root.id <= latest) }
     ElevatedCard(
-        modifier = Modifier.combinedClickable(
-            onLongClick = { onComplete(root.id) },
-            onClick = {}
-        ),
+        modifier = Modifier
+            .testTag("merriam_root_${root.id}")
+            .combinedClickable(
+                onLongClick = { onComplete(root.id) },
+                onClick = {}
+            ),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
