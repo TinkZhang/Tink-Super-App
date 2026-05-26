@@ -12,10 +12,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class HaircutRepository @Inject constructor(
+open class HaircutRepository @Inject constructor(
     private val api: HaircutApi,
 ) {
-    fun getHaircuts(): Flow<ApiResult<List<Haircut>>> = flow {
+    open fun getHaircuts(): Flow<ApiResult<List<Haircut>>> = flow {
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
@@ -26,7 +26,7 @@ class HaircutRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    fun addHaircut(
+    open fun addHaircut(
         price: Int,
         shopName: String,
         date: LocalDate,
@@ -45,7 +45,7 @@ class HaircutRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    fun deleteHaircut(id: Int): Flow<ApiResult<Unit>> = flow {
+    open fun deleteHaircut(id: Int): Flow<ApiResult<Unit>> = flow {
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
