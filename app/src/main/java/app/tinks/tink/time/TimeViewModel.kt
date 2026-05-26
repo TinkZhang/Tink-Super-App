@@ -32,7 +32,15 @@ sealed interface TimeEvent {
     data class UpdateStartTime(val value: LocalDateTime) : TimeEvent
     data class UpdateEndTime(val value: LocalDateTime) : TimeEvent
     data class ApplyDurationMinutes(val value: Long) : TimeEvent
+    data class ApplyLabel(val label: TimeLabel) : TimeEvent
     object SaveEntry : TimeEvent
+    object OpenLabelManager : TimeEvent
+    object DismissLabelManager : TimeEvent
+    data class UpdateLabelManagerType(val value: Int) : TimeEvent
+    data class UpdateLabelDraft(val value: String) : TimeEvent
+    data class EditLabel(val label: TimeLabel) : TimeEvent
+    object SaveLabel : TimeEvent
+    data class DeleteLabel(val id: Long) : TimeEvent
 }
 
 data class TimeUiState(
@@ -45,6 +53,9 @@ data class TimeUiState(
     val deletingIds: Set<Long>,
     val showEditor: Boolean,
     val editor: TimeEditorState,
+    val labels: List<TimeLabel>,
+    val showLabelManager: Boolean,
+    val labelManager: TimeLabelManagerState,
 )
 
 data class TimeDayEntries(
@@ -56,7 +67,7 @@ data class TimeEditorState(
     val editingId: Long? = null,
     val title: String = "",
     val description: String = "",
-    val type: Int = 1,
+    val type: Int = DEFAULT_TIME_TYPE,
     val start: LocalDateTime,
     val end: LocalDateTime,
 ) {
@@ -73,6 +84,16 @@ data class TimeEditorState(
     }
 }
 
+data class TimeLabelManagerState(
+    val selectedType: Int = DEFAULT_TIME_TYPE,
+    val editingId: Long? = null,
+    val draftName: String = "",
+    val isSaving: Boolean = false,
+    val deletingIds: Set<Long> = emptySet(),
+) {
+    fun isValid(): Boolean = draftName.isNotBlank()
+}
+
 data class TimeState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
@@ -83,6 +104,9 @@ data class TimeState(
     val deletingIds: Set<Long> = emptySet(),
     val showEditor: Boolean = false,
     val editor: TimeEditorState = TimeEditorState.defaultNow(),
+    val labels: List<TimeLabel> = emptyList(),
+    val showLabelManager: Boolean = false,
+    val labelManager: TimeLabelManagerState = TimeLabelManagerState(),
 ) {
     fun toUiState(): TimeUiState = TimeUiState(
         isLoading = isLoading,
@@ -94,6 +118,9 @@ data class TimeState(
         deletingIds = deletingIds,
         showEditor = showEditor,
         editor = editor,
+        labels = labels,
+        showLabelManager = showLabelManager,
+        labelManager = labelManager,
     )
 }
 
@@ -108,9 +135,11 @@ class TimeViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())
 
     private var refreshJob: Job? = null
+    private var labelsJob: Job? = null
 
     init {
         refresh()
+        refreshLabels()
     }
 
     fun onEvent(event: TimeEvent) {
@@ -141,7 +170,27 @@ class TimeViewModel @Inject constructor(
                 val end = it.editor.end
                 it.copy(editor = it.editor.copy(start = end.minusMinutes(event.value)))
             }
+            is TimeEvent.ApplyLabel -> applyLabel(event.label)
             is TimeEvent.SaveEntry -> saveEntry()
+            is TimeEvent.OpenLabelManager -> openLabelManager()
+            is TimeEvent.DismissLabelManager -> closeLabelManager()
+            is TimeEvent.UpdateLabelManagerType -> _state.update {
+                it.copy(labelManager = TimeLabelManagerState(selectedType = event.value))
+            }
+            is TimeEvent.UpdateLabelDraft -> _state.update {
+                it.copy(labelManager = it.labelManager.copy(draftName = event.value))
+            }
+            is TimeEvent.EditLabel -> _state.update {
+                it.copy(
+                    labelManager = it.labelManager.copy(
+                        selectedType = event.label.type,
+                        editingId = event.label.id,
+                        draftName = event.label.name,
+                    )
+                )
+            }
+            is TimeEvent.SaveLabel -> saveLabel()
+            is TimeEvent.DeleteLabel -> deleteLabel(event.id)
         }
     }
 
@@ -208,10 +257,15 @@ class TimeViewModel @Inject constructor(
                     }
 
                     is ApiResult.Success -> _state.update {
+                        val filteredEntries = result.data.entries.filterInDateRange(
+                            startDate = startDate,
+                            endDate = endDate,
+                            zoneId = localZone,
+                        )
                         it.copy(
                             isLoading = false,
                             statistics = result.data.statistics,
-                            entriesByDay = result.data.entries.toDayEntries(localZone),
+                            entriesByDay = filteredEntries.toDayEntries(localZone),
                         )
                     }
 
@@ -223,6 +277,42 @@ class TimeViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun refreshLabels() {
+        labelsJob?.cancel()
+        labelsJob = repository.getTimeLabels()
+            .onEach { result ->
+                when (result) {
+                    is ApiResult.Loading -> Unit
+                    is ApiResult.Success -> _state.update {
+                        it.copy(labels = result.data.sortedForDisplay())
+                    }
+                    is ApiResult.Error -> AppSnackbarBus.showApiFailure(onRetry = ::refreshLabels)
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun applyLabel(label: TimeLabel) {
+        _state.update { state ->
+            val editor = state.editor
+            val knownPrefixes = state.labels
+                .filter { it.type == editor.type }
+                .map { "${it.name}:" }
+            val trimmed = editor.title.trim()
+            val titleWithoutExistingLabel = knownPrefixes.firstNotNullOfOrNull { prefix ->
+                trimmed.takeIf { it.startsWith(prefix) }
+                    ?.removePrefix(prefix)
+                    ?.trimStart()
+            } ?: trimmed
+            val nextTitle = if (titleWithoutExistingLabel.isBlank()) {
+                "${label.name}: "
+            } else {
+                "${label.name}: $titleWithoutExistingLabel"
+            }
+            state.copy(editor = editor.copy(title = nextTitle))
+        }
     }
 
     private fun saveEntry() {
@@ -271,6 +361,96 @@ class TimeViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
+    private fun openLabelManager() {
+        _state.update {
+            it.copy(
+                showLabelManager = true,
+                labelManager = TimeLabelManagerState(
+                    selectedType = it.editor.type.takeIf { type -> type in 1..11 } ?: DEFAULT_TIME_TYPE,
+                ),
+            )
+        }
+    }
+
+    private fun closeLabelManager() {
+        _state.update {
+            it.copy(
+                showLabelManager = false,
+                labelManager = TimeLabelManagerState(),
+            )
+        }
+    }
+
+    private fun saveLabel() {
+        val manager = _state.value.labelManager
+        if (!manager.isValid()) {
+            AppSnackbarBus.showMessage("Please enter a label.")
+            return
+        }
+
+        val saveFlow = if (manager.editingId == null) {
+            repository.createTimeLabel(
+                type = manager.selectedType,
+                name = manager.draftName,
+            )
+        } else {
+            repository.updateTimeLabel(
+                labelId = manager.editingId,
+                type = manager.selectedType,
+                name = manager.draftName,
+            )
+        }
+
+        saveFlow.onEach { result ->
+            when (result) {
+                is ApiResult.Loading -> _state.update {
+                    it.copy(labelManager = it.labelManager.copy(isSaving = true))
+                }
+                is ApiResult.Success -> _state.update {
+                    val nextLabels = (it.labels.filterNot { label -> label.id == result.data.id } + result.data)
+                        .sortedForDisplay()
+                    it.copy(
+                        labels = nextLabels,
+                        labelManager = TimeLabelManagerState(selectedType = result.data.type),
+                    )
+                }
+                is ApiResult.Error -> _state.update {
+                    it.copy(labelManager = it.labelManager.copy(isSaving = false))
+                }.also {
+                    AppSnackbarBus.showApiFailure(onRetry = ::saveLabel)
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    private fun deleteLabel(id: Long) {
+        val previousLabels = _state.value.labels
+        _state.update {
+            it.copy(
+                labels = it.labels.filterNot { label -> label.id == id },
+                labelManager = it.labelManager.copy(deletingIds = it.labelManager.deletingIds + id),
+            )
+        }
+        repository.deleteTimeLabel(labelId = id).onEach { result ->
+            when (result) {
+                is ApiResult.Loading -> Unit
+                is ApiResult.Success -> _state.update {
+                    it.copy(
+                        labelManager = it.labelManager.copy(deletingIds = it.labelManager.deletingIds - id),
+                    )
+                }
+                is ApiResult.Error -> _state.update {
+                    it.copy(
+                        labels = previousLabels,
+                        labelManager = it.labelManager.copy(deletingIds = it.labelManager.deletingIds - id),
+                    )
+                }.also {
+                    AppSnackbarBus.showApiFailure { deleteLabel(id) }
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
+
     private fun deleteEntry(id: Long) {
         if (id in _state.value.deletingIds) return
         val previous = _state.value.entriesByDay
@@ -312,6 +492,20 @@ private fun List<TimeEntry>.toDayEntries(zoneId: ZoneId): List<TimeDayEntries> {
         }
 }
 
+internal fun List<TimeEntry>.filterInDateRange(
+    startDate: LocalDate,
+    endDate: LocalDate,
+    zoneId: ZoneId,
+): List<TimeEntry> {
+    return filter { entry ->
+        val day = entry.start.atZoneSameInstant(zoneId).toLocalDate()
+        day >= startDate && day <= endDate
+    }
+}
+
+private fun List<TimeLabel>.sortedForDisplay(): List<TimeLabel> =
+    sortedWith(compareBy<TimeLabel> { it.type }.thenBy { it.sortOrder }.thenBy { it.name })
+
 private fun List<TimeDayEntries>.removeEntry(id: Long): List<TimeDayEntries> {
     return mapNotNull { section ->
         val next = section.entries.filterNot { it.id == id }
@@ -322,3 +516,5 @@ private fun List<TimeDayEntries>.removeEntry(id: Long): List<TimeDayEntries> {
         }
     }
 }
+
+const val DEFAULT_TIME_TYPE = 5

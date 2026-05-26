@@ -1,6 +1,7 @@
 package app.tinks.tink.time
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -8,10 +9,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -22,6 +25,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -36,11 +40,13 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -60,9 +66,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -86,7 +98,7 @@ fun TimeScreen(viewModel: TimeViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun TimeScreen(
+internal fun TimeScreen(
     state: TimeUiState,
     onEvent: (TimeEvent) -> Unit,
 ) {
@@ -119,12 +131,15 @@ private fun TimeScreen(
         val editingId = state.editor.editingId
         TimeEntryDialog(
             editor = state.editor,
+            labels = state.labels.filter { it.type == state.editor.type },
             isSaving = state.isSaving,
             isDeleting = editingId != null && editingId in state.deletingIds,
             onDismiss = { onEvent(TimeEvent.DismissDialog) },
             onTitleChange = { onEvent(TimeEvent.UpdateTitle(it)) },
             onDescriptionChange = { onEvent(TimeEvent.UpdateDescription(it)) },
             onTypeChange = { onEvent(TimeEvent.UpdateType(it)) },
+            onApplyLabel = { onEvent(TimeEvent.ApplyLabel(it)) },
+            onManageLabels = { onEvent(TimeEvent.OpenLabelManager) },
             onStartChange = { onEvent(TimeEvent.UpdateStartTime(it)) },
             onEndChange = { onEvent(TimeEvent.UpdateEndTime(it)) },
             onDurationClick = { onEvent(TimeEvent.ApplyDurationMinutes(it)) },
@@ -135,6 +150,19 @@ private fun TimeScreen(
                     onEvent(TimeEvent.DismissDialog)
                 }
             },
+        )
+    }
+
+    if (state.showLabelManager) {
+        TimeLabelManagerDialog(
+            labels = state.labels,
+            manager = state.labelManager,
+            onDismiss = { onEvent(TimeEvent.DismissLabelManager) },
+            onTypeChange = { onEvent(TimeEvent.UpdateLabelManagerType(it)) },
+            onDraftChange = { onEvent(TimeEvent.UpdateLabelDraft(it)) },
+            onEditLabel = { onEvent(TimeEvent.EditLabel(it)) },
+            onSave = { onEvent(TimeEvent.SaveLabel) },
+            onDelete = { onEvent(TimeEvent.DeleteLabel(it)) },
         )
     }
 
@@ -244,28 +272,24 @@ private fun DateRangeCard(
     onStartDateClick: () -> Unit,
     onEndDateClick: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            DateRangeTextField(
-                label = "Start",
-                value = startDate.format(DATE_FORMATTER),
-                onClick = onStartDateClick,
-                modifier = Modifier.weight(1f),
-            )
-            DateRangeTextField(
-                label = "End",
-                value = endDate.format(DATE_FORMATTER),
-                onClick = onEndDateClick,
-                modifier = Modifier.weight(1f),
-            )
-        }
+        DateRangeTextField(
+            label = "Start",
+            value = startDate.format(DATE_FORMATTER),
+            onClick = onStartDateClick,
+            testTag = "time_start_date_field",
+            modifier = Modifier.weight(1f),
+        )
+        DateRangeTextField(
+            label = "End",
+            value = endDate.format(DATE_FORMATTER),
+            onClick = onEndDateClick,
+            testTag = "time_end_date_field",
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
@@ -274,67 +298,154 @@ private fun DateRangeTextField(
     label: String,
     value: String,
     onClick: () -> Unit,
+    testTag: String,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = {},
-        label = { Text(label) },
-        readOnly = true,
-        singleLine = true,
-        modifier = modifier.clickable(onClick = onClick),
-    )
+    Box(modifier = modifier.testTag(testTag)) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            label = { Text(label) },
+            readOnly = true,
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable(onClick = onClick)
+        )
+    }
 }
 
 @Composable
 private fun StatisticsCard(stats: List<TimeStatistic>) {
-    val visibleStats = stats.filter { it.duration > 0 }
+    val visibleStats = stats.filter { it.duration > 0 }.sortedByDescending { it.duration }
+    val total = visibleStats.sumOf { it.duration }
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(
-                text = "Category Duration Statistics",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            if (visibleStats.isEmpty()) {
+        if (visibleStats.isEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                DonutChart(stats = emptyList(), total = 0L)
                 Text(
                     text = "No tracked duration in this range.",
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            } else {
-                visibleStats.forEach { stat ->
-                    val category = categoryOf(stat.type)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .clip(CircleShape)
-                                .background(category.color)
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    DonutChart(stats = visibleStats, total = total)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Filled.Schedule,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary,
                         )
-                        Column(modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 8.dp)) {
-                            Text(
-                                text = category.categoryName(),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
                         Text(
-                            text = formatDuration(stat.duration),
-                            style = MaterialTheme.typography.bodyLarge,
+                            text = formatDuration(total),
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    visibleStats.take(4).forEach { stat ->
+                        CompactStatLegend(stat = stat)
+                    }
+                    if (visibleStats.size > 4) {
+                        Text(
+                            text = "+${visibleStats.size - 4}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DonutChart(
+    stats: List<TimeStatistic>,
+    total: Long,
+) {
+    val trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    Canvas(modifier = Modifier.size(120.dp)) {
+        val strokeWidth = 18.dp.toPx()
+        val inset = strokeWidth / 2
+        val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
+        drawArc(
+            color = trackColor,
+            startAngle = 0f,
+            sweepAngle = 360f,
+            useCenter = false,
+            topLeft = Offset(inset, inset),
+            size = arcSize,
+            style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
+        )
+        if (total <= 0L) return@Canvas
+
+        var startAngle = -90f
+        stats.forEach { stat ->
+            val sweep = (stat.duration.toFloat() / total.toFloat()) * 360f
+            drawArc(
+                color = categoryOf(stat.type).color,
+                startAngle = startAngle,
+                sweepAngle = sweep,
+                useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = arcSize,
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Butt),
+            )
+            startAngle += sweep
+        }
+    }
+}
+
+@Composable
+private fun CompactStatLegend(stat: TimeStatistic) {
+    val category = categoryOf(stat.type)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(14.dp)
+                .clip(CircleShape)
+                .background(category.color)
+        )
+        Text(
+            text = category.categoryName(),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.labelLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = formatDuration(stat.duration),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
@@ -459,12 +570,15 @@ private fun TimeEntryRow(
 @Composable
 private fun TimeEntryDialog(
     editor: TimeEditorState,
+    labels: List<TimeLabel>,
     isSaving: Boolean,
     isDeleting: Boolean,
     onDismiss: () -> Unit,
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onTypeChange: (Int) -> Unit,
+    onApplyLabel: (TimeLabel) -> Unit,
+    onManageLabels: () -> Unit,
     onStartChange: (LocalDateTime) -> Unit,
     onEndChange: (LocalDateTime) -> Unit,
     onDurationClick: (Long) -> Unit,
@@ -577,6 +691,40 @@ private fun TimeEntryDialog(
                         singleLine = true,
                     )
 
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Labels",
+                                style = MaterialTheme.typography.labelLarge,
+                                modifier = Modifier.weight(1f),
+                            )
+                            TextButton(onClick = onManageLabels) {
+                                Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Edit")
+                            }
+                        }
+                        if (labels.isEmpty()) {
+                            Text(
+                                text = "No labels for ${categoryOf(editor.type).categoryName()} yet.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        } else {
+                            Row(
+                                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                labels.forEach { label ->
+                                    AssistChip(
+                                        onClick = { onApplyLabel(label) },
+                                        label = { Text(label.name) },
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     Box {
                         OutlinedTextField(
                             value = categoryOf(editor.type).categoryName(),
@@ -671,6 +819,205 @@ private fun TimeEntryDialog(
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TimeLabelManagerDialog(
+    labels: List<TimeLabel>,
+    manager: TimeLabelManagerState,
+    onDismiss: () -> Unit,
+    onTypeChange: (Int) -> Unit,
+    onDraftChange: (String) -> Unit,
+    onEditLabel: (TimeLabel) -> Unit,
+    onSave: () -> Unit,
+    onDelete: (Long) -> Unit,
+) {
+    var showTypeMenu by remember { mutableStateOf(false) }
+    val visibleLabels = labels
+        .filter { it.type == manager.selectedType }
+        .sortedWith(compareBy<TimeLabel> { it.sortOrder }.thenBy { it.name })
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text("Time Labels") },
+                        navigationIcon = {
+                            IconButton(onClick = onDismiss) {
+                                Icon(Icons.Filled.Close, contentDescription = "Close")
+                            }
+                        },
+                    )
+                },
+                bottomBar = {
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            OutlinedTextField(
+                                value = manager.draftName,
+                                onValueChange = onDraftChange,
+                                label = { Text(if (manager.editingId == null) "New label" else "Edit label") },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Button(
+                                onClick = onSave,
+                                enabled = manager.isValid() && !manager.isSaving,
+                            ) {
+                                if (manager.isSaving) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    Text(if (manager.editingId == null) "Add" else "Save")
+                                }
+                            }
+                        }
+                    }
+                },
+            ) { paddingValues ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Box {
+                        OutlinedTextField(
+                            value = categoryOf(manager.selectedType).categoryName(),
+                            onValueChange = {},
+                            label = { Text("Type") },
+                            readOnly = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showTypeMenu = true },
+                            trailingIcon = {
+                                IconButton(onClick = { showTypeMenu = true }) {
+                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "Select type")
+                                }
+                            },
+                        )
+                        DropdownMenu(
+                            expanded = showTypeMenu,
+                            onDismissRequest = { showTypeMenu = false },
+                        ) {
+                            TIME_CATEGORIES.forEach { category ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(10.dp)
+                                                    .clip(CircleShape)
+                                                    .background(category.color)
+                                            )
+                                            Text(category.categoryName())
+                                        }
+                                    },
+                                    onClick = {
+                                        onTypeChange(category.id)
+                                        showTypeMenu = false
+                                    },
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = "Tap a label to edit it.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+
+                    if (visibleLabels.isEmpty()) {
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "No labels yet for ${categoryOf(manager.selectedType).categoryName()}.",
+                                modifier = Modifier.padding(16.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            items(
+                                items = visibleLabels,
+                                key = { it.id },
+                            ) { label ->
+                                LabelRow(
+                                    label = label,
+                                    isEditing = manager.editingId == label.id,
+                                    isDeleting = label.id in manager.deletingIds,
+                                    onEdit = { onEditLabel(label) },
+                                    onDelete = { onDelete(label.id) },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LabelRow(
+    label: TimeLabel,
+    isEditing: Boolean,
+    isDeleting: Boolean,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onEdit)
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            InputChip(
+                selected = isEditing,
+                onClick = onEdit,
+                label = { Text(label.name) },
+            )
+            Spacer(Modifier.weight(1f))
+            IconButton(
+                onClick = onDelete,
+                enabled = !isDeleting,
+            ) {
+                if (isDeleting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Icon(Icons.Filled.Delete, contentDescription = "Delete label")
                 }
             }
         }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DrawerValue
@@ -106,6 +107,7 @@ fun MyApp(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val snackbarHostState = remember { SnackbarHostState() }
     var menuExpanded by remember { mutableStateOf(false) }
+    val timeViewModel = hiltViewModel<TimeViewModel>()
 
     val scope = rememberCoroutineScope()
 
@@ -191,6 +193,14 @@ fun MyApp(
                         }
                     },
                     actions = {
+                        if (currentKey == ScreenA || currentKey == ScreenTime) {
+                            IconButton(
+                                onClick = { timeViewModel.onEvent(TimeEvent.OpenLabelManager) },
+                                modifier = Modifier.testTag("top_bar_time_labels_button")
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.Label, contentDescription = "Time labels")
+                            }
+                        }
                         IconButton(onClick = { menuExpanded = true }) {
                             Icon(Icons.Filled.MoreVert, contentDescription = "更多")
                         }
@@ -219,7 +229,7 @@ fun MyApp(
             ) { key ->
                 NavEntry(key) {
                     when (key) {
-                        is ScreenA -> TimeScreen(hiltViewModel())
+                        is ScreenA -> TimeScreen(timeViewModel)
                         is ScreenB -> WeightScreen(
                             hiltViewModel(),
                             onOpenHistory = { backStack.add(ScreenWeightHistory) },
@@ -239,7 +249,6 @@ fun MyApp(
                         is ScreenLearntZi -> LearntZiListScreen(hiltViewModel())
                         is ScreenMerriam -> MerriamScreen(hiltViewModel())
                         is ScreenTime -> {
-                            val timeViewModel = hiltViewModel<TimeViewModel>()
                             LaunchedEffect(pendingQuickAddRequestId) {
                                 val requestId = pendingQuickAddRequestId
                                 if (requestId != null && requestId != handledQuickAddRequestId) {

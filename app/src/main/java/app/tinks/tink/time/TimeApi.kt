@@ -41,6 +41,27 @@ interface TimeApi {
     suspend fun deleteTimeEntry(
         @Path("timeId") timeId: Long,
     )
+
+    @GET("time/labels")
+    suspend fun getTimeLabels(
+        @Query("type") type: Int? = null,
+    ): List<TimeLabelDto>
+
+    @POST("time/labels")
+    suspend fun createTimeLabel(
+        @Body payload: TimeLabelCreateRequest,
+    ): TimeLabelDto
+
+    @PATCH("time/labels/{labelId}")
+    suspend fun updateTimeLabel(
+        @Path("labelId") labelId: Long,
+        @Body payload: TimeLabelUpdateRequest,
+    ): TimeLabelDto
+
+    @DELETE("time/labels/{labelId}")
+    suspend fun deleteTimeLabel(
+        @Path("labelId") labelId: Long,
+    )
 }
 
 @Serializable
@@ -71,6 +92,31 @@ data class TimeUpsertRequest(
     val description: String? = null,
 )
 
+@Serializable
+data class TimeLabelDto(
+    val id: Long,
+    val type: Int,
+    val name: String,
+    @SerialName("sort_order")
+    val sortOrder: Int = 0,
+)
+
+@Serializable
+data class TimeLabelCreateRequest(
+    val type: Int,
+    val name: String,
+    @SerialName("sort_order")
+    val sortOrder: Int = 0,
+)
+
+@Serializable
+data class TimeLabelUpdateRequest(
+    val type: Int? = null,
+    val name: String? = null,
+    @SerialName("sort_order")
+    val sortOrder: Int? = null,
+)
+
 data class TimeStatistic(
     val type: Int,
     val duration: Long,
@@ -90,6 +136,13 @@ data class TimeDashboard(
     val entries: List<TimeEntry>,
 )
 
+data class TimeLabel(
+    val id: Long,
+    val type: Int,
+    val name: String,
+    val sortOrder: Int,
+)
+
 fun TimeStatisticDto.toDomain(): TimeStatistic = TimeStatistic(
     type = type,
     duration = duration,
@@ -102,6 +155,13 @@ fun TimeEntryDto.toDomain(): TimeEntry = TimeEntry(
     end = parseOffsetDateTime(end),
     title = title,
     description = description,
+)
+
+fun TimeLabelDto.toDomain(): TimeLabel = TimeLabel(
+    id = id,
+    type = type,
+    name = name,
+    sortOrder = sortOrder,
 )
 
 private fun parseOffsetDateTime(value: String): OffsetDateTime {
