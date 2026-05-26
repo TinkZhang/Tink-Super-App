@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -55,7 +56,7 @@ fun UnitItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .testTag("merriam_unit_${unit.id}"),
         elevation = CardDefaults.cardElevation(if (unit.roots.any { it.id > latest }) 4.dp else 0.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -102,7 +103,7 @@ fun UnitItem(
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
                     tint = MaterialTheme.colorScheme.secondary,
-                    contentDescription = null,
+                    contentDescription = "Toggle unit ${unit.id}",
                     modifier = Modifier.rotate(rotation)
                 )
             }
