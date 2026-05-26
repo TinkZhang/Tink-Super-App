@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DigitalDetoxMessageResolver.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.widget</a> &gt; <span class="el_source">DigitalDetoxMessageResolver.kt</span></div><h1>DigitalDetoxMessageResolver.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.widget
+
+import java.time.DayOfWeek
+import java.time.LocalDateTime
+import java.time.LocalTime
+
+internal object DigitalDetoxMessageResolver {
+    const val WAKE_UP = &quot;No Phone on WakeUp.&quot;
+    const val GOOD_MORNING = &quot;Good Morning&quot;
+    const val LAUNCH_AND_LEARN = &quot;Launch &amp; Learn&quot;
+    const val WORK_FOCUS = &quot;Keep Phone OFF and Keep your WORK DONE&quot;
+    const val LOG_TIME = &quot;Log your TIME before leaving office&quot;
+    const val MIND_EMPTY = &quot;Keep your mind EMPTY&quot;
+    const val TIME_FOR_TINK = &quot;Time for Tink&quot;
+    const val BEDROOM = &quot;No Phone in Bedroom&quot;
+    const val DETOX = &quot;Digital Detox&quot;
+    const val COUNTDOWN = &quot;3..2..1..&quot;
+
+<span class="nc" id="L19">    fun resolve(now: LocalDateTime = LocalDateTime.now()): String {</span>
+<span class="fc" id="L20">        val time = now.toLocalTime()</span>
+<span class="fc bfc" id="L21" title="All 2 branches covered.">        if (time.inRange(start = 0, end = 7 * 60)) return WAKE_UP</span>
+
+<span class="fc bfc" id="L23" title="All 2 branches covered.">        return if (now.dayOfWeek.isWeekend()) {</span>
+<span class="fc" id="L24">            resolveWeekend(time)</span>
+        } else {
+<span class="fc" id="L26">            resolveWeekday(time)</span>
+        }
+    }
+
+<span class="fc" id="L30">    private fun resolveWeekday(time: LocalTime): String = when {</span>
+<span class="fc bfc" id="L31" title="All 2 branches covered.">        time.inRange(start = 7 * 60, end = 9 * 60) -&gt; GOOD_MORNING</span>
+<span class="fc bfc" id="L32" title="All 2 branches covered.">        time.inRange(start = 11 * 60 + 30, end = 13 * 60 + 30) -&gt; LAUNCH_AND_LEARN</span>
+<span class="fc bfc" id="L33" title="All 2 branches covered.">        time.inRange(start = 9 * 60, end = 11 * 60 + 30) ||</span>
+<span class="pc bpc" id="L34" title="1 of 2 branches missed.">            time.inRange(start = 13 * 60 + 30, end = 17 * 60) -&gt; WORK_FOCUS</span>
+<span class="fc bfc" id="L35" title="All 2 branches covered.">        time.inRange(start = 17 * 60, end = 18 * 60) -&gt; LOG_TIME</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        time.inRange(start = 18 * 60, end = 19 * 60 + 30) -&gt; MIND_EMPTY</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        time.inRange(start = 19 * 60 + 30, end = 21 * 60) -&gt; TIME_FOR_TINK</span>
+<span class="pc bpc" id="L38" title="1 of 2 branches missed.">        time.inRange(start = 21 * 60, end = 24 * 60) -&gt; BEDROOM</span>
+<span class="nc" id="L39">        else -&gt; WORK_FOCUS</span>
+<span class="fc" id="L40">    }</span>
+
+<span class="fc" id="L42">    private fun resolveWeekend(time: LocalTime): String = when {</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        time.inRange(start = 7 * 60, end = 14 * 60) -&gt; DETOX</span>
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">        time.inRange(start = 14 * 60, end = 21 * 60) -&gt; COUNTDOWN</span>
+<span class="nc" id="L45">        else -&gt; BEDROOM</span>
+<span class="fc" id="L46">    }</span>
+
+<span class="pc bpc" id="L48" title="1 of 4 branches missed.">    private fun DayOfWeek.isWeekend(): Boolean = this == DayOfWeek.SATURDAY || this == DayOfWeek.SUNDAY</span>
+
+    private fun LocalTime.inRange(start: Int, end: Int): Boolean {
+<span class="fc" id="L51">        val minuteOfDay = hour * 60 + minute</span>
+<span class="fc bfc" id="L52" title="All 4 branches covered.">        return minuteOfDay in start until end</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
