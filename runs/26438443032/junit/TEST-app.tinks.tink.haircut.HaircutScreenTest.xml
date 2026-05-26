@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.haircut.HaircutScreenTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-05-26T07:26:11.599Z" hostname="runnervmg397c" time="8.255">
+  <properties/>
+  <testcase name="dashboard_rendersWarningStatus_whenDaysAreHigh" classname="app.tinks.tink.haircut.HaircutScreenTest" time="6.822"/>
+  <testcase name="dashboard_rendersFreshStatusAndHistory" classname="app.tinks.tink.haircut.HaircutScreenTest" time="0.241"/>
+  <testcase name="fabClick_requestsAddDialog" classname="app.tinks.tink.haircut.HaircutScreenTest" time="0.226"/>
+  <testcase name="addDialog_submitsValidHaircut" classname="app.tinks.tink.haircut.HaircutScreenTest" time="0.965"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

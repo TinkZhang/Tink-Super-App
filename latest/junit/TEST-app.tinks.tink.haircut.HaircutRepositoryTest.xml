@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.haircut.HaircutRepositoryTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-05-26T07:26:08.061Z" hostname="runnervmg397c" time="0.518">
+  <properties/>
+  <testcase name="deleteHaircut_callsApiWithId" classname="app.tinks.tink.haircut.HaircutRepositoryTest" time="0.494"/>
+  <testcase name="getHaircuts_emitsLoadingThenSuccess_sortedByDateDescending" classname="app.tinks.tink.haircut.HaircutRepositoryTest" time="0.011"/>
+  <testcase name="addHaircut_postsCreatePayload" classname="app.tinks.tink.haircut.HaircutRepositoryTest" time="0.008"/>
+  <testcase name="getHaircuts_emitsError_whenApiThrows" classname="app.tinks.tink.haircut.HaircutRepositoryTest" time="0.004"/>
+  <system-out><![CDATA[safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall caught exception: boom
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
