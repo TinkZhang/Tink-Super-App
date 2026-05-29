@@ -43,11 +43,6 @@ android {
         testInstrumentationRunner = "app.tinks.tink.HiltTestRunner"
         buildConfigField(
             "String",
-            "GOOGLE_API_KEY",
-            buildConfigString(secretValue("GOOGLE_API_KEY")),
-        )
-        buildConfigField(
-            "String",
             "TINK_API_BASE_URL",
             buildConfigString(secretValue("TINK_API_BASE_URL").ifBlank { "https://api.tinks.app/" }),
         )

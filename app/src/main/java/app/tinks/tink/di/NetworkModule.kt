@@ -3,7 +3,6 @@ package app.tinks.tink.di
 import android.content.Context
 import app.tinks.tink.BuildConfig
 import app.tinks.tink.book.BookApi
-import app.tinks.tink.book.GoogleBooksApi
 import app.tinks.tink.haircut.HaircutApi
 import app.tinks.tink.merriam.network.MerriamApi
 import app.tinks.tink.settings.ApiEnvironment
@@ -116,29 +115,8 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    @Named("googleBooksRetrofit")
-    fun provideGoogleBooksRetrofit(
-        okHttpClient: OkHttpClient
-    ): Retrofit =
-        Retrofit.Builder()
-            .baseUrl("https://www.googleapis.com/")
-            .client(okHttpClient)
-            .addConverterFactory(
-                json.asConverterFactory("application/json".toMediaType())
-            )
-            .build()
-
-    @Provides
-    @Singleton
     fun provideBookApi(retrofit: Retrofit): BookApi =
         retrofit.create(BookApi::class.java)
-
-    @Provides
-    @Singleton
-    fun provideGoogleBooksApi(
-        @Named("googleBooksRetrofit") retrofit: Retrofit
-    ): GoogleBooksApi =
-        retrofit.create(GoogleBooksApi::class.java)
 
     @Provides
     @Singleton

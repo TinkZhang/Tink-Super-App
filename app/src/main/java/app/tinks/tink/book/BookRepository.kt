@@ -10,34 +10,38 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class BookRepository @Inject constructor(
+open class BookRepository @Inject constructor(
     private val bookApi: BookApi,
-    private val googleBooksApi: GoogleBooksApi,
 ) {
-    fun getBooks(state: BookState): Flow<ApiResult<List<Book>>> = flow {
+    open fun getBooks(state: BookState, category: String? = null): Flow<ApiResult<List<Book>>> = flow {
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
                 when (state) {
-                    BookState.Wish -> bookApi.getWishlist()
-                    BookState.Reading -> bookApi.getReading()
-                    BookState.Archived -> bookApi.getArchived()
+                    BookState.Wish -> bookApi.getWishlist(category = category)
+                    BookState.Reading -> bookApi.getReading(category = category)
+                    BookState.Archived -> bookApi.getArchived(category = category)
                 }.map { it.toDomain() }
             }
         )
     }.flowOn(Dispatchers.IO)
 
-    fun getBook(bookId: Long): Flow<ApiResult<Book>> = flow {
+    open fun getCategories(): Flow<ApiResult<List<String>>> = flow {
+        emit(ApiResult.Loading)
+        emit(safeApiCall { bookApi.getCategories() })
+    }.flowOn(Dispatchers.IO)
+
+    open fun getBook(bookId: Long): Flow<ApiResult<Book>> = flow {
         emit(ApiResult.Loading)
         emit(safeApiCall { bookApi.getBook(bookId).toDomain() })
     }.flowOn(Dispatchers.IO)
 
-    fun addToWishlist(draft: BookDraft): Flow<ApiResult<Book>> = flow {
+    open fun addToWishlist(draft: BookDraft): Flow<ApiResult<Book>> = flow {
         emit(ApiResult.Loading)
         emit(safeApiCall { bookApi.createWishlistBook(draft.toCreateRequest()).toDomain() })
     }.flowOn(Dispatchers.IO)
 
-    fun addToReading(
+    open fun addToReading(
         draft: BookDraft,
         platform: String = "General",
     ): Flow<ApiResult<Book>> = flow {
@@ -57,7 +61,7 @@ class BookRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    fun moveToReading(
+    open fun moveToReading(
         bookId: Long,
         platform: String,
         currentPage: Int? = null,
@@ -78,12 +82,12 @@ class BookRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    fun updateBook(bookId: Long, payload: BookUpdateRequest): Flow<ApiResult<Book>> = flow {
+    open fun updateBook(bookId: Long, payload: BookUpdateRequest): Flow<ApiResult<Book>> = flow {
         emit(ApiResult.Loading)
         emit(safeApiCall { bookApi.updateBook(bookId, payload).toDomain() })
     }.flowOn(Dispatchers.IO)
 
-    fun archiveBook(
+    open fun archiveBook(
         bookId: Long,
         status: ArchiveStatus = ArchiveStatus.Done,
     ): Flow<ApiResult<Book>> = flow {
@@ -98,17 +102,17 @@ class BookRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    fun deleteBook(bookId: Long): Flow<ApiResult<Unit>> = flow {
+    open fun deleteBook(bookId: Long): Flow<ApiResult<Unit>> = flow {
         emit(ApiResult.Loading)
         emit(safeApiCall { bookApi.deleteBook(bookId) })
     }.flowOn(Dispatchers.IO)
 
-    fun getNotes(bookId: Long): Flow<ApiResult<List<BookNote>>> = flow {
+    open fun getNotes(bookId: Long): Flow<ApiResult<List<BookNote>>> = flow {
         emit(ApiResult.Loading)
         emit(safeApiCall { bookApi.getNotes(bookId).map { it.toDomain() } })
     }.flowOn(Dispatchers.IO)
 
-    fun saveNote(
+    open fun saveNote(
         bookId: Long,
         noteId: Long?,
         content: String,
@@ -142,17 +146,16 @@ class BookRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    fun deleteNote(bookId: Long, noteId: Long): Flow<ApiResult<Unit>> = flow {
+    open fun deleteNote(bookId: Long, noteId: Long): Flow<ApiResult<Unit>> = flow {
         emit(ApiResult.Loading)
         emit(safeApiCall { bookApi.deleteNote(bookId, noteId) })
     }.flowOn(Dispatchers.IO)
 
-    fun searchGoogleBooks(keyword: String): Flow<ApiResult<List<BookDraft>>> = flow {
+    open fun searchBooks(keyword: String): Flow<ApiResult<List<BookDraft>>> = flow {
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
-                googleBooksApi.search(keyword = keyword.trim())
-                    .items
+                bookApi.search(keyword = keyword.trim())
                     .map { it.toDraft() }
                     .filter { it.title.isNotBlank() }
             }

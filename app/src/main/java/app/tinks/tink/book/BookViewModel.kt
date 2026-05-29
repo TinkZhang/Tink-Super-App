@@ -29,19 +29,21 @@ sealed interface BookEvent {
     data object OpenSearch : BookEvent
     data class OpenDetail(val bookId: Long) : BookEvent
     data class OpenNotes(val bookId: Long) : BookEvent
-    data object BackToHome : BookEvent
+    data object NavigateBack : BookEvent
     data object Refresh : BookEvent
     data class SearchKeywordChanged(val keyword: String) : BookEvent
     data object SubmitSearch : BookEvent
     data class AddDraftToWishlist(val draft: BookDraft) : BookEvent
     data class AddDraftToReading(val draft: BookDraft) : BookEvent
     data class MoveToReading(val book: Book) : BookEvent
+    data class SelectCategory(val category: String?) : BookEvent
     data class Archive(val bookId: Long, val status: ArchiveStatus = ArchiveStatus.Done) : BookEvent
     data class DeleteBook(val bookId: Long) : BookEvent
     data class SaveBook(
         val bookId: Long,
         val title: String,
         val platform: String?,
+        val category: String?,
         val currentPage: Int?,
         val progressPercentage: Double?,
     ) : BookEvent
@@ -64,6 +66,9 @@ data class BookUiState(
     val notes: List<BookNote> = emptyList(),
     val searchKeyword: String = "",
     val searchResults: List<BookDraft> = emptyList(),
+    val categories: List<String> = emptyList(),
+    val selectedCategory: String? = null,
+    val navigationStack: List<BooksScreenState> = listOf(BooksScreenState.Home),
 )
 
 @HiltViewModel
@@ -78,29 +83,47 @@ class BookViewModel @Inject constructor(
     private var mutationJob: Job? = null
 
     init {
+        loadCategories()
         refreshAll()
     }
 
     fun onEvent(event: BookEvent) {
         when (event) {
             BookEvent.OpenHome -> {
-                _state.update { it.copy(screen = BooksScreenState.Home) }
+                _state.update {
+                    it.copy(
+                        screen = BooksScreenState.Home,
+                        navigationStack = listOf(BooksScreenState.Home),
+                        selectedCategory = null,
+                    )
+                }
                 refreshAll()
             }
             is BookEvent.OpenList -> {
-                _state.update { it.copy(screen = BooksScreenState.List(event.state)) }
-                loadList(event.state)
+                _state.update { it.copy(selectedCategory = null) }
+                navigateTo(BooksScreenState.List(event.state))
+                loadList(event.state, null)
             }
-            BookEvent.OpenSearch -> _state.update { it.copy(screen = BooksScreenState.Search) }
-            is BookEvent.OpenDetail -> openDetail(event.bookId)
-            is BookEvent.OpenNotes -> openNotes(event.bookId)
-            BookEvent.BackToHome -> _state.update { it.copy(screen = BooksScreenState.Home) }
+            BookEvent.OpenSearch -> navigateTo(BooksScreenState.Search)
+            is BookEvent.OpenDetail -> {
+                navigateTo(BooksScreenState.Detail(event.bookId))
+                openDetail(event.bookId)
+            }
+            is BookEvent.OpenNotes -> {
+                navigateTo(BooksScreenState.Notes(event.bookId))
+                openNotes(event.bookId)
+            }
+            BookEvent.NavigateBack -> {
+                navigateBack()
+                refreshCurrent()
+            }
             BookEvent.Refresh -> refreshCurrent()
             is BookEvent.SearchKeywordChanged -> _state.update { it.copy(searchKeyword = event.keyword) }
             BookEvent.SubmitSearch -> search()
             is BookEvent.AddDraftToWishlist -> addDraftToWishlist(event.draft)
             is BookEvent.AddDraftToReading -> addDraftToReading(event.draft)
             is BookEvent.MoveToReading -> moveToReading(event.book)
+            is BookEvent.SelectCategory -> selectCategory(event.category)
             is BookEvent.Archive -> archive(event.bookId, event.status)
             is BookEvent.DeleteBook -> deleteBook(event.bookId)
             is BookEvent.SaveBook -> saveBook(event)
@@ -112,7 +135,7 @@ class BookViewModel @Inject constructor(
     private fun refreshCurrent() {
         when (val screen = _state.value.screen) {
             BooksScreenState.Home -> refreshAll()
-            is BooksScreenState.List -> loadList(screen.state)
+            is BooksScreenState.List -> loadList(screen.state, _state.value.selectedCategory)
             BooksScreenState.Search -> search()
             is BooksScreenState.Detail -> openDetail(screen.bookId)
             is BooksScreenState.Notes -> openNotes(screen.bookId)
@@ -120,13 +143,18 @@ class BookViewModel @Inject constructor(
     }
 
     private fun refreshAll() {
-        loadList(BookState.Reading)
-        loadList(BookState.Wish)
-        loadList(BookState.Archived)
+        loadList(BookState.Reading, selectedCategoryFor(BookState.Reading))
+        loadList(BookState.Wish, selectedCategoryFor(BookState.Wish))
+        loadList(BookState.Archived, selectedCategoryFor(BookState.Archived))
     }
 
-    private fun loadList(state: BookState) {
-        repository.getBooks(state)
+    private fun selectedCategoryFor(state: BookState): String? {
+        val visibleList = _state.value.screen as? BooksScreenState.List ?: return null
+        return _state.value.selectedCategory.takeIf { visibleList.state == state }
+    }
+
+    private fun loadList(state: BookState, category: String? = null) {
+        repository.getBooks(state, category)
             .onEach { result ->
                 when (result) {
                     ApiResult.Loading -> _state.update { it.copy(isLoading = true) }
@@ -137,10 +165,28 @@ class BookViewModel @Inject constructor(
                             BookState.Archived -> it.copy(archivedBooks = result.data, isLoading = false)
                         }
                     }
-                    is ApiResult.Error -> failLoading { loadList(state) }
+                    is ApiResult.Error -> failLoading { loadList(state, category) }
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun loadCategories() {
+        repository.getCategories()
+            .onEach { result ->
+                when (result) {
+                    ApiResult.Loading -> Unit
+                    is ApiResult.Success -> _state.update { it.copy(categories = result.data) }
+                    is ApiResult.Error -> failLoading(::loadCategories)
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun selectCategory(category: String?) {
+        _state.update { it.copy(selectedCategory = category) }
+        val state = (_state.value.screen as? BooksScreenState.List)?.state ?: return
+        loadList(state, category)
     }
 
     private fun openDetail(bookId: Long) {
@@ -183,7 +229,7 @@ class BookViewModel @Inject constructor(
         val keyword = _state.value.searchKeyword.trim()
         if (keyword.isEmpty()) return
         searchJob?.cancel()
-        searchJob = repository.searchGoogleBooks(keyword)
+        searchJob = repository.searchBooks(keyword)
             .onEach { result ->
                 when (result) {
                     ApiResult.Loading -> _state.update { it.copy(isLoading = true, searchResults = emptyList()) }
@@ -220,7 +266,12 @@ class BookViewModel @Inject constructor(
     private fun archive(bookId: Long, status: ArchiveStatus) {
         mutate({ repository.archiveBook(bookId, status) }) {
             refreshAll()
-            _state.update { it.copy(screen = BooksScreenState.Home) }
+            _state.update {
+                it.copy(
+                    screen = BooksScreenState.Home,
+                    navigationStack = listOf(BooksScreenState.Home),
+                )
+            }
         }
     }
 
@@ -231,7 +282,13 @@ class BookViewModel @Inject constructor(
                 when (result) {
                     ApiResult.Loading -> _state.update { it.copy(isLoading = true) }
                     is ApiResult.Success -> {
-                        _state.update { it.copy(isLoading = false, screen = BooksScreenState.Home) }
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                screen = BooksScreenState.Home,
+                                navigationStack = listOf(BooksScreenState.Home),
+                            )
+                        }
                         refreshAll()
                     }
                     is ApiResult.Error -> failLoading { deleteBook(bookId) }
@@ -247,12 +304,14 @@ class BookViewModel @Inject constructor(
                 BookUpdateRequest(
                     title = event.title,
                     platform = event.platform,
+                    category = event.category,
                     currentPage = event.currentPage,
                     progressPercentage = event.progressPercentage,
                 )
             )
         }) {
             openDetail(event.bookId)
+            loadCategories()
             refreshAll()
         }
     }
@@ -319,5 +378,21 @@ class BookViewModel @Inject constructor(
     private fun failLoading(onRetry: () -> Unit) {
         _state.update { it.copy(isLoading = false) }
         AppSnackbarBus.showApiFailure(onRetry = onRetry)
+    }
+
+    private fun navigateTo(screen: BooksScreenState) {
+        _state.update {
+            it.copy(
+                screen = screen,
+                navigationStack = it.navigationStack + screen,
+            )
+        }
+    }
+
+    private fun navigateBack() {
+        _state.update {
+            val stack = it.navigationStack.dropLast(1).ifEmpty { listOf(BooksScreenState.Home) }
+            it.copy(screen = stack.last(), navigationStack = stack)
+        }
     }
 }

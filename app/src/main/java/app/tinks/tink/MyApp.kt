@@ -166,7 +166,8 @@ fun MyApp(
                 SnackbarHost(hostState = snackbarHostState)
             },
             topBar = {
-                TopAppBar(
+                if (currentKey !is ScreenBooks) {
+                    TopAppBar(
                     title = { Text(currentKey?.label ?: "响应式应用") },
                     // 左上角添加菜单按钮，点击打开抽屉
                     navigationIcon = {
@@ -217,7 +218,8 @@ fun MyApp(
                             )
                         }
                     }
-                )
+                    )
+                }
             }
         ) { paddingValues ->
             NavDisplay(
@@ -259,7 +261,10 @@ fun MyApp(
                             TimeScreen(timeViewModel)
                         }
                         is ScreenSettings -> SettingsScreen(hiltViewModel())
-                        is ScreenBooks -> BookScreen(hiltViewModel())
+                        is ScreenBooks -> BookScreen(
+                            hiltViewModel(),
+                            onOpenDrawer = { scope.launch { drawerState.open() } },
+                        )
                         is ScreenStoryList -> StoryListScreen(
                             hiltViewModel(),
                             onStoryClick = { story ->

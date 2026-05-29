@@ -19,6 +19,15 @@ import app.tinks.tink.time.TimeLabelManagerState
 import app.tinks.tink.time.TimeScreen
 import app.tinks.tink.time.TimeStatistic
 import app.tinks.tink.time.TimeUiState
+import app.tinks.tink.book.Book
+import app.tinks.tink.book.BookDraft
+import app.tinks.tink.book.ArchiveStatus
+import app.tinks.tink.book.BookListCard
+import app.tinks.tink.book.BookSearchResultCard
+import app.tinks.tink.book.BookScreen
+import app.tinks.tink.book.BookState
+import app.tinks.tink.book.BookUiState
+import app.tinks.tink.book.BooksScreenState
 import app.tinks.tink.weight.TrendChartCardUiState
 import app.tinks.tink.weight.WeightControlCardUiState
 import app.tinks.tink.weight.WeightScreen
@@ -129,3 +138,166 @@ fun TimeDashboardScreenshotPreview() {
         )
     }
 }
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 900)
+@Composable
+fun BookReadingTrackerScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        BookScreen(
+            state = BookUiState(
+                readingBooks = listOf(
+                    Book(
+                        id = 1,
+                        title = "The Left Hand of Darkness",
+                        publisher = "Ace",
+                        author = "Ursula K. Le Guin",
+                        coverUrl = null,
+                        isbn = "9780441478125",
+                        description = null,
+                        rating = 4.3,
+                        amazonLink = null,
+                        pages = 304,
+                        publishYear = 1969,
+                        state = BookState.Reading,
+                        platform = "Paper",
+                        currentPage = 92,
+                        progressPercentage = 30.0,
+                        archiveStatus = null,
+                        archivedDate = null,
+                    )
+                ),
+                wishlistBooks = emptyList(),
+                archivedBooks = emptyList(),
+            ),
+        )
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 160)
+@Composable
+fun BookSearchResultCardScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        Surface(modifier = Modifier.padding(8.dp)) {
+            BookSearchResultCard(
+                draft = BookDraft(
+                    title = "The Left Hand of Darkness",
+                    publisher = "Ace",
+                    author = "Ursula K. Le Guin",
+                    coverUrl = null,
+                    rating = 4.3,
+                    pages = 304,
+                    publishYear = 1969,
+                ),
+                onEvent = {},
+            )
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 164)
+@Composable
+fun BookReadingListCardScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        Surface(modifier = Modifier.padding(8.dp)) {
+            BookListCard(
+                book = listCardSample(
+                    state = BookState.Reading,
+                    platform = "Kindle",
+                    currentPage = 92,
+                    progressPercentage = 30.0,
+                ),
+                onEvent = {},
+            )
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 164)
+@Composable
+fun BookWishlistCardScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        Surface(modifier = Modifier.padding(8.dp)) {
+            BookListCard(
+                book = listCardSample(state = BookState.Wish),
+                onEvent = {},
+            )
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 164)
+@Composable
+fun BookArchivedCardScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        Surface(modifier = Modifier.padding(8.dp)) {
+            BookListCard(
+                book = listCardSample(
+                    state = BookState.Archived,
+                    currentPage = 304,
+                    progressPercentage = 100.0,
+                    archiveStatus = ArchiveStatus.Done,
+                    archivedDate = "2026-04-21",
+                ),
+                onEvent = {},
+            )
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 360)
+@Composable
+fun BookFilteredReadingShelfScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        BookScreen(
+            state = BookUiState(
+                screen = BooksScreenState.List(BookState.Reading),
+                categories = listOf("Science Fiction", "Design", "Work"),
+                selectedCategory = "Science Fiction",
+                readingBooks = listOf(
+                    listCardSample(
+                        state = BookState.Reading,
+                        platform = "Kindle",
+                        currentPage = 92,
+                        progressPercentage = 30.0,
+                        category = "Science Fiction",
+                    )
+                ),
+            ),
+        )
+    }
+}
+
+private fun listCardSample(
+    state: BookState,
+    platform: String? = null,
+    currentPage: Int? = null,
+    progressPercentage: Double? = null,
+    archiveStatus: ArchiveStatus? = null,
+    archivedDate: String? = null,
+    category: String? = null,
+) = Book(
+    id = 1,
+    title = "The Left Hand of Darkness",
+    publisher = "Ace",
+    author = "Ursula K. Le Guin",
+    coverUrl = null,
+    isbn = "9780441478125",
+    description = null,
+    rating = 4.3,
+    amazonLink = null,
+    pages = 304,
+    publishYear = 1969,
+    state = state,
+    platform = platform,
+    currentPage = currentPage,
+    progressPercentage = progressPercentage,
+    archiveStatus = archiveStatus,
+    archivedDate = archivedDate,
+    category = category,
+)

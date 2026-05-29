@@ -1,6 +1,5 @@
 package app.tinks.tink.book
 
-import app.tinks.tink.BuildConfig
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
@@ -12,10 +11,17 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface BookApi {
+    @GET("book/search")
+    suspend fun search(
+        @Query("query") keyword: String,
+        @Query("limit") limit: Int = 20,
+    ): List<BookSearchResultDto>
+
     @GET("book/wishlist")
     suspend fun getWishlist(
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 50,
+        @Query("category") category: String? = null,
     ): List<BookDto>
 
     @POST("book/wishlist")
@@ -27,6 +33,7 @@ interface BookApi {
     suspend fun getReading(
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 50,
+        @Query("category") category: String? = null,
     ): List<BookDto>
 
     @GET("book/archived")
@@ -34,7 +41,11 @@ interface BookApi {
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 50,
         @Query("status") status: String? = null,
+        @Query("category") category: String? = null,
     ): List<BookDto>
+
+    @GET("book/categories")
+    suspend fun getCategories(): List<String>
 
     @GET("book/{bookId}")
     suspend fun getBook(@Path("bookId") bookId: Long): BookDto
@@ -87,15 +98,24 @@ interface BookApi {
     )
 }
 
-interface GoogleBooksApi {
-    @GET("books/v1/volumes")
-    suspend fun search(
-        @Query("q") keyword: String,
-        @Query("startIndex") startIndex: Int = 0,
-        @Query("maxResults") maxResults: Int = 20,
-        @Query("key") key: String = BuildConfig.GOOGLE_API_KEY,
-    ): GoogleBooksResponse
-}
+@Serializable
+data class BookSearchResultDto(
+    @SerialName("source_id")
+    val sourceId: String,
+    val title: String,
+    val publisher: String? = null,
+    val author: String? = null,
+    @SerialName("cover_url")
+    val coverUrl: String? = null,
+    val isbn: String? = null,
+    val description: String? = null,
+    val rating: Double? = null,
+    @SerialName("amazon_link")
+    val amazonLink: String? = null,
+    val pages: Int? = null,
+    @SerialName("publish_year")
+    val publishYear: Int? = null,
+)
 
 @Serializable
 data class BookDto(
@@ -113,6 +133,7 @@ data class BookDto(
     val pages: Int? = null,
     @SerialName("publish_year")
     val publishYear: Int? = null,
+    val category: String? = null,
     val state: String,
     val platform: String? = null,
     @SerialName("current_page")
@@ -144,6 +165,7 @@ data class BookCreateRequest(
     val pages: Int? = null,
     @SerialName("publish_year")
     val publishYear: Int? = null,
+    val category: String? = null,
 )
 
 @Serializable
@@ -161,6 +183,7 @@ data class BookUpdateRequest(
     val pages: Int? = null,
     @SerialName("publish_year")
     val publishYear: Int? = null,
+    val category: String? = null,
     val platform: String? = null,
     @SerialName("current_page")
     val currentPage: Int? = null,
@@ -219,43 +242,6 @@ data class BookNoteUpdateRequest(
     val progressPercentage: Double? = null,
 )
 
-@Serializable
-data class GoogleBooksResponse(
-    val items: List<GoogleBookItemDto> = emptyList(),
-)
-
-@Serializable
-data class GoogleBookItemDto(
-    val id: String,
-    val volumeInfo: GoogleVolumeInfoDto = GoogleVolumeInfoDto(),
-)
-
-@Serializable
-data class GoogleVolumeInfoDto(
-    val title: String? = null,
-    val authors: List<String> = emptyList(),
-    val publisher: String? = null,
-    val publishedDate: String? = null,
-    val description: String? = null,
-    val pageCount: Int? = null,
-    val averageRating: Double? = null,
-    val imageLinks: GoogleImageLinksDto? = null,
-    val industryIdentifiers: List<GoogleIndustryIdentifierDto> = emptyList(),
-    val infoLink: String? = null,
-)
-
-@Serializable
-data class GoogleImageLinksDto(
-    val thumbnail: String? = null,
-    val smallThumbnail: String? = null,
-)
-
-@Serializable
-data class GoogleIndustryIdentifierDto(
-    val type: String? = null,
-    val identifier: String? = null,
-)
-
 enum class BookState(val wireValue: String, val label: String) {
     Wish("wish", "Wishlist"),
     Reading("reading", "Reading"),
@@ -285,6 +271,7 @@ data class Book(
     val progressPercentage: Double?,
     val archiveStatus: ArchiveStatus?,
     val archivedDate: String?,
+    val category: String? = null,
 )
 
 data class BookNote(
@@ -306,6 +293,7 @@ data class BookDraft(
     val amazonLink: String? = null,
     val pages: Int? = null,
     val publishYear: Int? = null,
+    val category: String? = null,
 )
 
 fun BookDto.toDomain(): Book = Book(
@@ -334,6 +322,7 @@ fun BookDto.toDomain(): Book = Book(
         else -> null
     },
     archivedDate = archivedDate,
+    category = category,
 )
 
 fun BookNoteDto.toDomain(): BookNote = BookNote(
@@ -355,22 +344,18 @@ fun BookDraft.toCreateRequest(): BookCreateRequest = BookCreateRequest(
     amazonLink = amazonLink,
     pages = pages,
     publishYear = publishYear,
+    category = category,
 )
 
-fun GoogleBookItemDto.toDraft(): BookDraft {
-    val info = volumeInfo
-    return BookDraft(
-        title = info.title.orEmpty().ifBlank { "Untitled" },
-        publisher = info.publisher,
-        author = info.authors.joinToString().ifBlank { null },
-        coverUrl = info.imageLinks?.thumbnail?.replace("http:", "https:")
-            ?: info.imageLinks?.smallThumbnail?.replace("http:", "https:"),
-        isbn = info.industryIdentifiers.firstOrNull { it.type == "ISBN_13" }?.identifier
-            ?: info.industryIdentifiers.firstOrNull()?.identifier,
-        description = info.description,
-        rating = info.averageRating,
-        amazonLink = info.infoLink,
-        pages = info.pageCount?.takeIf { it > 0 },
-        publishYear = info.publishedDate?.take(4)?.toIntOrNull(),
-    )
-}
+fun BookSearchResultDto.toDraft(): BookDraft = BookDraft(
+    title = title,
+    publisher = publisher,
+    author = author,
+    coverUrl = coverUrl,
+    isbn = isbn,
+    description = description,
+    rating = rating,
+    amazonLink = amazonLink,
+    pages = pages,
+    publishYear = publishYear,
+)
