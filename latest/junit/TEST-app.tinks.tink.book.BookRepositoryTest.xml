@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.book.BookRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-29T10:22:05.583Z" hostname="runnervm3jyl0" time="0.396">
+  <properties/>
+  <testcase name="getBooks_passesSelectedCategoryToApi" classname="app.tinks.tink.book.BookRepositoryTest" time="0.371"/>
+  <testcase name="addToReading_createsWishlistEntryThenStartsReading" classname="app.tinks.tink.book.BookRepositoryTest" time="0.015"/>
+  <testcase name="searchBooks_usesBackendSearchAndMapsResult" classname="app.tinks.tink.book.BookRepositoryTest" time="0.009"/>
+  <system-out><![CDATA[safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
