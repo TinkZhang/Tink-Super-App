@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.lottery.LotteryViewModelTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-06-04T16:16:37.357Z" hostname="runnervm3jyl0" time="0.031">
+  <properties/>
+  <testcase name="init_loadsHistoryAndBuildsActiveReadyTicket" classname="app.tinks.tink.lottery.LotteryViewModelTest" time="0.014"/>
+  <testcase name="saveDraft_postsLotteryAndRefreshesHistory" classname="app.tinks.tink.lottery.LotteryViewModelTest" time="0.004"/>
+  <testcase name="capturePreview_opensEditableReviewDraft" classname="app.tinks.tink.lottery.LotteryViewModelTest" time="0.002"/>
+  <testcase name="stateStats_mergeHistoryAndStats" classname="app.tinks.tink.lottery.LotteryViewModelTest" time="0.0"/>
+  <testcase name="checkWinningLottery_updatesTicketAndShowsHero" classname="app.tinks.tink.lottery.LotteryViewModelTest" time="0.005"/>
+  <testcase name="invalidDraft_keepsReviewOpenWithError" classname="app.tinks.tink.lottery.LotteryViewModelTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

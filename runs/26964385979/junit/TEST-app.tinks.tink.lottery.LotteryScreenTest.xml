@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.lottery.LotteryScreenTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-06-04T16:16:36.574Z" hostname="runnervm3jyl0" time="0.779">
+  <properties/>
+  <testcase name="dashboard_invokesCameraAndHistoryCallbacks" classname="app.tinks.tink.lottery.LotteryScreenTest" time="0.206"/>
+  <testcase name="historyStats_rendersStatsAndDeleteAction" classname="app.tinks.tink.lottery.LotteryScreenTest" time="0.158"/>
+  <testcase name="reviewScreen_rendersJsonAndSendsSaveEvent" classname="app.tinks.tink.lottery.LotteryScreenTest" time="0.221"/>
+  <testcase name="hero_rendersWinningResult" classname="app.tinks.tink.lottery.LotteryScreenTest" time="0.096"/>
+  <testcase name="readyTicket_invokesRevealAction" classname="app.tinks.tink.lottery.LotteryScreenTest" time="0.098"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

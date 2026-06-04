@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LotteryApi.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.lottery</a> &gt; <span class="el_source">LotteryApi.kt</span></div><h1>LotteryApi.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.lottery
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Path
+import java.time.Instant
+
+interface LotteryApi {
+    @GET(&quot;lottery&quot;)
+    suspend fun getLotteryHistory(): List&lt;LotteryHistoryDto&gt;
+
+    @POST(&quot;lottery&quot;)
+    suspend fun createLottery(
+        @Body payload: LotteryCreateRequest,
+    ): LotteryHistoryDto
+
+    @GET(&quot;lottery/{lotteryId}&quot;)
+    suspend fun getLottery(
+        @Path(&quot;lotteryId&quot;) lotteryId: Int,
+    ): LotteryHistoryDto
+
+    @PATCH(&quot;lottery/{lotteryId}&quot;)
+    suspend fun updateLottery(
+        @Path(&quot;lotteryId&quot;) lotteryId: Int,
+        @Body payload: LotteryUpdateRequest,
+    ): LotteryHistoryDto
+
+    @DELETE(&quot;lottery/{lotteryId}&quot;)
+    suspend fun deleteLottery(
+        @Path(&quot;lotteryId&quot;) lotteryId: Int,
+    )
+
+    @POST(&quot;lottery/{lotteryId}/check&quot;)
+    suspend fun checkLottery(
+        @Path(&quot;lotteryId&quot;) lotteryId: Int,
+    ): LotteryCheckResponseDto
+
+    @GET(&quot;lottery-results/{issueId}&quot;)
+    suspend fun getLotteryResult(
+        @Path(&quot;issueId&quot;) issueId: String,
+    ): LotteryResultDto
+}
+
+<span class="pc bnc" id="L49" title="All 66 branches missed.">@Serializable</span>
+<span class="fc" id="L50">data class LotteryHistoryDto(</span>
+<span class="fc" id="L51">    val id: Int,</span>
+<span class="fc" id="L52">    @SerialName(&quot;created_at&quot;)</span>
+<span class="nc" id="L53">    val createdAt: String,</span>
+<span class="fc" id="L54">    @SerialName(&quot;updated_at&quot;)</span>
+<span class="pc" id="L55">    val updatedAt: String? = null,</span>
+<span class="fc" id="L56">    val type: String,</span>
+<span class="fc" id="L57">    @SerialName(&quot;issue_id&quot;)</span>
+<span class="fc" id="L58">    val issueId: String,</span>
+<span class="fc" id="L59">    @SerialName(&quot;front_numbers&quot;)</span>
+<span class="fc" id="L60">    val frontNumbers: List&lt;Int&gt;,</span>
+<span class="fc" id="L61">    @SerialName(&quot;back_numbers&quot;)</span>
+<span class="fc" id="L62">    val backNumbers: List&lt;Int&gt;,</span>
+<span class="fc" id="L63">    @SerialName(&quot;reveal_time&quot;)</span>
+<span class="fc" id="L64">    val revealTime: String,</span>
+<span class="fc" id="L65">    @SerialName(&quot;captured_image_uri&quot;)</span>
+<span class="pc" id="L66">    val capturedImageUri: String? = null,</span>
+<span class="fc" id="L67">    val checked: Boolean,</span>
+<span class="fc" id="L68">    @SerialName(&quot;checked_at&quot;)</span>
+<span class="pc" id="L69">    val checkedAt: String? = null,</span>
+<span class="fc" id="L70">    @SerialName(&quot;result_id&quot;)</span>
+<span class="pc" id="L71">    val resultId: Int? = null,</span>
+<span class="fc" id="L72">    @SerialName(&quot;prize_tier&quot;)</span>
+<span class="pc" id="L73">    val prizeTier: String? = null,</span>
+<span class="fc" id="L74">    @SerialName(&quot;front_match_count&quot;)</span>
+<span class="pc" id="L75">    val frontMatchCount: Int? = null,</span>
+<span class="fc" id="L76">    @SerialName(&quot;back_match_count&quot;)</span>
+<span class="pc" id="L77">    val backMatchCount: Int? = null,</span>
+<span class="pc" id="L78">    val result: LotteryResultDto? = null,</span>
+<span class="fc" id="L79">)</span>
+
+<span class="pc bnc" id="L81" title="All 18 branches missed.">@Serializable</span>
+<span class="fc" id="L82">data class LotteryResultDto(</span>
+<span class="fc" id="L83">    val id: Int,</span>
+<span class="fc" id="L84">    @SerialName(&quot;created_at&quot;)</span>
+<span class="nc" id="L85">    val createdAt: String,</span>
+<span class="fc" id="L86">    @SerialName(&quot;updated_at&quot;)</span>
+<span class="pc" id="L87">    val updatedAt: String? = null,</span>
+<span class="fc" id="L88">    val type: String,</span>
+<span class="fc" id="L89">    @SerialName(&quot;issue_id&quot;)</span>
+<span class="fc" id="L90">    val issueId: String,</span>
+<span class="fc" id="L91">    @SerialName(&quot;front_numbers&quot;)</span>
+<span class="fc" id="L92">    val frontNumbers: List&lt;Int&gt;,</span>
+<span class="fc" id="L93">    @SerialName(&quot;back_numbers&quot;)</span>
+<span class="fc" id="L94">    val backNumbers: List&lt;Int&gt;,</span>
+<span class="fc" id="L95">    @SerialName(&quot;opened_at&quot;)</span>
+<span class="pc" id="L96">    val openedAt: String? = null,</span>
+<span class="fc" id="L97">    val source: String,</span>
+<span class="fc" id="L98">)</span>
+
+<span class="pc bnc" id="L100" title="All 18 branches missed.">@Serializable</span>
+<span class="fc" id="L101">data class LotteryCreateRequest(</span>
+<span class="pc" id="L102">    val type: String = LOTTERY_TYPE_DA_LE_TOU,</span>
+<span class="fc" id="L103">    @SerialName(&quot;issue_id&quot;)</span>
+<span class="fc" id="L104">    val issueId: String,</span>
+<span class="fc" id="L105">    @SerialName(&quot;front_numbers&quot;)</span>
+<span class="fc" id="L106">    val frontNumbers: List&lt;Int&gt;,</span>
+<span class="fc" id="L107">    @SerialName(&quot;back_numbers&quot;)</span>
+<span class="fc" id="L108">    val backNumbers: List&lt;Int&gt;,</span>
+<span class="fc" id="L109">    @SerialName(&quot;reveal_time&quot;)</span>
+<span class="fc" id="L110">    val revealTime: String,</span>
+<span class="fc" id="L111">    @SerialName(&quot;captured_image_uri&quot;)</span>
+<span class="pc" id="L112">    val capturedImageUri: String? = null,</span>
+<span class="fc" id="L113">)</span>
+
+<span class="nc bnc" id="L115" title="All 50 branches missed.">@Serializable</span>
+<span class="nc" id="L116">data class LotteryUpdateRequest(</span>
+<span class="nc" id="L117">    val type: String? = null,</span>
+<span class="nc" id="L118">    @SerialName(&quot;issue_id&quot;)</span>
+<span class="nc" id="L119">    val issueId: String? = null,</span>
+<span class="nc" id="L120">    @SerialName(&quot;front_numbers&quot;)</span>
+<span class="nc" id="L121">    val frontNumbers: List&lt;Int&gt;? = null,</span>
+<span class="nc" id="L122">    @SerialName(&quot;back_numbers&quot;)</span>
+<span class="nc" id="L123">    val backNumbers: List&lt;Int&gt;? = null,</span>
+<span class="nc" id="L124">    @SerialName(&quot;reveal_time&quot;)</span>
+<span class="nc" id="L125">    val revealTime: String? = null,</span>
+<span class="nc" id="L126">    @SerialName(&quot;captured_image_uri&quot;)</span>
+<span class="nc" id="L127">    val capturedImageUri: String? = null,</span>
+<span class="nc" id="L128">)</span>
+
+<span class="pc bnc" id="L130" title="All 2 branches missed.">@Serializable</span>
+<span class="fc" id="L131">data class LotteryCheckResponseDto(</span>
+<span class="fc" id="L132">    val lottery: LotteryHistoryDto,</span>
+<span class="fc" id="L133">    val result: LotteryResultDto,</span>
+<span class="fc" id="L134">    @SerialName(&quot;front_match_count&quot;)</span>
+<span class="fc" id="L135">    val frontMatchCount: Int,</span>
+<span class="fc" id="L136">    @SerialName(&quot;back_match_count&quot;)</span>
+<span class="fc" id="L137">    val backMatchCount: Int,</span>
+<span class="fc" id="L138">    @SerialName(&quot;prize_tier&quot;)</span>
+<span class="fc" id="L139">    val prizeTier: String,</span>
+)
+
+fun LotteryHistoryDto.toDomain(): LotteryTicket =
+<span class="fc" id="L143">    LotteryTicket(</span>
+<span class="fc" id="L144">        id = id,</span>
+<span class="fc" id="L145">        type = type,</span>
+<span class="fc" id="L146">        issueId = issueId,</span>
+<span class="fc" id="L147">        numbers = LotteryNumbers(frontNumbers.sorted(), backNumbers.sorted()),</span>
+<span class="fc" id="L148">        revealTime = parseInstantOrEpoch(revealTime),</span>
+<span class="fc" id="L149">        capturedImageUri = capturedImageUri,</span>
+<span class="fc" id="L150">        checked = checked,</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">        checkedAt = checkedAt?.let(::parseInstantOrNull),</span>
+<span class="fc" id="L152">        resultId = resultId,</span>
+<span class="fc" id="L153">        prizeTier = prizeTier,</span>
+<span class="fc" id="L154">        frontMatchCount = frontMatchCount,</span>
+<span class="fc" id="L155">        backMatchCount = backMatchCount,</span>
+<span class="fc bfc" id="L156" title="All 2 branches covered.">        result = result?.toDomain(),</span>
+<span class="fc" id="L157">    )</span>
+
+fun LotteryResultDto.toDomain(): LotteryResult =
+<span class="fc" id="L160">    LotteryResult(</span>
+<span class="fc" id="L161">        id = id,</span>
+<span class="fc" id="L162">        type = type,</span>
+<span class="fc" id="L163">        issueId = issueId,</span>
+<span class="fc" id="L164">        numbers = LotteryNumbers(frontNumbers.sorted(), backNumbers.sorted()),</span>
+<span class="pc bpc" id="L165" title="1 of 2 branches missed.">        openedAt = openedAt?.let(::parseInstantOrNull),</span>
+<span class="fc" id="L166">        source = source,</span>
+<span class="fc" id="L167">    )</span>
+
+fun LotteryCheckResponseDto.toDomain(): LotteryCheckOutcome =
+<span class="fc" id="L170">    LotteryCheckOutcome(</span>
+<span class="fc" id="L171">        lottery = lottery.toDomain(),</span>
+<span class="fc" id="L172">        result = result.toDomain(),</span>
+<span class="fc" id="L173">        frontMatchCount = frontMatchCount,</span>
+<span class="fc" id="L174">        backMatchCount = backMatchCount,</span>
+<span class="fc" id="L175">        prizeTier = prizeTier,</span>
+<span class="fc" id="L176">    )</span>
+
+private fun parseInstantOrEpoch(value: String): Instant =
+<span class="pc bpc" id="L179" title="1 of 2 branches missed.">    parseInstantOrNull(value) ?: Instant.EPOCH</span>
+
+private fun parseInstantOrNull(value: String): Instant? =
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">    runCatching { Instant.parse(value) }.getOrNull()</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

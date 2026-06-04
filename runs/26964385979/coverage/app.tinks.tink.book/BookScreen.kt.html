@@ -1,0 +1,1095 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookScreen.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.book</a> &gt; <span class="el_source">BookScreen.kt</span></div><h1>BookScreen.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.book
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.NoteAdd
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.LibraryBooks
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.AutoStories
+import androidx.compose.material.icons.outlined.BookmarkAdd
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.PhoneAndroid
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import java.util.Locale
+
+@Composable
+fun BookScreen(
+    viewModel: BookViewModel,
+<span class="nc" id="L94">    onOpenDrawer: () -&gt; Unit = {},</span>
+<span class="nc bnc" id="L95" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L96">    val state by viewModel.uiState.collectAsStateWithLifecycle()</span>
+<span class="nc" id="L97">    BookScreen(state = state, onEvent = viewModel::onEvent, onOpenDrawer = onOpenDrawer)</span>
+<span class="nc" id="L98">}</span>
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun BookScreen(
+    state: BookUiState,
+<span class="nc bnc" id="L104" title="All 2 branches missed.">    onEvent: (BookEvent) -&gt; Unit = {},</span>
+<span class="nc" id="L105">    onOpenDrawer: () -&gt; Unit = {},</span>
+<span class="nc bnc" id="L106" title="All 22 branches missed.">) {</span>
+<span class="nc" id="L107">    Scaffold(</span>
+<span class="nc" id="L108">        topBar = {</span>
+<span class="nc" id="L109">            when (state.screen) {</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">                BooksScreenState.Home -&gt; HomeSearchBar(onEvent, onOpenDrawer)</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">                BooksScreenState.Search -&gt; ActiveBookSearchBar(state, onEvent)</span>
+<span class="nc" id="L112">                else -&gt; BooksTopBar(</span>
+<span class="nc" id="L113">                    screen = state.screen,</span>
+<span class="nc" id="L114">                    onOpenDrawer = onOpenDrawer,</span>
+<span class="nc" id="L115">                    onBack = { onEvent(BookEvent.NavigateBack) },</span>
+                )
+            }
+<span class="nc" id="L118">        },</span>
+<span class="nc" id="L119">    ) { padding -&gt;</span>
+<span class="nc" id="L120">        Column(</span>
+<span class="nc" id="L121">            modifier = Modifier</span>
+<span class="nc" id="L122">                .fillMaxSize()</span>
+<span class="nc" id="L123">                .padding(padding)</span>
+        ) {
+<span class="nc" id="L125">            Box(Modifier.fillMaxSize()) {</span>
+<span class="nc" id="L126">                when (val screen = state.screen) {</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">                    BooksScreenState.Home -&gt; BooksHome(state, onEvent)</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">                    is BooksScreenState.List -&gt; BookList(</span>
+<span class="nc bnc" id="L129" title="All 3 branches missed.">                        books = when (screen.state) {</span>
+<span class="nc" id="L130">                            BookState.Reading -&gt; state.readingBooks</span>
+<span class="nc" id="L131">                            BookState.Wish -&gt; state.wishlistBooks</span>
+<span class="nc" id="L132">                            BookState.Archived -&gt; state.archivedBooks</span>
+                        },
+<span class="nc" id="L134">                        categories = state.categories,</span>
+<span class="nc" id="L135">                        selectedCategory = state.selectedCategory,</span>
+<span class="nc" id="L136">                        emptyText = &quot;No ${screen.state.label.lowercase()} books&quot;,</span>
+<span class="nc" id="L137">                        onCategorySelected = { onEvent(BookEvent.SelectCategory(it)) },</span>
+<span class="nc" id="L138">                        onEvent = onEvent,</span>
+                    )
+<span class="nc bnc" id="L140" title="All 2 branches missed.">                    BooksScreenState.Search -&gt; BookSearch(state, onEvent)</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">                    is BooksScreenState.Detail -&gt; BookDetail(state.selectedBook, state.categories, onEvent)</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">                    is BooksScreenState.Notes -&gt; NotesList(state.notes, onEvent)</span>
+<span class="nc" id="L143">                }</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">                if (state.isLoading) {</span>
+<span class="nc" id="L145">                    CircularProgressIndicator(</span>
+<span class="nc" id="L146">                        modifier = Modifier.align(Alignment.Center)</span>
+                    )
+<span class="nc" id="L148">                }</span>
+<span class="nc" id="L149">            }</span>
+<span class="nc" id="L150">        }</span>
+<span class="nc" id="L151">    }</span>
+<span class="nc" id="L152">}</span>
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BooksTopBar(
+    screen: BooksScreenState,
+    onOpenDrawer: () -&gt; Unit,
+    onBack: () -&gt; Unit,
+<span class="nc bnc" id="L160" title="All 18 branches missed.">) {</span>
+<span class="nc" id="L161">    val title = when (screen) {</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        BooksScreenState.Home -&gt; &quot;Reading tracker&quot;</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">        BooksScreenState.Search -&gt; &quot;Find a book&quot;</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        is BooksScreenState.List -&gt; screen.state.label</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">        is BooksScreenState.Detail -&gt; &quot;Book details&quot;</span>
+<span class="nc" id="L166">        is BooksScreenState.Notes -&gt; &quot;Reading notes&quot;</span>
+    }
+<span class="nc" id="L168">    TopAppBar(</span>
+<span class="nc" id="L169">        title = { Text(title) },</span>
+<span class="nc" id="L170">        navigationIcon = {</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">            if (screen == BooksScreenState.Home) {</span>
+<span class="nc" id="L172">                IconButton(</span>
+<span class="nc" id="L173">                    onClick = onOpenDrawer,</span>
+<span class="nc" id="L174">                    modifier = Modifier.testTag(&quot;book_menu_button&quot;),</span>
+<span class="nc" id="L175">                ) {</span>
+<span class="nc" id="L176">                    Icon(Icons.Filled.Menu, contentDescription = &quot;打开抽屉&quot;)</span>
+<span class="nc" id="L177">                }</span>
+<span class="nc" id="L178">            } else {</span>
+<span class="nc" id="L179">                IconButton(</span>
+<span class="nc" id="L180">                    onClick = onBack,</span>
+<span class="nc" id="L181">                    modifier = Modifier.testTag(&quot;book_back_button&quot;),</span>
+<span class="nc" id="L182">                ) {</span>
+<span class="nc" id="L183">                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = &quot;返回上级&quot;)</span>
+<span class="nc" id="L184">                }</span>
+            }
+<span class="nc" id="L186">        },</span>
+    )
+<span class="nc" id="L188">}</span>
+
+@Composable
+private fun BooksHome(
+    state: BookUiState,
+    onEvent: (BookEvent) -&gt; Unit,
+<span class="nc bnc" id="L194" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L195">    val current = state.readingBooks.firstOrNull()</span>
+<span class="nc" id="L196">    LazyColumn(</span>
+<span class="nc" id="L197">        modifier = Modifier.fillMaxSize(),</span>
+<span class="nc" id="L198">        contentPadding = PaddingValues(16.dp),</span>
+<span class="nc" id="L199">        verticalArrangement = Arrangement.spacedBy(16.dp),</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">    ) {</span>
+<span class="nc" id="L201">        item {</span>
+<span class="nc" id="L202">            CurrentReadingCard(current, onEvent)</span>
+<span class="nc" id="L203">        }</span>
+<span class="nc" id="L204">        item {</span>
+<span class="nc" id="L205">            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {</span>
+<span class="nc" id="L206">                SummaryCard(&quot;Reading&quot;, state.readingBooks.size, Icons.Filled.Bookmark, Modifier.weight(1f)) {</span>
+<span class="nc" id="L207">                    onEvent(BookEvent.OpenList(BookState.Reading))</span>
+<span class="nc" id="L208">                }</span>
+<span class="nc" id="L209">                SummaryCard(&quot;Wishlist&quot;, state.wishlistBooks.size, Icons.Filled.Favorite, Modifier.weight(1f)) {</span>
+<span class="nc" id="L210">                    onEvent(BookEvent.OpenList(BookState.Wish))</span>
+<span class="nc" id="L211">                }</span>
+<span class="nc" id="L212">                SummaryCard(&quot;Archived&quot;, state.archivedBooks.size, Icons.Filled.Archive, Modifier.weight(1f)) {</span>
+<span class="nc" id="L213">                    onEvent(BookEvent.OpenList(BookState.Archived))</span>
+<span class="nc" id="L214">                }</span>
+<span class="nc" id="L215">            }</span>
+<span class="nc" id="L216">        }</span>
+<span class="nc" id="L217">    }</span>
+<span class="nc" id="L218">}</span>
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HomeSearchBar(
+    onEvent: (BookEvent) -&gt; Unit,
+    onOpenDrawer: () -&gt; Unit,
+<span class="nc bnc" id="L225" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L226">    SearchBar(</span>
+<span class="nc" id="L227">        inputField = {</span>
+<span class="nc" id="L228">            SearchBarDefaults.InputField(</span>
+<span class="nc" id="L229">                query = &quot;&quot;,</span>
+<span class="nc" id="L230">                onQueryChange = {</span>
+<span class="nc" id="L231">                    onEvent(BookEvent.OpenSearch)</span>
+<span class="nc" id="L232">                    onEvent(BookEvent.SearchKeywordChanged(it))</span>
+<span class="nc" id="L233">                },</span>
+<span class="nc" id="L234">                onSearch = { onEvent(BookEvent.OpenSearch) },</span>
+<span class="nc" id="L235">                expanded = false,</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">                onExpandedChange = { if (it) onEvent(BookEvent.OpenSearch) },</span>
+<span class="nc" id="L237">                placeholder = { Text(&quot;Search books&quot;) },</span>
+<span class="nc" id="L238">                leadingIcon = {</span>
+<span class="nc" id="L239">                    IconButton(</span>
+<span class="nc" id="L240">                        onClick = onOpenDrawer,</span>
+<span class="nc" id="L241">                        modifier = Modifier.testTag(&quot;book_menu_button&quot;),</span>
+<span class="nc" id="L242">                    ) {</span>
+<span class="nc" id="L243">                        Icon(Icons.Filled.Menu, contentDescription = &quot;打开抽屉&quot;)</span>
+<span class="nc" id="L244">                    }</span>
+<span class="nc" id="L245">                },</span>
+            )
+<span class="nc" id="L247">        },</span>
+<span class="nc" id="L248">        expanded = false,</span>
+<span class="nc bnc" id="L249" title="All 4 branches missed.">        onExpandedChange = { if (it) onEvent(BookEvent.OpenSearch) },</span>
+<span class="nc" id="L250">        modifier = Modifier</span>
+<span class="nc" id="L251">            .fillMaxWidth()</span>
+<span class="nc" id="L252">            .padding(horizontal = 16.dp, vertical = 8.dp)</span>
+<span class="nc" id="L253">            .testTag(&quot;book_search_entry&quot;),</span>
+<span class="nc" id="L254">    ) {}</span>
+<span class="nc" id="L255">}</span>
+
+@Composable
+private fun CurrentReadingCard(
+    book: Book?,
+    onEvent: (BookEvent) -&gt; Unit,
+<span class="nc bnc" id="L261" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L262">    Card(</span>
+<span class="nc" id="L263">        modifier = Modifier</span>
+<span class="nc" id="L264">            .fillMaxWidth()</span>
+<span class="nc" id="L265">            .testTag(&quot;book_current_reading&quot;),</span>
+<span class="nc" id="L266">        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),</span>
+<span class="nc" id="L267">    ) {</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        if (book == null) {</span>
+<span class="nc" id="L269">            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {</span>
+<span class="nc" id="L270">                Text(&quot;No active reading book&quot;, style = MaterialTheme.typography.titleLarge)</span>
+<span class="nc" id="L271">                Button(onClick = { onEvent(BookEvent.OpenSearch) }) {</span>
+<span class="nc" id="L272">                    Icon(Icons.Filled.Search, contentDescription = null)</span>
+<span class="nc" id="L273">                    Spacer(Modifier.width(8.dp))</span>
+<span class="nc" id="L274">                    Text(&quot;Find a book&quot;)</span>
+<span class="nc" id="L275">                }</span>
+<span class="nc" id="L276">            }</span>
+<span class="nc" id="L277">        } else {</span>
+<span class="nc" id="L278">            Row(</span>
+<span class="nc" id="L279">                modifier = Modifier</span>
+<span class="nc" id="L280">                    .fillMaxWidth()</span>
+<span class="nc" id="L281">                    .clickable { onEvent(BookEvent.OpenDetail(book.id)) }</span>
+<span class="nc" id="L282">                    .padding(16.dp),</span>
+<span class="nc" id="L283">                horizontalArrangement = Arrangement.spacedBy(16.dp),</span>
+            ) {
+<span class="nc" id="L285">                BookCover(book.coverUrl, book.title, Modifier.width(88.dp))</span>
+<span class="nc" id="L286">                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L287">                    Text(book.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">                    Text(book.author.orEmpty(), style = MaterialTheme.typography.bodyMedium)</span>
+<span class="nc" id="L289">                    ProgressLine(book)</span>
+<span class="nc" id="L290">                    FilledTonalButton(onClick = { onEvent(BookEvent.OpenNotes(book.id)) }) {</span>
+<span class="nc" id="L291">                        Icon(Icons.AutoMirrored.Filled.NoteAdd, contentDescription = null)</span>
+<span class="nc" id="L292">                        Spacer(Modifier.width(8.dp))</span>
+<span class="nc" id="L293">                        Text(&quot;Notes&quot;)</span>
+<span class="nc" id="L294">                    }</span>
+<span class="nc" id="L295">                }</span>
+<span class="nc" id="L296">            }</span>
+        }
+<span class="nc" id="L298">    }</span>
+<span class="nc" id="L299">}</span>
+
+@Composable
+private fun SummaryCard(
+    label: String,
+    count: Int,
+    icon: ImageVector,
+<span class="nc" id="L306">    modifier: Modifier = Modifier,</span>
+    onClick: () -&gt; Unit,
+<span class="nc bnc" id="L308" title="All 28 branches missed.">) {</span>
+<span class="nc" id="L309">    Card(</span>
+<span class="nc" id="L310">        modifier = modifier</span>
+<span class="nc bnc" id="L311" title="All 2 branches missed.">            .clickable { onClick() }</span>
+<span class="nc" id="L312">            .testTag(&quot;book_list_${label.lowercase()}&quot;),</span>
+<span class="nc" id="L313">    ) {</span>
+<span class="nc" id="L314">        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L315">            Row(</span>
+<span class="nc" id="L316">                verticalAlignment = Alignment.CenterVertically,</span>
+            ) {
+<span class="nc" id="L318">                Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.primary)</span>
+<span class="nc" id="L319">            }</span>
+<span class="nc" id="L320">            Text(&quot;$count&quot;, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)</span>
+<span class="nc" id="L321">        }</span>
+<span class="nc" id="L322">    }</span>
+<span class="nc" id="L323">}</span>
+
+@Composable
+private fun BookList(
+    books: List&lt;Book&gt;,
+    categories: List&lt;String&gt;,
+    selectedCategory: String?,
+    emptyText: String,
+    onCategorySelected: (String?) -&gt; Unit,
+    onEvent: (BookEvent) -&gt; Unit,
+<span class="nc bnc" id="L333" title="All 28 branches missed.">) {</span>
+<span class="nc" id="L334">    LazyColumn(</span>
+<span class="nc" id="L335">        modifier = Modifier</span>
+<span class="nc" id="L336">            .fillMaxSize()</span>
+<span class="nc" id="L337">            .testTag(&quot;book_list_content&quot;),</span>
+<span class="nc" id="L338">        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),</span>
+<span class="nc" id="L339">        verticalArrangement = Arrangement.spacedBy(8.dp),</span>
+<span class="nc bnc" id="L340" title="All 8 branches missed.">    ) {</span>
+<span class="nc" id="L341">        item {</span>
+<span class="nc" id="L342">            BookCategoryFilters(</span>
+<span class="nc" id="L343">                categories = categories,</span>
+<span class="nc" id="L344">                selectedCategory = selectedCategory,</span>
+<span class="nc" id="L345">                onCategorySelected = onCategorySelected,</span>
+            )
+<span class="nc" id="L347">        }</span>
+<span class="nc bnc" id="L348" title="All 2 branches missed.">        if (books.isEmpty()) {</span>
+<span class="nc" id="L349">            item {</span>
+<span class="nc" id="L350">                Text(emptyText, style = MaterialTheme.typography.bodyLarge)</span>
+<span class="nc" id="L351">            }</span>
+        }
+<span class="nc" id="L353">        items(books, key = { it.id }) { book -&gt;</span>
+<span class="nc" id="L354">            BookListCard(book, onEvent)</span>
+<span class="nc" id="L355">        }</span>
+<span class="nc" id="L356">    }</span>
+<span class="nc" id="L357">}</span>
+
+@Composable
+private fun BookCategoryFilters(
+    categories: List&lt;String&gt;,
+    selectedCategory: String?,
+    onCategorySelected: (String?) -&gt; Unit,
+<span class="nc bnc" id="L364" title="All 16 branches missed.">) {</span>
+<span class="nc bnc" id="L365" title="All 4 branches missed.">    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L366">        item {</span>
+<span class="nc" id="L367">            FilterChip(</span>
+<span class="nc bnc" id="L368" title="All 2 branches missed.">                selected = selectedCategory == null,</span>
+<span class="nc" id="L369">                onClick = { onCategorySelected(null) },</span>
+<span class="nc" id="L370">                label = { Text(&quot;All&quot;) },</span>
+<span class="nc" id="L371">                modifier = Modifier.testTag(&quot;book_category_all&quot;),</span>
+            )
+<span class="nc" id="L373">        }</span>
+<span class="nc" id="L374">        items(categories, key = { it }) { category -&gt;</span>
+<span class="nc" id="L375">            FilterChip(</span>
+<span class="nc" id="L376">                selected = selectedCategory == category,</span>
+<span class="nc" id="L377">                onClick = { onCategorySelected(category) },</span>
+<span class="nc" id="L378">                label = { Text(category) },</span>
+<span class="nc" id="L379">                modifier = Modifier.testTag(&quot;book_category_$category&quot;),</span>
+<span class="nc" id="L380">            )</span>
+<span class="nc" id="L381">        }</span>
+<span class="nc" id="L382">    }</span>
+<span class="nc" id="L383">}</span>
+
+@Composable
+internal fun BookListCard(
+    book: Book,
+    onEvent: (BookEvent) -&gt; Unit,
+<span class="nc bnc" id="L389" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L390">    Card(</span>
+<span class="nc" id="L391">        modifier = Modifier</span>
+<span class="nc" id="L392">            .fillMaxWidth()</span>
+<span class="nc bnc" id="L393" title="All 4 branches missed.">            .clickable { onEvent(BookEvent.OpenDetail(book.id)) }</span>
+<span class="nc" id="L394">            .testTag(&quot;book_item_${book.id}&quot;),</span>
+<span class="nc" id="L395">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L396">        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),</span>
+<span class="nc" id="L397">    ) {</span>
+<span class="nc" id="L398">        Row(</span>
+<span class="nc" id="L399">            modifier = Modifier.padding(8.dp),</span>
+<span class="nc" id="L400">            horizontalArrangement = Arrangement.spacedBy(10.dp),</span>
+        ) {
+<span class="nc" id="L402">            BookCover(book.coverUrl, book.title, Modifier.width(88.dp))</span>
+<span class="nc" id="L403">            Column(</span>
+<span class="nc" id="L404">                modifier = Modifier</span>
+<span class="nc" id="L405">                    .weight(1f)</span>
+<span class="nc" id="L406">                    .height(130.dp),</span>
+<span class="nc" id="L407">                verticalArrangement = Arrangement.spacedBy(4.dp),</span>
+            ) {
+<span class="nc" id="L409">                Text(</span>
+<span class="nc" id="L410">                    book.title,</span>
+<span class="nc" id="L411">                    style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L412">                    fontWeight = FontWeight.Medium,</span>
+<span class="nc" id="L413">                    maxLines = 2,</span>
+<span class="nc" id="L414">                    overflow = TextOverflow.Ellipsis,</span>
+                )
+<span class="nc" id="L416">                Text(</span>
+<span class="nc bnc" id="L417" title="All 4 branches missed.">                    book.author ?: book.publisher.orEmpty(),</span>
+<span class="nc" id="L418">                    style = MaterialTheme.typography.bodySmall,</span>
+<span class="nc" id="L419">                    color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+<span class="nc" id="L420">                    maxLines = 1,</span>
+<span class="nc" id="L421">                    overflow = TextOverflow.Ellipsis,</span>
+                )
+<span class="nc bnc" id="L423" title="All 4 branches missed.">                when (book.state) {</span>
+<span class="nc" id="L424">                    BookState.Reading -&gt; ReadingListCardInfo(book)</span>
+<span class="nc" id="L425">                    BookState.Wish -&gt; WishlistCardInfo(book, onEvent)</span>
+<span class="nc" id="L426">                    BookState.Archived -&gt; ArchivedListCardInfo(book)</span>
+<span class="nc" id="L427">                }</span>
+<span class="nc" id="L428">            }</span>
+<span class="nc" id="L429">        }</span>
+<span class="nc" id="L430">    }</span>
+<span class="nc" id="L431">}</span>
+
+@Composable
+<span class="nc bnc" id="L434" title="All 12 branches missed.">private fun ColumnScope.ReadingListCardInfo(book: Book) {</span>
+<span class="nc" id="L435">    BookMetadataRow(book.rating, book.pages, book.publishYear)</span>
+<span class="nc bnc" id="L436" title="All 8 branches missed.">    book.platform?.takeIf { it.isNotBlank() }?.let { platform -&gt;</span>
+<span class="nc" id="L437">        SearchMetadataValue(icon = Icons.Outlined.PhoneAndroid, text = platform)</span>
+<span class="nc" id="L438">    }</span>
+<span class="nc" id="L439">    Spacer(Modifier.weight(1f))</span>
+<span class="nc" id="L440">    ProgressLine(book)</span>
+<span class="nc" id="L441">}</span>
+
+@Composable
+private fun ColumnScope.WishlistCardInfo(
+    book: Book,
+    onEvent: (BookEvent) -&gt; Unit,
+<span class="nc bnc" id="L447" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L448">    BookMetadataRow(book.rating, book.pages, book.publishYear)</span>
+<span class="nc" id="L449">    Spacer(Modifier.weight(1f))</span>
+<span class="nc" id="L450">    FilledTonalIconButton(</span>
+<span class="nc bnc" id="L451" title="All 4 branches missed.">        onClick = { onEvent(BookEvent.MoveToReading(book)) },</span>
+<span class="nc" id="L452">        modifier = Modifier</span>
+<span class="nc" id="L453">            .align(Alignment.End)</span>
+<span class="nc" id="L454">            .testTag(&quot;book_move_to_reading_${book.id}&quot;),</span>
+<span class="nc" id="L455">    ) {</span>
+<span class="nc" id="L456">        Icon(Icons.Outlined.BookmarkAdd, contentDescription = &quot;Move to reading&quot;)</span>
+<span class="nc" id="L457">    }</span>
+<span class="nc" id="L458">}</span>
+
+@Composable
+<span class="nc bnc" id="L461" title="All 12 branches missed.">private fun ColumnScope.ArchivedListCardInfo(book: Book) {</span>
+<span class="nc" id="L462">    BookMetadataRow(book.rating, book.pages, book.publishYear)</span>
+<span class="nc" id="L463">    Spacer(Modifier.weight(1f))</span>
+<span class="nc" id="L464">    Row(</span>
+<span class="nc" id="L465">        verticalAlignment = Alignment.CenterVertically,</span>
+<span class="nc" id="L466">        horizontalArrangement = Arrangement.spacedBy(4.dp),</span>
+    ) {
+<span class="nc" id="L468">        Icon(</span>
+<span class="nc" id="L469">            Icons.Outlined.CheckCircle,</span>
+<span class="nc" id="L470">            contentDescription = null,</span>
+<span class="nc" id="L471">            modifier = Modifier.size(16.dp),</span>
+<span class="nc" id="L472">            tint = MaterialTheme.colorScheme.primary,</span>
+        )
+<span class="nc" id="L474">        Text(</span>
+<span class="nc bnc" id="L475" title="All 4 branches missed.">            book.archiveStatus?.label ?: &quot;Archived&quot;,</span>
+<span class="nc" id="L476">            style = MaterialTheme.typography.labelMedium,</span>
+<span class="nc" id="L477">            color = MaterialTheme.colorScheme.primary,</span>
+        )
+<span class="nc bnc" id="L479" title="All 8 branches missed.">        book.archivedDate?.takeIf { it.isNotBlank() }?.let { date -&gt;</span>
+<span class="nc" id="L480">            Text(</span>
+<span class="nc" id="L481">                &quot;· $date&quot;,</span>
+<span class="nc" id="L482">                style = MaterialTheme.typography.labelMedium,</span>
+<span class="nc" id="L483">                color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+            )
+<span class="nc" id="L485">        }</span>
+<span class="nc" id="L486">    }</span>
+<span class="nc bnc" id="L487" title="All 4 branches missed.">    if (book.currentPage != null || book.progressPercentage != null) {</span>
+<span class="nc" id="L488">        ProgressLine(book)</span>
+<span class="nc" id="L489">    }</span>
+<span class="nc" id="L490">}</span>
+
+@Composable
+private fun BookSearch(
+    state: BookUiState,
+    onEvent: (BookEvent) -&gt; Unit,
+<span class="nc bnc" id="L496" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L497">    LazyColumn(</span>
+<span class="nc" id="L498">        modifier = Modifier.fillMaxSize(),</span>
+<span class="nc" id="L499">        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),</span>
+<span class="nc" id="L500">        verticalArrangement = Arrangement.spacedBy(6.dp),</span>
+<span class="nc bnc" id="L501" title="All 2 branches missed.">    ) {</span>
+<span class="nc" id="L502">        items(state.searchResults) { draft -&gt;</span>
+<span class="nc" id="L503">            BookSearchResultCard(draft, onEvent)</span>
+<span class="nc" id="L504">        }</span>
+<span class="nc" id="L505">    }</span>
+<span class="nc" id="L506">}</span>
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ActiveBookSearchBar(
+    state: BookUiState,
+    onEvent: (BookEvent) -&gt; Unit,
+<span class="nc bnc" id="L513" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L514">    val focusRequester = remember { FocusRequester() }</span>
+<span class="nc" id="L515">    val keyboardController = LocalSoftwareKeyboardController.current</span>
+
+<span class="nc" id="L517">    LaunchedEffect(Unit) {</span>
+<span class="nc" id="L518">        focusRequester.requestFocus()</span>
+<span class="nc bnc" id="L519" title="All 2 branches missed.">        keyboardController?.show()</span>
+<span class="nc" id="L520">    }</span>
+
+<span class="nc" id="L522">    SearchBar(</span>
+<span class="nc" id="L523">        inputField = {</span>
+<span class="nc" id="L524">            SearchBarDefaults.InputField(</span>
+<span class="nc" id="L525">                query = state.searchKeyword,</span>
+<span class="nc" id="L526">                onQueryChange = { onEvent(BookEvent.SearchKeywordChanged(it)) },</span>
+<span class="nc" id="L527">                onSearch = { onEvent(BookEvent.SubmitSearch) },</span>
+<span class="nc" id="L528">                modifier = Modifier</span>
+<span class="nc" id="L529">                    .focusRequester(focusRequester)</span>
+<span class="nc" id="L530">                    .testTag(&quot;book_search_input&quot;),</span>
+<span class="nc" id="L531">                expanded = false,</span>
+<span class="nc" id="L532">                onExpandedChange = {},</span>
+<span class="nc" id="L533">                placeholder = { Text(&quot;Title, author, or ISBN&quot;) },</span>
+<span class="nc" id="L534">                leadingIcon = {</span>
+<span class="nc" id="L535">                    IconButton(</span>
+<span class="nc" id="L536">                        onClick = { onEvent(BookEvent.NavigateBack) },</span>
+<span class="nc" id="L537">                        modifier = Modifier.testTag(&quot;book_back_button&quot;),</span>
+<span class="nc" id="L538">                    ) {</span>
+<span class="nc" id="L539">                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = &quot;返回上级&quot;)</span>
+<span class="nc" id="L540">                    }</span>
+<span class="nc" id="L541">                },</span>
+<span class="nc" id="L542">                trailingIcon = {</span>
+<span class="nc" id="L543">                    IconButton(onClick = { onEvent(BookEvent.SubmitSearch) }) {</span>
+<span class="nc" id="L544">                        Icon(Icons.Filled.Search, contentDescription = &quot;Search books&quot;)</span>
+<span class="nc" id="L545">                    }</span>
+<span class="nc" id="L546">                },</span>
+            )
+<span class="nc" id="L548">        },</span>
+<span class="nc" id="L549">        expanded = false,</span>
+<span class="nc" id="L550">        onExpandedChange = {},</span>
+<span class="nc" id="L551">        modifier = Modifier</span>
+<span class="nc" id="L552">            .fillMaxWidth()</span>
+<span class="nc" id="L553">            .padding(horizontal = 16.dp, vertical = 8.dp)</span>
+<span class="nc" id="L554">            .testTag(&quot;book_search_field&quot;),</span>
+<span class="nc" id="L555">    ) {}</span>
+<span class="nc" id="L556">}</span>
+
+@Composable
+internal fun BookSearchResultCard(
+    draft: BookDraft,
+    onEvent: (BookEvent) -&gt; Unit,
+<span class="nc bnc" id="L562" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L563">    Card(</span>
+<span class="nc" id="L564">        modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L565">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L566">        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),</span>
+<span class="nc" id="L567">    ) {</span>
+<span class="nc" id="L568">        Row(</span>
+<span class="nc" id="L569">            modifier = Modifier.padding(8.dp),</span>
+<span class="nc" id="L570">            horizontalArrangement = Arrangement.spacedBy(10.dp),</span>
+        ) {
+<span class="nc" id="L572">            BookCover(draft.coverUrl, draft.title, Modifier.width(88.dp))</span>
+<span class="nc" id="L573">            Column(</span>
+<span class="nc" id="L574">                modifier = Modifier</span>
+<span class="nc" id="L575">                    .weight(1f)</span>
+<span class="nc" id="L576">                    .height(130.dp),</span>
+<span class="nc" id="L577">                verticalArrangement = Arrangement.spacedBy(4.dp),</span>
+            ) {
+<span class="nc" id="L579">                Text(</span>
+<span class="nc" id="L580">                    draft.title,</span>
+<span class="nc" id="L581">                    style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L582">                    fontWeight = FontWeight.Medium,</span>
+<span class="nc" id="L583">                    maxLines = 2,</span>
+<span class="nc" id="L584">                    overflow = TextOverflow.Ellipsis,</span>
+                )
+<span class="nc" id="L586">                Text(</span>
+<span class="nc bnc" id="L587" title="All 4 branches missed.">                    draft.author ?: draft.publisher.orEmpty(),</span>
+<span class="nc" id="L588">                    style = MaterialTheme.typography.bodySmall,</span>
+<span class="nc" id="L589">                    color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+<span class="nc" id="L590">                    maxLines = 1,</span>
+<span class="nc" id="L591">                    overflow = TextOverflow.Ellipsis,</span>
+                )
+<span class="nc" id="L593">                BookMetadataRow(draft.rating, draft.pages, draft.publishYear)</span>
+<span class="nc" id="L594">                Spacer(Modifier.weight(1f))</span>
+<span class="nc" id="L595">                Row(</span>
+<span class="nc" id="L596">                    modifier = Modifier.align(Alignment.End),</span>
+<span class="nc" id="L597">                    horizontalArrangement = Arrangement.spacedBy(6.dp),</span>
+                ) {
+<span class="nc" id="L599">                    IconButton(</span>
+<span class="nc" id="L600">                        onClick = { onEvent(BookEvent.AddDraftToWishlist(draft)) },</span>
+<span class="nc" id="L601">                        modifier = Modifier.testTag(&quot;book_add_wishlist&quot;),</span>
+<span class="nc" id="L602">                    ) {</span>
+<span class="nc" id="L603">                        Icon(Icons.Outlined.FavoriteBorder, contentDescription = &quot;Add to wishlist&quot;)</span>
+<span class="nc" id="L604">                    }</span>
+<span class="nc" id="L605">                    FilledTonalIconButton(</span>
+<span class="nc" id="L606">                        onClick = { onEvent(BookEvent.AddDraftToReading(draft)) },</span>
+<span class="nc" id="L607">                        modifier = Modifier.testTag(&quot;book_add_reading&quot;),</span>
+<span class="nc" id="L608">                    ) {</span>
+<span class="nc" id="L609">                        Icon(Icons.Outlined.BookmarkAdd, contentDescription = &quot;Add to reading&quot;)</span>
+<span class="nc" id="L610">                    }</span>
+<span class="nc" id="L611">                }</span>
+<span class="nc" id="L612">            }</span>
+<span class="nc" id="L613">        }</span>
+<span class="nc" id="L614">    }</span>
+<span class="nc" id="L615">}</span>
+
+@Composable
+private fun BookMetadataRow(
+    rating: Double?,
+    pages: Int?,
+    publishYear: Int?,
+<span class="nc bnc" id="L622" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L623">    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {</span>
+<span class="nc bnc" id="L624" title="All 2 branches missed.">        rating?.let {</span>
+<span class="nc" id="L625">            SearchMetadataValue(</span>
+<span class="nc" id="L626">                icon = Icons.Filled.Star,</span>
+<span class="nc" id="L627">                text = String.format(Locale.US, &quot;%.1f&quot;, it),</span>
+            )
+<span class="nc" id="L629">        }</span>
+<span class="nc bnc" id="L630" title="All 2 branches missed.">        pages?.let {</span>
+<span class="nc" id="L631">            SearchMetadataValue(</span>
+<span class="nc" id="L632">                icon = Icons.Outlined.AutoStories,</span>
+<span class="nc" id="L633">                text = &quot;$it&quot;,</span>
+            )
+<span class="nc" id="L635">        }</span>
+<span class="nc bnc" id="L636" title="All 2 branches missed.">        publishYear?.let {</span>
+<span class="nc" id="L637">            SearchMetadataValue(</span>
+<span class="nc" id="L638">                icon = Icons.Outlined.CalendarMonth,</span>
+<span class="nc" id="L639">                text = &quot;$it&quot;,</span>
+            )
+<span class="nc" id="L641">        }</span>
+<span class="nc" id="L642">    }</span>
+<span class="nc" id="L643">}</span>
+
+@Composable
+private fun SearchMetadataValue(
+    icon: ImageVector,
+    text: String,
+<span class="nc bnc" id="L649" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L650">    Row(</span>
+<span class="nc" id="L651">        verticalAlignment = Alignment.CenterVertically,</span>
+<span class="nc" id="L652">        horizontalArrangement = Arrangement.spacedBy(3.dp),</span>
+    ) {
+<span class="nc" id="L654">        Icon(</span>
+<span class="nc" id="L655">            icon,</span>
+<span class="nc" id="L656">            contentDescription = null,</span>
+<span class="nc" id="L657">            modifier = Modifier.size(14.dp),</span>
+<span class="nc" id="L658">            tint = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+        )
+<span class="nc" id="L660">        Text(</span>
+<span class="nc" id="L661">            text,</span>
+<span class="nc" id="L662">            style = MaterialTheme.typography.labelMedium,</span>
+<span class="nc" id="L663">            color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+        )
+<span class="nc" id="L665">    }</span>
+<span class="nc" id="L666">}</span>
+
+@Composable
+private fun BookDetail(
+    book: Book?,
+    categories: List&lt;String&gt;,
+    onEvent: (BookEvent) -&gt; Unit,
+<span class="nc bnc" id="L673" title="All 16 branches missed.">) {</span>
+<span class="nc bnc" id="L674" title="All 2 branches missed.">    if (book == null) return</span>
+<span class="nc" id="L675">    var showEdit by remember(book.id) { mutableStateOf(false) }</span>
+<span class="nc" id="L676">    var showProgress by remember(book.id) { mutableStateOf(false) }</span>
+<span class="nc" id="L677">    var showDelete by remember(book.id) { mutableStateOf(false) }</span>
+
+<span class="nc" id="L679">    LazyColumn(</span>
+<span class="nc" id="L680">        modifier = Modifier.fillMaxSize(),</span>
+<span class="nc" id="L681">        contentPadding = PaddingValues(16.dp),</span>
+<span class="nc" id="L682">        verticalArrangement = Arrangement.spacedBy(16.dp),</span>
+<span class="nc bnc" id="L683" title="All 4 branches missed.">    ) {</span>
+<span class="nc" id="L684">        item {</span>
+<span class="nc" id="L685">            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {</span>
+<span class="nc" id="L686">                BookCover(book.coverUrl, book.title, Modifier.width(112.dp))</span>
+<span class="nc" id="L687">                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L688">                    Text(book.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)</span>
+<span class="nc bnc" id="L689" title="All 2 branches missed.">                    Text(book.author.orEmpty(), style = MaterialTheme.typography.bodyMedium)</span>
+<span class="nc" id="L690">                    MetadataRow(book)</span>
+<span class="nc" id="L691">                    ProgressLine(book)</span>
+<span class="nc" id="L692">                }</span>
+<span class="nc" id="L693">            }</span>
+<span class="nc" id="L694">        }</span>
+<span class="nc" id="L695">        item {</span>
+<span class="nc" id="L696">            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L697">                Button(onClick = { showProgress = true }) {</span>
+<span class="nc" id="L698">                    Icon(Icons.Filled.Edit, contentDescription = null)</span>
+<span class="nc" id="L699">                    Spacer(Modifier.width(6.dp))</span>
+<span class="nc" id="L700">                    Text(&quot;Progress&quot;)</span>
+<span class="nc" id="L701">                }</span>
+<span class="nc" id="L702">                FilledTonalButton(</span>
+<span class="nc" id="L703">                    onClick = { onEvent(BookEvent.OpenNotes(book.id)) },</span>
+<span class="nc" id="L704">                    modifier = Modifier.testTag(&quot;book_open_notes&quot;),</span>
+<span class="nc" id="L705">                ) {</span>
+<span class="nc" id="L706">                    Icon(Icons.AutoMirrored.Filled.NoteAdd, contentDescription = null)</span>
+<span class="nc" id="L707">                    Spacer(Modifier.width(6.dp))</span>
+<span class="nc" id="L708">                    Text(&quot;Notes&quot;)</span>
+<span class="nc" id="L709">                }</span>
+<span class="nc" id="L710">                OutlinedButton(onClick = { showEdit = true }) {</span>
+<span class="nc" id="L711">                    Text(&quot;Edit&quot;)</span>
+<span class="nc" id="L712">                }</span>
+<span class="nc" id="L713">            }</span>
+<span class="nc" id="L714">        }</span>
+<span class="nc" id="L715">        item {</span>
+<span class="nc bnc" id="L716" title="All 6 branches missed.">            if (!book.description.isNullOrBlank()) {</span>
+<span class="nc" id="L717">                Text(book.description, style = MaterialTheme.typography.bodyMedium)</span>
+<span class="nc" id="L718">            }</span>
+<span class="nc" id="L719">        }</span>
+<span class="nc" id="L720">        item {</span>
+<span class="nc" id="L721">            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc bnc" id="L722" title="All 2 branches missed.">                if (book.state != BookState.Archived) {</span>
+<span class="nc" id="L723">                    OutlinedButton(onClick = { onEvent(BookEvent.Archive(book.id)) }) {</span>
+<span class="nc" id="L724">                        Icon(Icons.Filled.Archive, contentDescription = null)</span>
+<span class="nc" id="L725">                        Spacer(Modifier.width(6.dp))</span>
+<span class="nc" id="L726">                        Text(&quot;Archive&quot;)</span>
+<span class="nc" id="L727">                    }</span>
+<span class="nc" id="L728">                }</span>
+<span class="nc" id="L729">                OutlinedButton(onClick = { showDelete = true }) {</span>
+<span class="nc" id="L730">                    Icon(Icons.Filled.Delete, contentDescription = null)</span>
+<span class="nc" id="L731">                    Spacer(Modifier.width(6.dp))</span>
+<span class="nc" id="L732">                    Text(&quot;Delete&quot;)</span>
+<span class="nc" id="L733">                }</span>
+<span class="nc" id="L734">            }</span>
+<span class="nc" id="L735">        }</span>
+<span class="nc" id="L736">    }</span>
+
+<span class="nc bnc" id="L738" title="All 2 branches missed.">    if (showEdit) {</span>
+<span class="nc bnc" id="L739" title="All 4 branches missed.">        EditBookDialog(book = book, categories = categories, onDismiss = { showEdit = false }, onSave = { title, platform, category -&gt;</span>
+<span class="nc" id="L740">            onEvent(</span>
+<span class="nc" id="L741">                BookEvent.SaveBook(</span>
+<span class="nc" id="L742">                    bookId = book.id,</span>
+<span class="nc" id="L743">                    title = title,</span>
+<span class="nc" id="L744">                    platform = platform,</span>
+<span class="nc" id="L745">                    category = category,</span>
+<span class="nc" id="L746">                    currentPage = book.currentPage,</span>
+<span class="nc" id="L747">                    progressPercentage = book.progressPercentage,</span>
+                )
+            )
+<span class="nc" id="L750">            showEdit = false</span>
+<span class="nc" id="L751">        })</span>
+<span class="nc" id="L752">    }</span>
+<span class="nc bnc" id="L753" title="All 2 branches missed.">    if (showProgress) {</span>
+<span class="nc bnc" id="L754" title="All 4 branches missed.">        ProgressDialog(book = book, onDismiss = { showProgress = false }, onSave = { page, progress -&gt;</span>
+<span class="nc" id="L755">            onEvent(</span>
+<span class="nc" id="L756">                BookEvent.SaveBook(</span>
+<span class="nc" id="L757">                    bookId = book.id,</span>
+<span class="nc" id="L758">                    title = book.title,</span>
+<span class="nc" id="L759">                    platform = book.platform,</span>
+<span class="nc" id="L760">                    category = book.category,</span>
+<span class="nc" id="L761">                    currentPage = page,</span>
+<span class="nc" id="L762">                    progressPercentage = progress,</span>
+                )
+            )
+<span class="nc" id="L765">            showProgress = false</span>
+<span class="nc" id="L766">        })</span>
+<span class="nc" id="L767">    }</span>
+<span class="nc bnc" id="L768" title="All 2 branches missed.">    if (showDelete) {</span>
+<span class="nc" id="L769">        AlertDialog(</span>
+<span class="nc" id="L770">            onDismissRequest = { showDelete = false },</span>
+<span class="nc" id="L771">            confirmButton = {</span>
+<span class="nc" id="L772">                TextButton(onClick = { onEvent(BookEvent.DeleteBook(book.id)) }) {</span>
+<span class="nc" id="L773">                    Text(&quot;Delete&quot;)</span>
+<span class="nc" id="L774">                }</span>
+<span class="nc" id="L775">            },</span>
+<span class="nc" id="L776">            dismissButton = {</span>
+<span class="nc" id="L777">                TextButton(onClick = { showDelete = false }) {</span>
+<span class="nc" id="L778">                    Text(&quot;Cancel&quot;)</span>
+<span class="nc" id="L779">                }</span>
+<span class="nc" id="L780">            },</span>
+<span class="nc" id="L781">            title = { Text(&quot;Delete book?&quot;) },</span>
+<span class="nc" id="L782">            text = { Text(book.title) },</span>
+        )
+<span class="nc" id="L784">    }</span>
+<span class="nc" id="L785">}</span>
+
+@Composable
+private fun NotesList(
+    notes: List&lt;BookNote&gt;,
+    onEvent: (BookEvent) -&gt; Unit,
+<span class="nc bnc" id="L791" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L792">    var editingNote by remember { mutableStateOf&lt;BookNote?&gt;(null) }</span>
+<span class="nc" id="L793">    var showCreate by remember { mutableStateOf(false) }</span>
+
+<span class="nc" id="L795">    Box(Modifier.fillMaxSize()) {</span>
+<span class="nc" id="L796">        LazyColumn(</span>
+<span class="nc" id="L797">            modifier = Modifier</span>
+<span class="nc" id="L798">                .fillMaxSize()</span>
+<span class="nc" id="L799">                .testTag(&quot;book_notes_list&quot;),</span>
+<span class="nc" id="L800">            contentPadding = PaddingValues(16.dp),</span>
+<span class="nc" id="L801">            verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+<span class="nc bnc" id="L802" title="All 2 branches missed.">        ) {</span>
+<span class="nc bnc" id="L803" title="All 2 branches missed.">            if (notes.isEmpty()) {</span>
+<span class="nc" id="L804">                item { Text(&quot;No notes yet&quot;, style = MaterialTheme.typography.bodyLarge) }</span>
+            }
+<span class="nc" id="L806">            items(notes, key = { it.id }) { note -&gt;</span>
+<span class="nc" id="L807">                Card(</span>
+<span class="nc" id="L808">                    modifier = Modifier</span>
+<span class="nc" id="L809">                        .fillMaxWidth()</span>
+<span class="nc" id="L810">                        .clickable { editingNote = note }</span>
+<span class="nc" id="L811">                ) {</span>
+<span class="nc" id="L812">                    ListItem(</span>
+<span class="nc" id="L813">                        headlineContent = { Text(note.content) },</span>
+<span class="nc" id="L814">                        supportingContent = {</span>
+<span class="nc bnc" id="L815" title="All 4 branches missed.">                            Text(listOfNotNull(note.page?.let { &quot;Page $it&quot; }, note.progressPercentage?.let { &quot;${it.toInt()}%&quot; }).joinToString(&quot; · &quot;))</span>
+<span class="nc" id="L816">                        },</span>
+<span class="nc" id="L817">                        trailingContent = {</span>
+<span class="nc" id="L818">                            IconButton(</span>
+<span class="nc" id="L819">                                onClick = { onEvent(BookEvent.DeleteNote(note.id)) },</span>
+<span class="nc" id="L820">                                modifier = Modifier.testTag(&quot;book_delete_note_${note.id}&quot;),</span>
+<span class="nc" id="L821">                            ) {</span>
+<span class="nc" id="L822">                                Icon(Icons.Filled.Delete, contentDescription = &quot;Delete note&quot;)</span>
+<span class="nc" id="L823">                            }</span>
+<span class="nc" id="L824">                        }</span>
+                    )
+<span class="nc" id="L826">                }</span>
+<span class="nc" id="L827">            }</span>
+<span class="nc" id="L828">        }</span>
+<span class="nc" id="L829">        FloatingActionButton(</span>
+<span class="nc" id="L830">            onClick = { showCreate = true },</span>
+<span class="nc" id="L831">            modifier = Modifier</span>
+<span class="nc" id="L832">                .align(Alignment.BottomEnd)</span>
+<span class="nc" id="L833">                .padding(16.dp)</span>
+<span class="nc" id="L834">                .testTag(&quot;book_add_note&quot;),</span>
+<span class="nc" id="L835">        ) {</span>
+<span class="nc" id="L836">            Icon(Icons.AutoMirrored.Filled.NoteAdd, contentDescription = &quot;Add note&quot;)</span>
+<span class="nc" id="L837">        }</span>
+<span class="nc" id="L838">    }</span>
+<span class="nc bnc" id="L839" title="All 2 branches missed.">    if (showCreate) {</span>
+<span class="nc bnc" id="L840" title="All 2 branches missed.">        NoteDialog(note = null, onDismiss = { showCreate = false }, onSave = {</span>
+<span class="nc" id="L841">            onEvent(it)</span>
+<span class="nc" id="L842">            showCreate = false</span>
+<span class="nc" id="L843">        })</span>
+<span class="nc" id="L844">    }</span>
+<span class="nc bnc" id="L845" title="All 2 branches missed.">    if (editingNote != null) {</span>
+<span class="nc bnc" id="L846" title="All 2 branches missed.">        NoteDialog(note = editingNote, onDismiss = { editingNote = null }, onSave = {</span>
+<span class="nc" id="L847">            onEvent(it)</span>
+<span class="nc" id="L848">            editingNote = null</span>
+<span class="nc" id="L849">        })</span>
+<span class="nc" id="L850">    }</span>
+<span class="nc" id="L851">}</span>
+
+@Composable
+private fun EditBookDialog(
+    book: Book,
+    categories: List&lt;String&gt;,
+    onDismiss: () -&gt; Unit,
+    onSave: (String, String?, String?) -&gt; Unit,
+<span class="nc bnc" id="L859" title="All 20 branches missed.">) {</span>
+<span class="nc" id="L860">    var title by remember(book.id) { mutableStateOf(book.title) }</span>
+<span class="nc bnc" id="L861" title="All 2 branches missed.">    var platform by remember(book.id) { mutableStateOf(book.platform.orEmpty()) }</span>
+<span class="nc bnc" id="L862" title="All 2 branches missed.">    var category by remember(book.id) { mutableStateOf(book.category.orEmpty()) }</span>
+<span class="nc" id="L863">    AlertDialog(</span>
+<span class="nc" id="L864">        onDismissRequest = onDismiss,</span>
+<span class="nc" id="L865">        confirmButton = {</span>
+<span class="nc" id="L866">            TextButton(onClick = {</span>
+<span class="nc" id="L867">                onSave(</span>
+<span class="nc" id="L868">                    title.trim(),</span>
+<span class="nc bnc" id="L869" title="All 2 branches missed.">                    platform.trim().ifBlank { null },</span>
+<span class="nc bnc" id="L870" title="All 2 branches missed.">                    category.trim().ifBlank { null },</span>
+                )
+<span class="nc" id="L872">            }) {</span>
+<span class="nc" id="L873">                Text(&quot;Save&quot;)</span>
+<span class="nc" id="L874">            }</span>
+<span class="nc" id="L875">        },</span>
+<span class="nc" id="L876">        dismissButton = {</span>
+<span class="nc" id="L877">            TextButton(onClick = onDismiss) { Text(&quot;Cancel&quot;) }</span>
+<span class="nc" id="L878">        },</span>
+<span class="nc" id="L879">        title = { Text(&quot;Edit book&quot;) },</span>
+<span class="nc" id="L880">        text = {</span>
+<span class="nc" id="L881">            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {</span>
+<span class="nc" id="L882">                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(&quot;Title&quot;) })</span>
+<span class="nc" id="L883">                OutlinedTextField(value = platform, onValueChange = { platform = it }, label = { Text(&quot;Platform&quot;) })</span>
+<span class="nc" id="L884">                OutlinedTextField(</span>
+<span class="nc" id="L885">                    value = category,</span>
+<span class="nc" id="L886">                    onValueChange = { category = it },</span>
+<span class="nc" id="L887">                    label = { Text(&quot;Category&quot;) },</span>
+<span class="nc" id="L888">                    singleLine = true,</span>
+<span class="nc" id="L889">                    modifier = Modifier.testTag(&quot;book_category_input&quot;),</span>
+                )
+<span class="nc bnc" id="L891" title="All 4 branches missed.">                if (categories.isNotEmpty()) {</span>
+<span class="nc" id="L892">                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L893">                        items(categories, key = { it }) { value -&gt;</span>
+<span class="nc" id="L894">                            FilterChip(</span>
+<span class="nc" id="L895">                                selected = category == value,</span>
+<span class="nc" id="L896">                                onClick = { category = value },</span>
+<span class="nc" id="L897">                                label = { Text(value) },</span>
+<span class="nc" id="L898">                            )</span>
+<span class="nc" id="L899">                        }</span>
+<span class="nc" id="L900">                    }</span>
+<span class="nc" id="L901">                }</span>
+<span class="nc" id="L902">            }</span>
+<span class="nc" id="L903">        },</span>
+    )
+<span class="nc" id="L905">}</span>
+
+@Composable
+private fun ProgressDialog(
+    book: Book,
+    onDismiss: () -&gt; Unit,
+    onSave: (Int?, Double?) -&gt; Unit,
+<span class="nc bnc" id="L912" title="All 16 branches missed.">) {</span>
+<span class="nc bnc" id="L913" title="All 4 branches missed.">    var pageText by remember(book.id) { mutableStateOf(book.currentPage?.toString().orEmpty()) }</span>
+<span class="nc bnc" id="L914" title="All 4 branches missed.">    var progressText by remember(book.id) { mutableStateOf(book.progressPercentage?.toInt()?.toString().orEmpty()) }</span>
+<span class="nc" id="L915">    AlertDialog(</span>
+<span class="nc" id="L916">        onDismissRequest = onDismiss,</span>
+<span class="nc" id="L917">        confirmButton = {</span>
+<span class="nc" id="L918">            TextButton(onClick = {</span>
+<span class="nc" id="L919">                onSave(pageText.toIntOrNull(), progressText.toDoubleOrNull())</span>
+<span class="nc" id="L920">            }) { Text(&quot;Save&quot;) }</span>
+<span class="nc" id="L921">        },</span>
+<span class="nc" id="L922">        dismissButton = {</span>
+<span class="nc" id="L923">            TextButton(onClick = onDismiss) { Text(&quot;Cancel&quot;) }</span>
+<span class="nc" id="L924">        },</span>
+<span class="nc" id="L925">        title = { Text(&quot;Update progress&quot;) },</span>
+<span class="nc" id="L926">        text = {</span>
+<span class="nc" id="L927">            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {</span>
+<span class="nc" id="L928">                OutlinedTextField(</span>
+<span class="nc" id="L929">                    value = pageText,</span>
+<span class="nc" id="L930">                    onValueChange = { pageText = it },</span>
+<span class="nc" id="L931">                    label = { Text(&quot;Current page&quot;) },</span>
+<span class="nc" id="L932">                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),</span>
+                )
+<span class="nc" id="L934">                OutlinedTextField(</span>
+<span class="nc" id="L935">                    value = progressText,</span>
+<span class="nc" id="L936">                    onValueChange = { progressText = it },</span>
+<span class="nc" id="L937">                    label = { Text(&quot;Progress %&quot;) },</span>
+<span class="nc" id="L938">                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),</span>
+                )
+<span class="nc" id="L940">            }</span>
+<span class="nc" id="L941">        },</span>
+    )
+<span class="nc" id="L943">}</span>
+
+@Composable
+private fun NoteDialog(
+    note: BookNote?,
+    onDismiss: () -&gt; Unit,
+    onSave: (BookEvent.SaveNote) -&gt; Unit,
+<span class="nc bnc" id="L950" title="All 16 branches missed.">) {</span>
+<span class="nc bnc" id="L951" title="All 6 branches missed.">    var content by remember(note?.id) { mutableStateOf(note?.content.orEmpty()) }</span>
+<span class="nc bnc" id="L952" title="All 8 branches missed.">    var pageText by remember(note?.id) { mutableStateOf(note?.page?.toString().orEmpty()) }</span>
+<span class="nc bnc" id="L953" title="All 8 branches missed.">    var progressText by remember(note?.id) { mutableStateOf(note?.progressPercentage?.toInt()?.toString().orEmpty()) }</span>
+<span class="nc" id="L954">    AlertDialog(</span>
+<span class="nc" id="L955">        onDismissRequest = onDismiss,</span>
+<span class="nc" id="L956">        confirmButton = {</span>
+<span class="nc" id="L957">            TextButton(</span>
+<span class="nc" id="L958">                onClick = {</span>
+<span class="nc bnc" id="L959" title="All 4 branches missed.">                    if (content.isNotBlank()) {</span>
+<span class="nc" id="L960">                        onSave(</span>
+<span class="nc" id="L961">                            BookEvent.SaveNote(</span>
+<span class="nc bnc" id="L962" title="All 2 branches missed.">                                noteId = note?.id,</span>
+<span class="nc" id="L963">                                content = content.trim(),</span>
+<span class="nc" id="L964">                                page = pageText.toIntOrNull(),</span>
+<span class="nc" id="L965">                                progressPercentage = progressText.toDoubleOrNull(),</span>
+                            )
+                        )
+                    }
+<span class="nc" id="L969">                },</span>
+<span class="nc" id="L970">                modifier = Modifier.testTag(&quot;book_save_note&quot;),</span>
+<span class="nc" id="L971">            ) { Text(&quot;Save&quot;) }</span>
+<span class="nc" id="L972">        },</span>
+<span class="nc" id="L973">        dismissButton = {</span>
+<span class="nc" id="L974">            TextButton(onClick = onDismiss) { Text(&quot;Cancel&quot;) }</span>
+<span class="nc" id="L975">        },</span>
+<span class="nc bnc" id="L976" title="All 2 branches missed.">        title = { Text(if (note == null) &quot;Add note&quot; else &quot;Edit note&quot;) },</span>
+<span class="nc" id="L977">        text = {</span>
+<span class="nc" id="L978">            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {</span>
+<span class="nc" id="L979">                OutlinedTextField(</span>
+<span class="nc" id="L980">                    value = content,</span>
+<span class="nc" id="L981">                    onValueChange = { content = it },</span>
+<span class="nc" id="L982">                    modifier = Modifier.testTag(&quot;book_note_content&quot;),</span>
+<span class="nc" id="L983">                    label = { Text(&quot;Note&quot;) },</span>
+                )
+<span class="nc" id="L985">                OutlinedTextField(</span>
+<span class="nc" id="L986">                    value = pageText,</span>
+<span class="nc" id="L987">                    onValueChange = { pageText = it },</span>
+<span class="nc" id="L988">                    modifier = Modifier.testTag(&quot;book_note_page&quot;),</span>
+<span class="nc" id="L989">                    label = { Text(&quot;Page&quot;) },</span>
+<span class="nc" id="L990">                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),</span>
+                )
+<span class="nc" id="L992">                OutlinedTextField(</span>
+<span class="nc" id="L993">                    value = progressText,</span>
+<span class="nc" id="L994">                    onValueChange = { progressText = it },</span>
+<span class="nc" id="L995">                    label = { Text(&quot;Progress %&quot;) },</span>
+<span class="nc" id="L996">                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),</span>
+                )
+<span class="nc" id="L998">            }</span>
+<span class="nc" id="L999">        },</span>
+    )
+<span class="nc" id="L1001">}</span>
+
+@Composable
+<span class="nc bnc" id="L1004" title="All 8 branches missed.">private fun ProgressLine(book: Book) {</span>
+<span class="nc bnc" id="L1005" title="All 6 branches missed.">    val progress = ((book.progressPercentage ?: book.currentPage?.let { page -&gt;</span>
+<span class="nc bnc" id="L1006" title="All 8 branches missed.">        book.pages?.takeIf { it &gt; 0 }?.let { page * 100.0 / it }</span>
+<span class="nc" id="L1007">    }) ?: 0.0).coerceIn(0.0, 100.0)</span>
+<span class="nc" id="L1008">    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {</span>
+<span class="nc" id="L1009">        LinearProgressIndicator(</span>
+<span class="nc" id="L1010">            progress = { (progress / 100.0).toFloat() },</span>
+<span class="nc" id="L1011">            modifier = Modifier.fillMaxWidth(),</span>
+        )
+<span class="nc" id="L1013">        Text(</span>
+<span class="nc" id="L1014">            text = listOfNotNull(</span>
+<span class="nc bnc" id="L1015" title="All 6 branches missed.">                book.currentPage?.let { page -&gt; book.pages?.let { &quot;$page / $it pages&quot; } ?: &quot;Page $page&quot; },</span>
+<span class="nc" id="L1016">                &quot;${progress.toInt()}%&quot;,</span>
+<span class="nc" id="L1017">            ).joinToString(&quot; · &quot;),</span>
+<span class="nc" id="L1018">            style = MaterialTheme.typography.labelSmall,</span>
+        )
+<span class="nc" id="L1020">    }</span>
+<span class="nc" id="L1021">}</span>
+
+@Composable
+<span class="nc bnc" id="L1024" title="All 8 branches missed.">private fun MetadataRow(book: Book) {</span>
+<span class="nc bnc" id="L1025" title="All 2 branches missed.">    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L1026">        item { AssistChip(onClick = {}, label = { Text(book.state.label) }) }</span>
+<span class="nc bnc" id="L1027" title="All 6 branches missed.">        if (!book.platform.isNullOrBlank()) {</span>
+<span class="nc" id="L1028">            item { AssistChip(onClick = {}, label = { Text(book.platform) }) }</span>
+        }
+<span class="nc bnc" id="L1030" title="All 2 branches missed.">        if (book.publishYear != null) {</span>
+<span class="nc" id="L1031">            item { AssistChip(onClick = {}, label = { Text(book.publishYear.toString()) }) }</span>
+        }
+<span class="nc bnc" id="L1033" title="All 6 branches missed.">        if (!book.category.isNullOrBlank()) {</span>
+<span class="nc" id="L1034">            item { AssistChip(onClick = {}, label = { Text(book.category) }) }</span>
+        }
+<span class="nc" id="L1036">    }</span>
+<span class="nc" id="L1037">}</span>
+
+@Composable
+private fun BookCover(
+    url: String?,
+    title: String,
+<span class="nc" id="L1043">    modifier: Modifier = Modifier,</span>
+<span class="nc bnc" id="L1044" title="All 20 branches missed.">) {</span>
+<span class="nc" id="L1045">    Card(</span>
+<span class="nc" id="L1046">        modifier = modifier.aspectRatio(0.68f),</span>
+<span class="nc" id="L1047">        shape = RoundedCornerShape(6.dp),</span>
+<span class="nc" id="L1048">        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),</span>
+<span class="nc" id="L1049">    ) {</span>
+<span class="nc bnc" id="L1050" title="All 6 branches missed.">        if (url.isNullOrBlank()) {</span>
+<span class="nc" id="L1051">            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {</span>
+<span class="nc" id="L1052">                Icon(Icons.Filled.Book, contentDescription = null, modifier = Modifier.size(28.dp))</span>
+<span class="nc" id="L1053">            }</span>
+<span class="nc" id="L1054">        } else {</span>
+<span class="nc" id="L1055">            AsyncImage(</span>
+<span class="nc" id="L1056">                model = url,</span>
+<span class="nc" id="L1057">                contentDescription = title,</span>
+<span class="nc" id="L1058">                modifier = Modifier</span>
+<span class="nc" id="L1059">                    .fillMaxSize()</span>
+<span class="nc" id="L1060">                    .clip(RoundedCornerShape(6.dp)),</span>
+            )
+        }
+<span class="nc" id="L1063">    }</span>
+<span class="nc" id="L1064">}</span>
+
+@Preview
+@Composable
+<span class="nc bnc" id="L1068" title="All 4 branches missed.">private fun BookScreenPreview() {</span>
+<span class="nc" id="L1069">    BookScreen(</span>
+<span class="nc" id="L1070">        state = BookUiState(</span>
+<span class="nc" id="L1071">            readingBooks = listOf(</span>
+<span class="nc" id="L1072">                Book(</span>
+<span class="nc" id="L1073">                    id = 1,</span>
+<span class="nc" id="L1074">                    title = &quot;Designing Data-Intensive Applications&quot;,</span>
+<span class="nc" id="L1075">                    publisher = null,</span>
+<span class="nc" id="L1076">                    author = &quot;Martin Kleppmann&quot;,</span>
+<span class="nc" id="L1077">                    coverUrl = null,</span>
+<span class="nc" id="L1078">                    isbn = null,</span>
+<span class="nc" id="L1079">                    description = &quot;A book about data systems.&quot;,</span>
+<span class="nc" id="L1080">                    rating = null,</span>
+<span class="nc" id="L1081">                    amazonLink = null,</span>
+<span class="nc" id="L1082">                    pages = 616,</span>
+<span class="nc" id="L1083">                    publishYear = 2017,</span>
+<span class="nc" id="L1084">                    state = BookState.Reading,</span>
+<span class="nc" id="L1085">                    platform = &quot;Kindle&quot;,</span>
+<span class="nc" id="L1086">                    currentPage = 120,</span>
+<span class="nc" id="L1087">                    progressPercentage = 19.0,</span>
+<span class="nc" id="L1088">                    archiveStatus = null,</span>
+<span class="nc" id="L1089">                    archivedDate = null,</span>
+                )
+            )
+        )
+    )
+<span class="nc" id="L1094">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,789 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LotteryScreen.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.lottery</a> &gt; <span class="el_source">LotteryScreen.kt</span></div><h1>LotteryScreen.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.lottery
+
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Celebration
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.LocalActivity
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.outlined.LocalActivity
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tinks.tink.ui.theme.TinkTheme
+import java.time.Instant
+
+@Composable
+fun LotteryScreen(
+    viewModel: LotteryViewModel,
+<span class="nc" id="L70">    onOpenHistoryStats: () -&gt; Unit = {},</span>
+<span class="nc bnc" id="L71" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L72">    val uiState by viewModel.uiState.collectAsStateWithLifecycle()</span>
+<span class="nc" id="L73">    val cameraLauncher = rememberLauncherForActivityResult(</span>
+<span class="nc" id="L74">        contract = ActivityResultContracts.TakePicturePreview(),</span>
+<span class="nc" id="L75">    ) { bitmap -&gt;</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (bitmap != null) {</span>
+<span class="nc" id="L77">            viewModel.onEvent(LotteryEvent.UseCapturedTicketPreview)</span>
+        }
+<span class="nc" id="L79">    }</span>
+
+<span class="nc" id="L81">    LotteryScreen(</span>
+<span class="nc" id="L82">        state = uiState,</span>
+<span class="nc" id="L83">        onEvent = viewModel::onEvent,</span>
+<span class="nc" id="L84">        onOpenHistoryStats = onOpenHistoryStats,</span>
+<span class="nc" id="L85">        onRequestCapture = { cameraLauncher.launch(null) },</span>
+    )
+<span class="nc" id="L87">}</span>
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun LotteryScreen(
+    state: LotteryUiState,
+<span class="nc bnc" id="L93" title="All 2 branches missed.">    onEvent: (LotteryEvent) -&gt; Unit = {},</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">    onOpenHistoryStats: () -&gt; Unit = {},</span>
+<span class="nc" id="L95">    onRequestCapture: () -&gt; Unit = {},</span>
+<span class="nc bnc" id="L96" title="All 28 branches missed.">) {</span>
+<span class="nc" id="L97">    val refreshState = rememberPullToRefreshState()</span>
+
+<span class="nc" id="L99">    when {</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        state.luckyOutcome != null -&gt; LotteryResultHero(</span>
+<span class="nc" id="L101">            outcome = state.luckyOutcome,</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">            onDone = { onEvent(LotteryEvent.DismissHero) },</span>
+        )
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        state.draft != null -&gt; LotteryReviewScreen(</span>
+<span class="nc" id="L105">            draft = state.draft,</span>
+<span class="nc" id="L106">            isSaving = state.isLoading,</span>
+<span class="nc" id="L107">            onEvent = onEvent,</span>
+<span class="nc" id="L108">            onRetakePhoto = onRequestCapture,</span>
+        )
+<span class="nc" id="L110">        else -&gt; Scaffold(</span>
+<span class="nc" id="L111">            floatingActionButton = {</span>
+<span class="nc" id="L112">                ExtendedFloatingActionButton(</span>
+<span class="nc" id="L113">                    onClick = onRequestCapture,</span>
+<span class="nc" id="L114">                    icon = { Icon(Icons.Filled.CameraAlt, contentDescription = null) },</span>
+<span class="nc" id="L115">                    text = { Text(&quot;Add&quot;) },</span>
+<span class="nc" id="L116">                    modifier = Modifier.testTag(&quot;lottery_add_fab&quot;),</span>
+                )
+<span class="nc" id="L118">            }</span>
+<span class="nc" id="L119">        ) { padding -&gt;</span>
+<span class="nc" id="L120">            PullToRefreshBox(</span>
+<span class="nc" id="L121">                isRefreshing = state.isLoading,</span>
+<span class="nc" id="L122">                onRefresh = { onEvent(LotteryEvent.Refresh) },</span>
+<span class="nc" id="L123">                state = refreshState,</span>
+<span class="nc" id="L124">                modifier = Modifier</span>
+<span class="nc" id="L125">                    .fillMaxSize()</span>
+<span class="nc" id="L126">                    .padding(padding)</span>
+<span class="nc" id="L127">                    .testTag(&quot;lottery_screen&quot;),</span>
+<span class="nc" id="L128">            ) {</span>
+<span class="nc" id="L129">                LotteryDashboard(</span>
+<span class="nc" id="L130">                    state = state,</span>
+<span class="nc" id="L131">                    onEvent = onEvent,</span>
+<span class="nc" id="L132">                    onOpenHistoryStats = onOpenHistoryStats,</span>
+                )
+<span class="nc" id="L134">            }</span>
+<span class="nc" id="L135">        }</span>
+    }
+<span class="nc" id="L137">}</span>
+
+@Composable
+<span class="nc bnc" id="L140" title="All 8 branches missed.">fun LotteryHistoryStatsScreen(viewModel: LotteryViewModel) {</span>
+<span class="nc" id="L141">    val uiState by viewModel.uiState.collectAsStateWithLifecycle()</span>
+<span class="nc" id="L142">    LotteryHistoryStatsScreen(</span>
+<span class="nc" id="L143">        state = uiState,</span>
+<span class="nc" id="L144">        onEvent = viewModel::onEvent,</span>
+    )
+<span class="nc" id="L146">}</span>
+
+@Composable
+internal fun LotteryHistoryStatsScreen(
+    state: LotteryUiState,
+<span class="nc" id="L151">    onEvent: (LotteryEvent) -&gt; Unit = {},</span>
+<span class="nc bnc" id="L152" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L153">    LazyColumn(</span>
+<span class="nc" id="L154">        modifier = Modifier</span>
+<span class="nc" id="L155">            .fillMaxSize()</span>
+<span class="nc" id="L156">            .padding(horizontal = 16.dp)</span>
+<span class="nc" id="L157">            .testTag(&quot;lottery_history_stats_screen&quot;),</span>
+<span class="nc" id="L158">        verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+<span class="nc" id="L159">        contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp),</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">    ) {</span>
+<span class="nc" id="L161">        item(&quot;stats&quot;) {</span>
+<span class="nc" id="L162">            LotteryStatsPanel(state.stats)</span>
+<span class="nc" id="L163">        }</span>
+
+<span class="nc" id="L165">        item(&quot;history_header&quot;) {</span>
+<span class="nc" id="L166">            Text(</span>
+<span class="nc" id="L167">                text = &quot;History&quot;,</span>
+<span class="nc" id="L168">                style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L169">                fontWeight = FontWeight.SemiBold,</span>
+            )
+<span class="nc" id="L171">        }</span>
+
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        if (state.historyTickets.isEmpty()) {</span>
+<span class="nc" id="L174">            item(&quot;empty&quot;) {</span>
+<span class="nc" id="L175">                ElevatedCard(</span>
+<span class="nc" id="L176">                    modifier = Modifier</span>
+<span class="nc" id="L177">                        .fillMaxWidth()</span>
+<span class="nc" id="L178">                        .testTag(&quot;lottery_history_empty&quot;),</span>
+<span class="nc" id="L179">                    shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L180">                ) {</span>
+<span class="nc" id="L181">                    Column(</span>
+<span class="nc" id="L182">                        modifier = Modifier.padding(24.dp),</span>
+<span class="nc" id="L183">                        horizontalAlignment = Alignment.CenterHorizontally,</span>
+<span class="nc" id="L184">                        verticalArrangement = Arrangement.spacedBy(8.dp),</span>
+                    ) {
+<span class="nc" id="L186">                        Icon(Icons.Outlined.LocalActivity, contentDescription = null)</span>
+<span class="nc" id="L187">                        Text(&quot;No lottery history yet.&quot;, style = MaterialTheme.typography.titleMedium)</span>
+<span class="nc" id="L188">                    }</span>
+<span class="nc" id="L189">                }</span>
+<span class="nc" id="L190">            }</span>
+        } else {
+<span class="nc" id="L192">            items(state.historyTickets, key = { it.ticket.id }) { ticket -&gt;</span>
+<span class="nc" id="L193">                LotteryHistoryItem(</span>
+<span class="nc" id="L194">                    ticket = ticket,</span>
+<span class="nc" id="L195">                    onDelete = { onEvent(LotteryEvent.DeleteLottery(ticket.ticket.id)) },</span>
+<span class="nc" id="L196">                )</span>
+<span class="nc" id="L197">            }</span>
+        }
+<span class="nc" id="L199">    }</span>
+<span class="nc" id="L200">}</span>
+
+@Composable
+private fun LotteryDashboard(
+    state: LotteryUiState,
+    onEvent: (LotteryEvent) -&gt; Unit,
+    onOpenHistoryStats: () -&gt; Unit,
+<span class="nc bnc" id="L207" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L208">    LazyColumn(</span>
+<span class="nc" id="L209">        modifier = Modifier</span>
+<span class="nc" id="L210">            .fillMaxSize()</span>
+<span class="nc" id="L211">            .padding(horizontal = 16.dp),</span>
+<span class="nc" id="L212">        verticalArrangement = Arrangement.spacedBy(16.dp),</span>
+<span class="nc" id="L213">        contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),</span>
+<span class="nc bnc" id="L214" title="All 4 branches missed.">    ) {</span>
+<span class="nc" id="L215">        item(&quot;active&quot;) {</span>
+<span class="nc" id="L216">            val active = state.activeTicket</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">            if (active == null) {</span>
+<span class="nc" id="L218">                LotteryEmptyActiveCard()</span>
+<span class="nc" id="L219">            } else {</span>
+<span class="nc" id="L220">                LotteryActiveTicketCard(</span>
+<span class="nc" id="L221">                    ticket = active,</span>
+<span class="nc" id="L222">                    onReveal = { onEvent(LotteryEvent.CheckLottery(active.ticket.id)) },</span>
+                )
+            }
+<span class="nc" id="L225">        }</span>
+
+<span class="nc" id="L227">        item(&quot;history_stats&quot;) {</span>
+<span class="nc" id="L228">            LotteryHistoryStatsButton(onClick = onOpenHistoryStats)</span>
+<span class="nc" id="L229">        }</span>
+<span class="nc" id="L230">    }</span>
+<span class="nc" id="L231">}</span>
+
+@Composable
+<span class="nc bnc" id="L234" title="All 4 branches missed.">private fun LotteryEmptyActiveCard() {</span>
+<span class="nc" id="L235">    ElevatedCard(</span>
+<span class="nc" id="L236">        modifier = Modifier</span>
+<span class="nc" id="L237">            .fillMaxWidth()</span>
+<span class="nc" id="L238">            .testTag(&quot;lottery_current_ticket_card&quot;),</span>
+<span class="nc" id="L239">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L240">    ) {</span>
+<span class="nc" id="L241">        Column(</span>
+<span class="nc" id="L242">            modifier = Modifier.padding(24.dp),</span>
+<span class="nc" id="L243">            verticalArrangement = Arrangement.spacedBy(16.dp),</span>
+        ) {
+<span class="nc" id="L245">            Icon(</span>
+<span class="nc" id="L246">                Icons.Filled.AddAPhoto,</span>
+<span class="nc" id="L247">                contentDescription = null,</span>
+<span class="nc" id="L248">                modifier = Modifier.size(44.dp),</span>
+<span class="nc" id="L249">                tint = MaterialTheme.colorScheme.primary,</span>
+            )
+<span class="nc" id="L251">            Text(</span>
+<span class="nc" id="L252">                text = &quot;No active lottery&quot;,</span>
+<span class="nc" id="L253">                style = MaterialTheme.typography.headlineSmall,</span>
+<span class="nc" id="L254">                fontWeight = FontWeight.SemiBold,</span>
+            )
+<span class="nc" id="L256">            Text(</span>
+<span class="nc" id="L257">                text = &quot;Capture a 大乐透 ticket and review the parsed JSON before saving.&quot;,</span>
+<span class="nc" id="L258">                color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+            )
+<span class="nc" id="L260">        }</span>
+<span class="nc" id="L261">    }</span>
+<span class="nc" id="L262">}</span>
+
+@Composable
+private fun LotteryActiveTicketCard(
+    ticket: LotteryTicketUiState,
+    onReveal: () -&gt; Unit,
+<span class="nc bnc" id="L268" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L269">    ElevatedCard(</span>
+<span class="nc" id="L270">        modifier = Modifier</span>
+<span class="nc" id="L271">            .fillMaxWidth()</span>
+<span class="nc" id="L272">            .testTag(&quot;lottery_current_ticket_card&quot;),</span>
+<span class="nc" id="L273">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L274">    ) {</span>
+<span class="nc" id="L275">        Column(</span>
+<span class="nc" id="L276">            modifier = Modifier.padding(20.dp),</span>
+<span class="nc" id="L277">            verticalArrangement = Arrangement.spacedBy(18.dp),</span>
+        ) {
+<span class="nc" id="L279">            Row(</span>
+<span class="nc" id="L280">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L281">                horizontalArrangement = Arrangement.SpaceBetween,</span>
+<span class="nc" id="L282">                verticalAlignment = Alignment.CenterVertically,</span>
+            ) {
+<span class="nc" id="L284">                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {</span>
+<span class="nc" id="L285">                    Text(</span>
+<span class="nc" id="L286">                        text = &quot;第${ticket.ticket.issueId}期&quot;,</span>
+<span class="nc" id="L287">                        style = MaterialTheme.typography.headlineSmall,</span>
+<span class="nc" id="L288">                        fontWeight = FontWeight.SemiBold,</span>
+                    )
+<span class="nc" id="L290">                    Text(</span>
+<span class="nc" id="L291">                        text = ticket.ticket.type,</span>
+<span class="nc" id="L292">                        color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+                    )
+<span class="nc" id="L294">                }</span>
+<span class="nc" id="L295">                LotteryStatusChip(ticket.status)</span>
+<span class="nc" id="L296">            }</span>
+
+<span class="nc" id="L298">            LotteryNumbersBlock(ticket.ticket.numbers, label = &quot;My numbers&quot;)</span>
+
+<span class="nc" id="L300">            Text(</span>
+<span class="nc" id="L301">                text = &quot;Reveal time ${ticket.revealTimeText}&quot;,</span>
+<span class="nc" id="L302">                style = MaterialTheme.typography.bodyMedium,</span>
+<span class="nc" id="L303">                color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+            )
+
+<span class="nc bnc" id="L306" title="All 2 branches missed.">            ticket.ticket.result?.let { result -&gt;</span>
+<span class="nc" id="L307">                LotteryNumbersBlock(result.numbers, label = &quot;Winning numbers&quot;)</span>
+<span class="nc" id="L308">            }</span>
+
+<span class="nc bnc" id="L310" title="All 2 branches missed.">            ticket.matchSummary?.let { summary -&gt;</span>
+<span class="nc" id="L311">                Text(</span>
+<span class="nc" id="L312">                    text = &quot;前区 ${summary.frontMatches} / 后区 ${summary.backMatches} · ${summary.prizeTier}&quot;,</span>
+<span class="nc" id="L313">                    style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L314">                    fontWeight = FontWeight.SemiBold,</span>
+<span class="nc bnc" id="L315" title="All 2 branches missed.">                    color = if (summary.isWinning) {</span>
+<span class="nc" id="L316">                        MaterialTheme.colorScheme.primary</span>
+<span class="nc" id="L317">                    } else {</span>
+<span class="nc" id="L318">                        MaterialTheme.colorScheme.onSurfaceVariant</span>
+                    },
+                )
+<span class="nc" id="L321">            }</span>
+
+<span class="nc bnc" id="L323" title="All 2 branches missed.">            if (ticket.canReveal) {</span>
+<span class="nc" id="L324">                Button(</span>
+<span class="nc" id="L325">                    onClick = onReveal,</span>
+<span class="nc" id="L326">                    modifier = Modifier</span>
+<span class="nc" id="L327">                        .fillMaxWidth()</span>
+<span class="nc" id="L328">                        .testTag(&quot;lottery_reveal_button_${ticket.ticket.id}&quot;),</span>
+<span class="nc" id="L329">                ) {</span>
+<span class="nc" id="L330">                    Icon(Icons.Filled.Celebration, contentDescription = null)</span>
+<span class="nc" id="L331">                    Spacer(Modifier.width(8.dp))</span>
+<span class="nc" id="L332">                    Text(&quot;开奖&quot;)</span>
+<span class="nc" id="L333">                }</span>
+<span class="nc" id="L334">            }</span>
+<span class="nc" id="L335">        }</span>
+<span class="nc" id="L336">    }</span>
+<span class="nc" id="L337">}</span>
+
+@Composable
+<span class="nc bnc" id="L340" title="All 8 branches missed.">private fun LotteryStatusChip(status: LotteryTicketStatus) {</span>
+<span class="nc bnc" id="L341" title="All 3 branches missed.">    val label = when (status) {</span>
+<span class="nc" id="L342">        LotteryTicketStatus.Pending -&gt; &quot;等待开奖&quot;</span>
+<span class="nc" id="L343">        LotteryTicketStatus.Ready -&gt; &quot;可开奖&quot;</span>
+<span class="nc" id="L344">        LotteryTicketStatus.Revealed -&gt; &quot;已开奖&quot;</span>
+    }
+<span class="nc" id="L346">    AssistChip(onClick = {}, label = { Text(label) })</span>
+<span class="nc" id="L347">}</span>
+
+@Composable
+<span class="nc bnc" id="L350" title="All 12 branches missed.">private fun LotteryNumbersBlock(numbers: LotteryNumbers, label: String) {</span>
+<span class="nc" id="L351">    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L352">        Text(</span>
+<span class="nc" id="L353">            text = label,</span>
+<span class="nc" id="L354">            style = MaterialTheme.typography.labelLarge,</span>
+<span class="nc" id="L355">            color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+        )
+<span class="nc" id="L357">        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L358">            numbers.front.forEach { number -&gt;</span>
+<span class="nc" id="L359">                NumberBall(</span>
+<span class="nc" id="L360">                    number = number,</span>
+<span class="nc" id="L361">                    containerColor = MaterialTheme.colorScheme.errorContainer,</span>
+<span class="nc" id="L362">                    contentColor = MaterialTheme.colorScheme.onErrorContainer,</span>
+                )
+<span class="nc" id="L364">            }</span>
+<span class="nc" id="L365">        }</span>
+<span class="nc" id="L366">        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L367">            numbers.back.forEach { number -&gt;</span>
+<span class="nc" id="L368">                NumberBall(</span>
+<span class="nc" id="L369">                    number = number,</span>
+<span class="nc" id="L370">                    containerColor = MaterialTheme.colorScheme.primaryContainer,</span>
+<span class="nc" id="L371">                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,</span>
+                )
+<span class="nc" id="L373">            }</span>
+<span class="nc" id="L374">        }</span>
+<span class="nc" id="L375">    }</span>
+<span class="nc" id="L376">}</span>
+
+@Composable
+private fun NumberBall(
+    number: Int,
+    containerColor: Color,
+    contentColor: Color,
+<span class="nc bnc" id="L383" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L384">    Box(</span>
+<span class="nc" id="L385">        modifier = Modifier</span>
+<span class="nc" id="L386">            .size(34.dp)</span>
+<span class="nc" id="L387">            .clip(CircleShape)</span>
+<span class="nc" id="L388">            .background(containerColor),</span>
+<span class="nc" id="L389">        contentAlignment = Alignment.Center,</span>
+    ) {
+<span class="nc" id="L391">        Text(</span>
+<span class="nc" id="L392">            text = number.toString().padStart(2, '0'),</span>
+<span class="nc" id="L393">            style = MaterialTheme.typography.labelLarge,</span>
+<span class="nc" id="L394">            fontWeight = FontWeight.SemiBold,</span>
+<span class="nc" id="L395">            color = contentColor,</span>
+        )
+<span class="nc" id="L397">    }</span>
+<span class="nc" id="L398">}</span>
+
+@Composable
+<span class="nc bnc" id="L401" title="All 8 branches missed.">private fun LotteryHistoryStatsButton(onClick: () -&gt; Unit) {</span>
+<span class="nc" id="L402">    ElevatedCard(</span>
+<span class="nc" id="L403">        onClick = onClick,</span>
+<span class="nc" id="L404">        modifier = Modifier</span>
+<span class="nc" id="L405">            .fillMaxWidth()</span>
+<span class="nc" id="L406">            .testTag(&quot;lottery_history_stats_button&quot;),</span>
+<span class="nc" id="L407">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L408">    ) {</span>
+<span class="nc" id="L409">        Row(</span>
+<span class="nc" id="L410">            modifier = Modifier.padding(16.dp),</span>
+<span class="nc" id="L411">            horizontalArrangement = Arrangement.spacedBy(16.dp),</span>
+<span class="nc" id="L412">            verticalAlignment = Alignment.CenterVertically,</span>
+        ) {
+<span class="nc" id="L414">            Box(</span>
+<span class="nc" id="L415">                modifier = Modifier</span>
+<span class="nc" id="L416">                    .size(64.dp)</span>
+<span class="nc" id="L417">                    .clip(RoundedCornerShape(8.dp))</span>
+<span class="nc" id="L418">                    .background(MaterialTheme.colorScheme.secondaryContainer),</span>
+<span class="nc" id="L419">                contentAlignment = Alignment.Center,</span>
+            ) {
+<span class="nc" id="L421">                Icon(</span>
+<span class="nc" id="L422">                    Icons.Filled.BarChart,</span>
+<span class="nc" id="L423">                    contentDescription = null,</span>
+<span class="nc" id="L424">                    tint = MaterialTheme.colorScheme.onSecondaryContainer,</span>
+<span class="nc" id="L425">                    modifier = Modifier.size(34.dp),</span>
+                )
+<span class="nc" id="L427">            }</span>
+<span class="nc" id="L428">            Column(modifier = Modifier.weight(1f)) {</span>
+<span class="nc" id="L429">                Text(</span>
+<span class="nc" id="L430">                    text = &quot;History &amp; stats&quot;,</span>
+<span class="nc" id="L431">                    style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L432">                    fontWeight = FontWeight.SemiBold,</span>
+                )
+<span class="nc" id="L434">                Text(</span>
+<span class="nc" id="L435">                    text = &quot;Past tickets, wins, and prize distribution&quot;,</span>
+<span class="nc" id="L436">                    style = MaterialTheme.typography.bodyMedium,</span>
+<span class="nc" id="L437">                    color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+                )
+<span class="nc" id="L439">            }</span>
+<span class="nc" id="L440">            Icon(Icons.Filled.ChevronRight, contentDescription = null)</span>
+<span class="nc" id="L441">        }</span>
+<span class="nc" id="L442">    }</span>
+<span class="nc" id="L443">}</span>
+
+@Composable
+private fun LotteryReviewScreen(
+    draft: LotteryDraft,
+    isSaving: Boolean,
+    onEvent: (LotteryEvent) -&gt; Unit,
+    onRetakePhoto: () -&gt; Unit,
+<span class="nc bnc" id="L451" title="All 20 branches missed.">) {</span>
+<span class="nc" id="L452">    LazyColumn(</span>
+<span class="nc" id="L453">        modifier = Modifier</span>
+<span class="nc" id="L454">            .fillMaxSize()</span>
+<span class="nc" id="L455">            .padding(horizontal = 16.dp)</span>
+<span class="nc" id="L456">            .testTag(&quot;lottery_review_screen&quot;),</span>
+<span class="nc" id="L457">        verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+<span class="nc" id="L458">        contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp),</span>
+<span class="nc bnc" id="L459" title="All 8 branches missed.">    ) {</span>
+<span class="nc" id="L460">        item(&quot;header&quot;) {</span>
+<span class="nc" id="L461">            Text(</span>
+<span class="nc" id="L462">                text = &quot;Review ticket&quot;,</span>
+<span class="nc" id="L463">                style = MaterialTheme.typography.headlineSmall,</span>
+<span class="nc" id="L464">                fontWeight = FontWeight.SemiBold,</span>
+            )
+<span class="nc" id="L466">        }</span>
+<span class="nc" id="L467">        item(&quot;type&quot;) {</span>
+<span class="nc" id="L468">            OutlinedTextField(</span>
+<span class="nc" id="L469">                value = draft.type,</span>
+<span class="nc" id="L470">                onValueChange = {},</span>
+<span class="nc" id="L471">                enabled = false,</span>
+<span class="nc" id="L472">                label = { Text(&quot;Type&quot;) },</span>
+<span class="nc" id="L473">                modifier = Modifier.fillMaxWidth(),</span>
+            )
+<span class="nc" id="L475">        }</span>
+<span class="nc" id="L476">        item(&quot;issue&quot;) {</span>
+<span class="nc" id="L477">            OutlinedTextField(</span>
+<span class="nc" id="L478">                value = draft.issueId,</span>
+<span class="nc" id="L479">                onValueChange = { onEvent(LotteryEvent.UpdateDraftIssueId(it)) },</span>
+<span class="nc" id="L480">                label = { Text(&quot;Issue id&quot;) },</span>
+<span class="nc" id="L481">                singleLine = true,</span>
+<span class="nc" id="L482">                modifier = Modifier.fillMaxWidth(),</span>
+            )
+<span class="nc" id="L484">        }</span>
+<span class="nc" id="L485">        item(&quot;front&quot;) {</span>
+<span class="nc" id="L486">            OutlinedTextField(</span>
+<span class="nc" id="L487">                value = draft.frontNumbersText,</span>
+<span class="nc" id="L488">                onValueChange = { onEvent(LotteryEvent.UpdateDraftFrontNumbers(it)) },</span>
+<span class="nc" id="L489">                label = { Text(&quot;Front numbers&quot;) },</span>
+<span class="nc" id="L490">                singleLine = true,</span>
+<span class="nc" id="L491">                modifier = Modifier.fillMaxWidth(),</span>
+            )
+<span class="nc" id="L493">        }</span>
+<span class="nc" id="L494">        item(&quot;back&quot;) {</span>
+<span class="nc" id="L495">            OutlinedTextField(</span>
+<span class="nc" id="L496">                value = draft.backNumbersText,</span>
+<span class="nc" id="L497">                onValueChange = { onEvent(LotteryEvent.UpdateDraftBackNumbers(it)) },</span>
+<span class="nc" id="L498">                label = { Text(&quot;Back numbers&quot;) },</span>
+<span class="nc" id="L499">                singleLine = true,</span>
+<span class="nc" id="L500">                modifier = Modifier.fillMaxWidth(),</span>
+            )
+<span class="nc" id="L502">        }</span>
+<span class="nc" id="L503">        item(&quot;reveal&quot;) {</span>
+<span class="nc" id="L504">            OutlinedTextField(</span>
+<span class="nc" id="L505">                value = draft.revealTimeText,</span>
+<span class="nc" id="L506">                onValueChange = { onEvent(LotteryEvent.UpdateDraftRevealTime(it)) },</span>
+<span class="nc" id="L507">                label = { Text(&quot;Reveal time&quot;) },</span>
+<span class="nc" id="L508">                singleLine = true,</span>
+<span class="nc" id="L509">                modifier = Modifier.fillMaxWidth(),</span>
+            )
+<span class="nc" id="L511">        }</span>
+<span class="nc bnc" id="L512" title="All 2 branches missed.">        draft.parseError?.let { error -&gt;</span>
+<span class="nc" id="L513">            item(&quot;error&quot;) {</span>
+<span class="nc" id="L514">                Text(</span>
+<span class="nc" id="L515">                    text = error,</span>
+<span class="nc" id="L516">                    color = MaterialTheme.colorScheme.error,</span>
+<span class="nc" id="L517">                    style = MaterialTheme.typography.bodyMedium,</span>
+                )
+<span class="nc" id="L519">            }</span>
+<span class="nc" id="L520">        }</span>
+<span class="nc" id="L521">        item(&quot;json&quot;) {</span>
+<span class="nc" id="L522">            Surface(</span>
+<span class="nc" id="L523">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L524">                shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L525">                color = MaterialTheme.colorScheme.surfaceContainerHighest,</span>
+<span class="nc" id="L526">            ) {</span>
+<span class="nc" id="L527">                Text(</span>
+<span class="nc" id="L528">                    text = draft.jsonPreview,</span>
+<span class="nc" id="L529">                    modifier = Modifier.padding(16.dp),</span>
+<span class="nc" id="L530">                    style = MaterialTheme.typography.bodySmall,</span>
+<span class="nc" id="L531">                    color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+                )
+<span class="nc" id="L533">            }</span>
+<span class="nc" id="L534">        }</span>
+<span class="nc bnc" id="L535" title="All 2 branches missed.">        if (isSaving) {</span>
+<span class="nc" id="L536">            item(&quot;progress&quot;) {</span>
+<span class="nc" id="L537">                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())</span>
+<span class="nc" id="L538">            }</span>
+        }
+<span class="nc" id="L540">        item(&quot;actions&quot;) {</span>
+<span class="nc" id="L541">            Row(</span>
+<span class="nc" id="L542">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L543">                horizontalArrangement = Arrangement.spacedBy(8.dp),</span>
+            ) {
+<span class="nc" id="L545">                TextButton(</span>
+<span class="nc" id="L546">                    onClick = {</span>
+<span class="nc" id="L547">                        onEvent(LotteryEvent.RetakePhoto)</span>
+<span class="nc" id="L548">                        onRetakePhoto()</span>
+<span class="nc" id="L549">                    },</span>
+<span class="nc" id="L550">                    modifier = Modifier</span>
+<span class="nc" id="L551">                        .weight(1f)</span>
+<span class="nc" id="L552">                        .testTag(&quot;lottery_review_retake_button&quot;),</span>
+<span class="nc" id="L553">                ) {</span>
+<span class="nc" id="L554">                    Icon(Icons.Filled.Refresh, contentDescription = null)</span>
+<span class="nc" id="L555">                    Spacer(Modifier.width(6.dp))</span>
+<span class="nc" id="L556">                    Text(&quot;Retake&quot;)</span>
+<span class="nc" id="L557">                }</span>
+<span class="nc" id="L558">                FilledTonalButton(</span>
+<span class="nc" id="L559">                    onClick = { onEvent(LotteryEvent.DismissReview) },</span>
+<span class="nc" id="L560">                    modifier = Modifier</span>
+<span class="nc" id="L561">                        .weight(1f)</span>
+<span class="nc" id="L562">                        .testTag(&quot;lottery_review_manual_edit_button&quot;),</span>
+<span class="nc" id="L563">                ) {</span>
+<span class="nc" id="L564">                    Text(&quot;Cancel&quot;)</span>
+<span class="nc" id="L565">                }</span>
+<span class="nc" id="L566">                Button(</span>
+<span class="nc" id="L567">                    onClick = { onEvent(LotteryEvent.SaveDraft) },</span>
+<span class="nc" id="L568">                    modifier = Modifier</span>
+<span class="nc" id="L569">                        .weight(1f)</span>
+<span class="nc" id="L570">                        .testTag(&quot;lottery_review_save_button&quot;),</span>
+<span class="nc" id="L571">                ) {</span>
+<span class="nc" id="L572">                    Icon(Icons.Filled.Save, contentDescription = null)</span>
+<span class="nc" id="L573">                    Spacer(Modifier.width(6.dp))</span>
+<span class="nc" id="L574">                    Text(&quot;Save&quot;)</span>
+<span class="nc" id="L575">                }</span>
+<span class="nc" id="L576">            }</span>
+<span class="nc" id="L577">        }</span>
+<span class="nc" id="L578">    }</span>
+<span class="nc" id="L579">}</span>
+
+@Composable
+private fun LotteryResultHero(
+    outcome: LotteryCheckOutcome,
+    onDone: () -&gt; Unit,
+<span class="nc bnc" id="L585" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L586">    Column(</span>
+<span class="nc" id="L587">        modifier = Modifier</span>
+<span class="nc" id="L588">            .fillMaxSize()</span>
+<span class="nc" id="L589">            .padding(24.dp)</span>
+<span class="nc" id="L590">            .testTag(&quot;lottery_result_hero&quot;),</span>
+<span class="nc" id="L591">        verticalArrangement = Arrangement.Center,</span>
+<span class="nc" id="L592">        horizontalAlignment = Alignment.CenterHorizontally,</span>
+    ) {
+<span class="nc" id="L594">        Icon(</span>
+<span class="nc" id="L595">            Icons.Filled.Celebration,</span>
+<span class="nc" id="L596">            contentDescription = null,</span>
+<span class="nc" id="L597">            tint = MaterialTheme.colorScheme.primary,</span>
+<span class="nc" id="L598">            modifier = Modifier.size(72.dp),</span>
+        )
+<span class="nc" id="L600">        Spacer(Modifier.height(16.dp))</span>
+<span class="nc" id="L601">        Text(</span>
+<span class="nc" id="L602">            text = outcome.prizeTier,</span>
+<span class="nc" id="L603">            style = MaterialTheme.typography.displayMedium,</span>
+<span class="nc" id="L604">            fontWeight = FontWeight.Bold,</span>
+<span class="nc" id="L605">            color = MaterialTheme.colorScheme.primary,</span>
+        )
+<span class="nc" id="L607">        Text(</span>
+<span class="nc" id="L608">            text = &quot;第${outcome.lottery.issueId}期&quot;,</span>
+<span class="nc" id="L609">            style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L610">            color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+        )
+<span class="nc" id="L612">        Spacer(Modifier.height(28.dp))</span>
+<span class="nc" id="L613">        LotteryNumbersBlock(outcome.lottery.numbers, label = &quot;My numbers&quot;)</span>
+<span class="nc" id="L614">        Spacer(Modifier.height(16.dp))</span>
+<span class="nc" id="L615">        LotteryNumbersBlock(outcome.result.numbers, label = &quot;Winning numbers&quot;)</span>
+<span class="nc" id="L616">        Spacer(Modifier.height(24.dp))</span>
+<span class="nc" id="L617">        Text(</span>
+<span class="nc" id="L618">            text = &quot;前区 ${outcome.frontMatchCount} / 后区 ${outcome.backMatchCount}&quot;,</span>
+<span class="nc" id="L619">            style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L620">            fontWeight = FontWeight.SemiBold,</span>
+        )
+<span class="nc" id="L622">        Spacer(Modifier.height(24.dp))</span>
+<span class="nc" id="L623">        Button(onClick = onDone) {</span>
+<span class="nc" id="L624">            Text(&quot;Done&quot;)</span>
+<span class="nc" id="L625">        }</span>
+<span class="nc" id="L626">    }</span>
+<span class="nc" id="L627">}</span>
+
+@Composable
+<span class="nc bnc" id="L630" title="All 8 branches missed.">private fun LotteryStatsPanel(stats: LotteryStatsUiState) {</span>
+<span class="nc" id="L631">    ElevatedCard(</span>
+<span class="nc" id="L632">        modifier = Modifier</span>
+<span class="nc" id="L633">            .fillMaxWidth()</span>
+<span class="nc" id="L634">            .testTag(&quot;lottery_stats_panel&quot;),</span>
+<span class="nc" id="L635">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L636">    ) {</span>
+<span class="nc" id="L637">        Column(</span>
+<span class="nc" id="L638">            modifier = Modifier.padding(16.dp),</span>
+<span class="nc" id="L639">            verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+        ) {
+<span class="nc" id="L641">            Text(</span>
+<span class="nc" id="L642">                text = &quot;Statistics&quot;,</span>
+<span class="nc" id="L643">                style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L644">                fontWeight = FontWeight.SemiBold,</span>
+            )
+<span class="nc" id="L646">            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L647">                StatPill(&quot;Total&quot;, stats.totalTickets.toString(), Modifier.weight(1f))</span>
+<span class="nc" id="L648">                StatPill(&quot;Pending&quot;, stats.pendingTickets.toString(), Modifier.weight(1f))</span>
+<span class="nc" id="L649">            }</span>
+<span class="nc" id="L650">            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L651">                StatPill(&quot;Revealed&quot;, stats.revealedTickets.toString(), Modifier.weight(1f))</span>
+<span class="nc" id="L652">                StatPill(&quot;Wins&quot;, stats.winningTickets.toString(), Modifier.weight(1f))</span>
+<span class="nc" id="L653">            }</span>
+<span class="nc" id="L654">            StatPill(&quot;Best prize&quot;, stats.bestPrizeTier, Modifier.fillMaxWidth())</span>
+<span class="nc bnc" id="L655" title="All 4 branches missed.">            if (stats.prizeDistribution.isNotEmpty()) {</span>
+<span class="nc" id="L656">                stats.prizeDistribution.forEach { (tier, count) -&gt;</span>
+<span class="nc" id="L657">                    Text(</span>
+<span class="nc" id="L658">                        text = &quot;$tier · $count&quot;,</span>
+<span class="nc" id="L659">                        style = MaterialTheme.typography.bodyMedium,</span>
+<span class="nc" id="L660">                        color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+                    )
+<span class="nc" id="L662">                }</span>
+<span class="nc" id="L663">            }</span>
+<span class="nc" id="L664">        }</span>
+<span class="nc" id="L665">    }</span>
+<span class="nc" id="L666">}</span>
+
+@Composable
+<span class="nc bnc" id="L669" title="All 20 branches missed.">private fun StatPill(label: String, value: String, modifier: Modifier = Modifier) {</span>
+<span class="nc" id="L670">    Surface(</span>
+<span class="nc" id="L671">        modifier = modifier,</span>
+<span class="nc" id="L672">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L673">        color = MaterialTheme.colorScheme.surfaceContainerHighest,</span>
+<span class="nc" id="L674">    ) {</span>
+<span class="nc" id="L675">        Column(modifier = Modifier.padding(12.dp)) {</span>
+<span class="nc" id="L676">            Text(</span>
+<span class="nc" id="L677">                text = label,</span>
+<span class="nc" id="L678">                style = MaterialTheme.typography.labelMedium,</span>
+<span class="nc" id="L679">                color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+            )
+<span class="nc" id="L681">            Text(</span>
+<span class="nc" id="L682">                text = value,</span>
+<span class="nc" id="L683">                style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L684">                fontWeight = FontWeight.SemiBold,</span>
+            )
+<span class="nc" id="L686">        }</span>
+<span class="nc" id="L687">    }</span>
+<span class="nc" id="L688">}</span>
+
+@Composable
+private fun LotteryHistoryItem(
+    ticket: LotteryTicketUiState,
+    onDelete: () -&gt; Unit,
+<span class="nc bnc" id="L694" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L695">    ElevatedCard(</span>
+<span class="nc" id="L696">        modifier = Modifier</span>
+<span class="nc" id="L697">            .fillMaxWidth()</span>
+<span class="nc" id="L698">            .testTag(&quot;lottery_ticket_card_${ticket.ticket.id}&quot;),</span>
+<span class="nc" id="L699">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L700">    ) {</span>
+<span class="nc" id="L701">        ListItem(</span>
+<span class="nc" id="L702">            headlineContent = {</span>
+<span class="nc" id="L703">                Text(</span>
+<span class="nc" id="L704">                    text = &quot;第${ticket.ticket.issueId}期&quot;,</span>
+<span class="nc" id="L705">                    fontWeight = FontWeight.SemiBold,</span>
+                )
+<span class="nc" id="L707">            },</span>
+<span class="nc" id="L708">            supportingContent = {</span>
+<span class="nc" id="L709">                Column {</span>
+<span class="nc" id="L710">                    Text(ticket.revealTimeText)</span>
+<span class="nc bnc" id="L711" title="All 4 branches missed.">                    Text(ticket.matchSummary?.prizeTier ?: statusText(ticket.status))</span>
+<span class="nc" id="L712">                    CompactNumbersRow(ticket.ticket.numbers)</span>
+<span class="nc" id="L713">                }</span>
+<span class="nc" id="L714">            },</span>
+<span class="nc" id="L715">            leadingContent = {</span>
+<span class="nc" id="L716">                Icon(Icons.Filled.LocalActivity, contentDescription = null)</span>
+<span class="nc" id="L717">            },</span>
+<span class="nc" id="L718">            trailingContent = {</span>
+<span class="nc" id="L719">                IconButton(onClick = onDelete) {</span>
+<span class="nc" id="L720">                    Icon(Icons.Filled.Delete, contentDescription = &quot;Delete lottery&quot;)</span>
+<span class="nc" id="L721">                }</span>
+<span class="nc" id="L722">            },</span>
+<span class="nc" id="L723">            colors = ListItemDefaults.colors(</span>
+<span class="nc" id="L724">                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,</span>
+            )
+        )
+<span class="nc" id="L727">    }</span>
+<span class="nc" id="L728">}</span>
+
+@Composable
+<span class="nc bnc" id="L731" title="All 8 branches missed.">private fun CompactNumbersRow(numbers: LotteryNumbers) {</span>
+<span class="nc" id="L732">    Text(</span>
+<span class="nc" id="L733">        text = numbers.front.joinToString(&quot; &quot;) { it.toString().padStart(2, '0') } +</span>
+            &quot; + &quot; +
+<span class="nc" id="L735">            numbers.back.joinToString(&quot; &quot;) { it.toString().padStart(2, '0') },</span>
+<span class="nc" id="L736">        style = MaterialTheme.typography.bodySmall,</span>
+<span class="nc" id="L737">        color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+    )
+<span class="nc" id="L739">}</span>
+
+private fun statusText(status: LotteryTicketStatus): String =
+<span class="nc bnc" id="L742" title="All 3 branches missed.">    when (status) {</span>
+<span class="nc" id="L743">        LotteryTicketStatus.Pending -&gt; &quot;等待开奖&quot;</span>
+<span class="nc" id="L744">        LotteryTicketStatus.Ready -&gt; &quot;可开奖&quot;</span>
+<span class="nc" id="L745">        LotteryTicketStatus.Revealed -&gt; &quot;已开奖&quot;</span>
+<span class="nc" id="L746">    }</span>
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 800)
+@Composable
+<span class="nc bnc" id="L750" title="All 4 branches missed.">private fun LotteryScreenPreview() {</span>
+<span class="nc" id="L751">    TinkTheme(dynamicColor = false) {</span>
+<span class="nc" id="L752">        LotteryScreen(</span>
+<span class="nc" id="L753">            state = LotteryUiState(</span>
+<span class="nc" id="L754">                isLoading = false,</span>
+<span class="nc" id="L755">                activeTicket = sampleTicketUiState(),</span>
+<span class="nc" id="L756">                historyTickets = listOf(sampleTicketUiState()),</span>
+<span class="nc" id="L757">                stats = LotteryStatsUiState(1, 0, 0, 0, &quot;暂无&quot;, emptyList()),</span>
+<span class="nc" id="L758">                draft = null,</span>
+<span class="nc" id="L759">                luckyOutcome = null,</span>
+            )
+        )
+<span class="nc" id="L762">    }</span>
+<span class="nc" id="L763">}</span>
+
+private fun sampleTicketUiState(): LotteryTicketUiState {
+<span class="nc" id="L766">    val ticket = LotteryTicket(</span>
+<span class="nc" id="L767">        id = 1,</span>
+<span class="nc" id="L768">        type = LOTTERY_TYPE_DA_LE_TOU,</span>
+<span class="nc" id="L769">        issueId = &quot;21126&quot;,</span>
+<span class="nc" id="L770">        numbers = LotteryNumbers(listOf(1, 11, 12, 34, 35), listOf(9, 12)),</span>
+<span class="nc" id="L771">        revealTime = Instant.parse(&quot;2021-11-03T12:30:00Z&quot;),</span>
+<span class="nc" id="L772">        capturedImageUri = null,</span>
+<span class="nc" id="L773">        checked = false,</span>
+<span class="nc" id="L774">        checkedAt = null,</span>
+<span class="nc" id="L775">        resultId = null,</span>
+<span class="nc" id="L776">        prizeTier = null,</span>
+<span class="nc" id="L777">        frontMatchCount = null,</span>
+<span class="nc" id="L778">        backMatchCount = null,</span>
+<span class="nc" id="L779">        result = null,</span>
+    )
+<span class="nc" id="L781">    return LotteryTicketUiState(</span>
+<span class="nc" id="L782">        ticket = ticket,</span>
+<span class="nc" id="L783">        status = LotteryTicketStatus.Ready,</span>
+<span class="nc" id="L784">        revealTimeText = &quot;2021-11-03 12:30:00&quot;,</span>
+<span class="nc" id="L785">        checkedTimeText = null,</span>
+<span class="nc" id="L786">        matchSummary = null,</span>
+    )
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
