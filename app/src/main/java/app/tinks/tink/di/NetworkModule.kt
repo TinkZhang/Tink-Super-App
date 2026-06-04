@@ -4,6 +4,7 @@ import android.content.Context
 import app.tinks.tink.BuildConfig
 import app.tinks.tink.book.BookApi
 import app.tinks.tink.haircut.HaircutApi
+import app.tinks.tink.lottery.LotteryApi
 import app.tinks.tink.merriam.network.MerriamApi
 import app.tinks.tink.settings.ApiEnvironment
 import app.tinks.tink.settings.AppEnvironmentRepository
@@ -147,4 +148,9 @@ object NetworkModule {
     @Singleton
     fun provideWeightApi(retrofit: Retrofit): WeightApi =
         retrofit.create(WeightApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideLotteryApi(retrofit: Retrofit): LotteryApi =
+        retrofit.create(LotteryApi::class.java)
 }

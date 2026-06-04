@@ -44,6 +44,8 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import app.tinks.tink.book.BookScreen
 import app.tinks.tink.haircut.HaircutScreen
+import app.tinks.tink.lottery.LotteryHistoryStatsScreen
+import app.tinks.tink.lottery.LotteryScreen
 import app.tinks.tink.merriam.MerriamScreen
 import app.tinks.tink.navigation.MyNavKey
 import app.tinks.tink.navigation.ScreenA
@@ -52,6 +54,8 @@ import app.tinks.tink.navigation.ScreenBooks
 import app.tinks.tink.navigation.ScreenHair
 import app.tinks.tink.navigation.ScreenLearntZi
 import app.tinks.tink.navigation.ScreenLeeter
+import app.tinks.tink.navigation.ScreenLottery
+import app.tinks.tink.navigation.ScreenLotteryHistoryStats
 import app.tinks.tink.navigation.ScreenMerriam
 import app.tinks.tink.navigation.ScreenSettings
 import app.tinks.tink.navigation.ScreenStoryDetail
@@ -265,6 +269,11 @@ fun MyApp(
                             hiltViewModel(),
                             onOpenDrawer = { scope.launch { drawerState.open() } },
                         )
+                        is ScreenLottery -> LotteryScreen(
+                            hiltViewModel(),
+                            onOpenHistoryStats = { backStack.add(ScreenLotteryHistoryStats) },
+                        )
+                        is ScreenLotteryHistoryStats -> LotteryHistoryStatsScreen(hiltViewModel())
                         is ScreenStoryList -> StoryListScreen(
                             hiltViewModel(),
                             onStoryClick = { story ->
@@ -291,6 +300,8 @@ private fun MyNavKey.drawerTestTag(): String = when (this) {
     ScreenMerriam -> "drawer_destination_merriam"
     ScreenTime -> "drawer_destination_time"
     ScreenBooks -> "drawer_destination_books"
+    ScreenLottery -> "drawer_destination_lottery"
+    ScreenLotteryHistoryStats -> "drawer_destination_lottery_history_stats"
     ScreenSettings -> "drawer_destination_settings"
     ScreenLearntZi -> "drawer_destination_learnt_zi"
     ScreenStoryList -> "drawer_destination_story_list"
