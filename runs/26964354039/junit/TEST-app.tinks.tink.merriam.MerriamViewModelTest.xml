@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.merriam.MerriamViewModelTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-06-04T16:16:05.176Z" hostname="runnervm3jyl0" time="0.032">
+  <properties/>
+  <testcase name="refresh_loadsStatAgain" classname="app.tinks.tink.merriam.MerriamViewModelTest" time="0.021"/>
+  <testcase name="completeRoot_postsMissingRootsAndOptimisticallyUpdatesLatest" classname="app.tinks.tink.merriam.MerriamViewModelTest" time="0.006"/>
+  <testcase name="init_loadsStatAndLocalUnits" classname="app.tinks.tink.merriam.MerriamViewModelTest" time="0.002"/>
+  <testcase name="completeRoot_ignoresAlreadyCompletedRoot" classname="app.tinks.tink.merriam.MerriamViewModelTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

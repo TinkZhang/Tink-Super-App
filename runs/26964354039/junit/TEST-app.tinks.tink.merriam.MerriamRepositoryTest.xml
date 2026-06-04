@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.merriam.MerriamRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-04T16:16:04.655Z" hostname="runnervm3jyl0" time="0.011">
+  <properties/>
+  <testcase name="addMerriamRecords_emitsLoadingThenSuccess_andCallsApi" classname="app.tinks.tink.merriam.MerriamRepositoryTest" time="0.006"/>
+  <testcase name="getMerriamStat_emitsLoadingThenSuccess" classname="app.tinks.tink.merriam.MerriamRepositoryTest" time="0.003"/>
+  <testcase name="getMerriamStat_emitsLoadingThenError_whenApiThrows" classname="app.tinks.tink.merriam.MerriamRepositoryTest" time="0.002"/>
+  <system-out><![CDATA[safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall caught exception: no network
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

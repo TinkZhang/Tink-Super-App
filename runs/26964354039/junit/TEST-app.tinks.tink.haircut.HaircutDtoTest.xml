@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.haircut.HaircutDtoTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-06-04T16:16:02.552Z" hostname="runnervm3jyl0" time="0.011">
+  <properties/>
+  <testcase name="toDomain_mapsApiFields" classname="app.tinks.tink.haircut.HaircutDtoTest" time="0.011"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

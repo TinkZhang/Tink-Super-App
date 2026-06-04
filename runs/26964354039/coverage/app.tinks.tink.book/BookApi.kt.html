@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookApi.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.book</a> &gt; <span class="el_source">BookApi.kt</span></div><h1>BookApi.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.book
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
+
+interface BookApi {
+    @GET(&quot;book/search&quot;)
+<span class="pc" id="L15">    suspend fun search(</span>
+        @Query(&quot;query&quot;) keyword: String,
+<span class="fc" id="L17">        @Query(&quot;limit&quot;) limit: Int = 20,</span>
+<span class="nc" id="L18">    ): List&lt;BookSearchResultDto&gt;</span>
+
+    @GET(&quot;book/wishlist&quot;)
+<span class="pc" id="L21">    suspend fun getWishlist(</span>
+<span class="fc" id="L22">        @Query(&quot;page&quot;) page: Int = 0,</span>
+<span class="fc" id="L23">        @Query(&quot;size&quot;) size: Int = 50,</span>
+<span class="nc" id="L24">        @Query(&quot;category&quot;) category: String? = null,</span>
+<span class="nc" id="L25">    ): List&lt;BookDto&gt;</span>
+
+    @POST(&quot;book/wishlist&quot;)
+    suspend fun createWishlistBook(
+        @Body payload: BookCreateRequest,
+    ): BookDto
+
+    @GET(&quot;book/reading&quot;)
+<span class="nc" id="L33">    suspend fun getReading(</span>
+<span class="nc" id="L34">        @Query(&quot;page&quot;) page: Int = 0,</span>
+<span class="nc" id="L35">        @Query(&quot;size&quot;) size: Int = 50,</span>
+<span class="nc" id="L36">        @Query(&quot;category&quot;) category: String? = null,</span>
+<span class="nc" id="L37">    ): List&lt;BookDto&gt;</span>
+
+    @GET(&quot;book/archived&quot;)
+<span class="nc" id="L40">    suspend fun getArchived(</span>
+<span class="nc" id="L41">        @Query(&quot;page&quot;) page: Int = 0,</span>
+<span class="nc" id="L42">        @Query(&quot;size&quot;) size: Int = 50,</span>
+<span class="nc" id="L43">        @Query(&quot;status&quot;) status: String? = null,</span>
+<span class="nc" id="L44">        @Query(&quot;category&quot;) category: String? = null,</span>
+<span class="nc" id="L45">    ): List&lt;BookDto&gt;</span>
+
+    @GET(&quot;book/categories&quot;)
+    suspend fun getCategories(): List&lt;String&gt;
+
+    @GET(&quot;book/{bookId}&quot;)
+    suspend fun getBook(@Path(&quot;bookId&quot;) bookId: Long): BookDto
+
+    @PATCH(&quot;book/{bookId}&quot;)
+    suspend fun updateBook(
+        @Path(&quot;bookId&quot;) bookId: Long,
+        @Body payload: BookUpdateRequest,
+    ): BookDto
+
+    @DELETE(&quot;book/{bookId}&quot;)
+    suspend fun deleteBook(@Path(&quot;bookId&quot;) bookId: Long)
+
+    @POST(&quot;book/{bookId}/reading&quot;)
+    suspend fun startReading(
+        @Path(&quot;bookId&quot;) bookId: Long,
+        @Body payload: BookStartReadingRequest,
+    ): BookDto
+
+    @POST(&quot;book/{bookId}/archive&quot;)
+    suspend fun archiveBook(
+        @Path(&quot;bookId&quot;) bookId: Long,
+        @Body payload: BookArchiveRequest,
+    ): BookDto
+
+    @GET(&quot;book/{bookId}/notes&quot;)
+<span class="nc" id="L75">    suspend fun getNotes(</span>
+        @Path(&quot;bookId&quot;) bookId: Long,
+<span class="nc" id="L77">        @Query(&quot;page&quot;) page: Int = 0,</span>
+<span class="nc" id="L78">        @Query(&quot;size&quot;) size: Int = 50,</span>
+<span class="nc" id="L79">    ): List&lt;BookNoteDto&gt;</span>
+
+    @POST(&quot;book/{bookId}/notes&quot;)
+    suspend fun createNote(
+        @Path(&quot;bookId&quot;) bookId: Long,
+        @Body payload: BookNoteCreateRequest,
+    ): BookNoteDto
+
+    @PATCH(&quot;book/{bookId}/notes/{noteId}&quot;)
+    suspend fun updateNote(
+        @Path(&quot;bookId&quot;) bookId: Long,
+        @Path(&quot;noteId&quot;) noteId: Long,
+        @Body payload: BookNoteUpdateRequest,
+    ): BookNoteDto
+
+    @DELETE(&quot;book/{bookId}/notes/{noteId}&quot;)
+    suspend fun deleteNote(
+        @Path(&quot;bookId&quot;) bookId: Long,
+        @Path(&quot;noteId&quot;) noteId: Long,
+    )
+}
+
+<span class="pc bnc" id="L101" title="All 74 branches missed.">@Serializable</span>
+<span class="fc" id="L102">data class BookSearchResultDto(</span>
+<span class="fc" id="L103">    @SerialName(&quot;source_id&quot;)</span>
+<span class="nc" id="L104">    val sourceId: String,</span>
+<span class="fc" id="L105">    val title: String,</span>
+<span class="pc" id="L106">    val publisher: String? = null,</span>
+<span class="pc" id="L107">    val author: String? = null,</span>
+<span class="fc" id="L108">    @SerialName(&quot;cover_url&quot;)</span>
+<span class="pc" id="L109">    val coverUrl: String? = null,</span>
+<span class="pc" id="L110">    val isbn: String? = null,</span>
+<span class="pc" id="L111">    val description: String? = null,</span>
+<span class="pc" id="L112">    val rating: Double? = null,</span>
+<span class="fc" id="L113">    @SerialName(&quot;amazon_link&quot;)</span>
+<span class="pc" id="L114">    val amazonLink: String? = null,</span>
+<span class="pc" id="L115">    val pages: Int? = null,</span>
+<span class="fc" id="L116">    @SerialName(&quot;publish_year&quot;)</span>
+<span class="pc" id="L117">    val publishYear: Int? = null,</span>
+<span class="fc" id="L118">)</span>
+
+<span class="pc bnc" id="L120" title="All 130 branches missed.">@Serializable</span>
+<span class="fc" id="L121">data class BookDto(</span>
+<span class="fc" id="L122">    val id: Long,</span>
+<span class="fc" id="L123">    val title: String,</span>
+<span class="pc" id="L124">    val publisher: String? = null,</span>
+<span class="pc" id="L125">    val author: String? = null,</span>
+<span class="fc" id="L126">    @SerialName(&quot;cover_url&quot;)</span>
+<span class="pc" id="L127">    val coverUrl: String? = null,</span>
+<span class="pc" id="L128">    val isbn: String? = null,</span>
+<span class="pc" id="L129">    val description: String? = null,</span>
+<span class="pc" id="L130">    val rating: Double? = null,</span>
+<span class="fc" id="L131">    @SerialName(&quot;amazon_link&quot;)</span>
+<span class="pc" id="L132">    val amazonLink: String? = null,</span>
+<span class="pc" id="L133">    val pages: Int? = null,</span>
+<span class="fc" id="L134">    @SerialName(&quot;publish_year&quot;)</span>
+<span class="pc" id="L135">    val publishYear: Int? = null,</span>
+<span class="pc" id="L136">    val category: String? = null,</span>
+<span class="fc" id="L137">    val state: String,</span>
+<span class="pc" id="L138">    val platform: String? = null,</span>
+<span class="fc" id="L139">    @SerialName(&quot;current_page&quot;)</span>
+<span class="pc" id="L140">    val currentPage: Int? = null,</span>
+<span class="fc" id="L141">    @SerialName(&quot;progress_percentage&quot;)</span>
+<span class="pc" id="L142">    val progressPercentage: Double? = null,</span>
+<span class="fc" id="L143">    @SerialName(&quot;archive_status&quot;)</span>
+<span class="pc" id="L144">    val archiveStatus: String? = null,</span>
+<span class="fc" id="L145">    @SerialName(&quot;archived_date&quot;)</span>
+<span class="pc" id="L146">    val archivedDate: String? = null,</span>
+<span class="fc" id="L147">    @SerialName(&quot;created_at&quot;)</span>
+<span class="nc" id="L148">    val createdAt: String,</span>
+<span class="fc" id="L149">    @SerialName(&quot;updated_at&quot;)</span>
+<span class="pc" id="L150">    val updatedAt: String? = null,</span>
+<span class="fc" id="L151">)</span>
+
+<span class="pc bnc" id="L153" title="All 82 branches missed.">@Serializable</span>
+<span class="pc" id="L154">data class BookCreateRequest(</span>
+<span class="fc" id="L155">    val title: String,</span>
+<span class="pc" id="L156">    val publisher: String? = null,</span>
+<span class="pc" id="L157">    val author: String? = null,</span>
+<span class="fc" id="L158">    @SerialName(&quot;cover_url&quot;)</span>
+<span class="nc" id="L159">    val coverUrl: String? = null,</span>
+<span class="pc" id="L160">    val isbn: String? = null,</span>
+<span class="pc" id="L161">    val description: String? = null,</span>
+<span class="pc" id="L162">    val rating: Double? = null,</span>
+<span class="fc" id="L163">    @SerialName(&quot;amazon_link&quot;)</span>
+<span class="nc" id="L164">    val amazonLink: String? = null,</span>
+<span class="pc" id="L165">    val pages: Int? = null,</span>
+<span class="fc" id="L166">    @SerialName(&quot;publish_year&quot;)</span>
+<span class="nc" id="L167">    val publishYear: Int? = null,</span>
+<span class="pc" id="L168">    val category: String? = null,</span>
+<span class="nc" id="L169">)</span>
+
+<span class="nc bnc" id="L171" title="All 130 branches missed.">@Serializable</span>
+<span class="nc" id="L172">data class BookUpdateRequest(</span>
+<span class="nc" id="L173">    val title: String? = null,</span>
+<span class="nc" id="L174">    val publisher: String? = null,</span>
+<span class="nc" id="L175">    val author: String? = null,</span>
+<span class="nc" id="L176">    @SerialName(&quot;cover_url&quot;)</span>
+<span class="nc" id="L177">    val coverUrl: String? = null,</span>
+<span class="nc" id="L178">    val isbn: String? = null,</span>
+<span class="nc" id="L179">    val description: String? = null,</span>
+<span class="nc" id="L180">    val rating: Double? = null,</span>
+<span class="nc" id="L181">    @SerialName(&quot;amazon_link&quot;)</span>
+<span class="nc" id="L182">    val amazonLink: String? = null,</span>
+<span class="nc" id="L183">    val pages: Int? = null,</span>
+<span class="nc" id="L184">    @SerialName(&quot;publish_year&quot;)</span>
+<span class="nc" id="L185">    val publishYear: Int? = null,</span>
+<span class="nc" id="L186">    val category: String? = null,</span>
+<span class="nc" id="L187">    val platform: String? = null,</span>
+<span class="nc" id="L188">    @SerialName(&quot;current_page&quot;)</span>
+<span class="nc" id="L189">    val currentPage: Int? = null,</span>
+<span class="nc" id="L190">    @SerialName(&quot;progress_percentage&quot;)</span>
+<span class="nc" id="L191">    val progressPercentage: Double? = null,</span>
+<span class="nc" id="L192">    @SerialName(&quot;archive_status&quot;)</span>
+<span class="nc" id="L193">    val archiveStatus: String? = null,</span>
+<span class="nc" id="L194">    @SerialName(&quot;archived_date&quot;)</span>
+<span class="nc" id="L195">    val archivedDate: String? = null,</span>
+<span class="nc" id="L196">)</span>
+
+<span class="pc bnc" id="L198" title="All 18 branches missed.">@Serializable</span>
+<span class="pc" id="L199">data class BookStartReadingRequest(</span>
+<span class="fc" id="L200">    val platform: String,</span>
+<span class="fc" id="L201">    @SerialName(&quot;current_page&quot;)</span>
+<span class="nc" id="L202">    val currentPage: Int? = null,</span>
+<span class="fc" id="L203">    @SerialName(&quot;progress_percentage&quot;)</span>
+<span class="nc" id="L204">    val progressPercentage: Double? = null,</span>
+<span class="nc" id="L205">)</span>
+
+<span class="nc bnc" id="L207" title="All 10 branches missed.">@Serializable</span>
+<span class="nc" id="L208">data class BookArchiveRequest(</span>
+<span class="nc" id="L209">    val status: String,</span>
+<span class="nc" id="L210">    @SerialName(&quot;archived_date&quot;)</span>
+<span class="nc" id="L211">    val archivedDate: String? = null,</span>
+<span class="nc" id="L212">)</span>
+
+<span class="nc bnc" id="L214" title="All 26 branches missed.">@Serializable</span>
+<span class="nc" id="L215">data class BookNoteDto(</span>
+<span class="nc" id="L216">    val id: Long,</span>
+<span class="nc" id="L217">    @SerialName(&quot;book_id&quot;)</span>
+<span class="nc" id="L218">    val bookId: Long,</span>
+<span class="nc" id="L219">    val content: String,</span>
+<span class="nc" id="L220">    val page: Int? = null,</span>
+<span class="nc" id="L221">    @SerialName(&quot;progress_percentage&quot;)</span>
+<span class="nc" id="L222">    val progressPercentage: Double? = null,</span>
+<span class="nc" id="L223">    @SerialName(&quot;created_at&quot;)</span>
+<span class="nc" id="L224">    val createdAt: String,</span>
+<span class="nc" id="L225">    @SerialName(&quot;updated_at&quot;)</span>
+<span class="nc" id="L226">    val updatedAt: String? = null,</span>
+<span class="nc" id="L227">)</span>
+
+<span class="nc bnc" id="L229" title="All 18 branches missed.">@Serializable</span>
+<span class="nc" id="L230">data class BookNoteCreateRequest(</span>
+<span class="nc" id="L231">    val content: String,</span>
+<span class="nc" id="L232">    val page: Int? = null,</span>
+<span class="nc" id="L233">    @SerialName(&quot;progress_percentage&quot;)</span>
+<span class="nc" id="L234">    val progressPercentage: Double? = null,</span>
+<span class="nc" id="L235">)</span>
+
+<span class="nc bnc" id="L237" title="All 26 branches missed.">@Serializable</span>
+<span class="nc" id="L238">data class BookNoteUpdateRequest(</span>
+<span class="nc" id="L239">    val content: String? = null,</span>
+<span class="nc" id="L240">    val page: Int? = null,</span>
+<span class="nc" id="L241">    @SerialName(&quot;progress_percentage&quot;)</span>
+<span class="nc" id="L242">    val progressPercentage: Double? = null,</span>
+<span class="nc" id="L243">)</span>
+
+<span class="pc" id="L245">enum class BookState(val wireValue: String, val label: String) {</span>
+<span class="fc" id="L246">    Wish(&quot;wish&quot;, &quot;Wishlist&quot;),</span>
+<span class="fc" id="L247">    Reading(&quot;reading&quot;, &quot;Reading&quot;),</span>
+<span class="fc" id="L248">    Archived(&quot;archived&quot;, &quot;Archived&quot;),</span>
+}
+
+<span class="nc" id="L251">enum class ArchiveStatus(val wireValue: String, val label: String) {</span>
+<span class="nc" id="L252">    Done(&quot;done&quot;, &quot;Done&quot;),</span>
+<span class="nc" id="L253">    Abandon(&quot;abandon&quot;, &quot;Abandoned&quot;),</span>
+}
+
+<span class="fc" id="L256">data class Book(</span>
+<span class="pc" id="L257">    val id: Long,</span>
+<span class="fc" id="L258">    val title: String,</span>
+<span class="pc" id="L259">    val publisher: String?,</span>
+<span class="pc" id="L260">    val author: String?,</span>
+<span class="pc" id="L261">    val coverUrl: String?,</span>
+<span class="pc" id="L262">    val isbn: String?,</span>
+<span class="pc" id="L263">    val description: String?,</span>
+<span class="pc" id="L264">    val rating: Double?,</span>
+<span class="pc" id="L265">    val amazonLink: String?,</span>
+<span class="pc" id="L266">    val pages: Int?,</span>
+<span class="pc" id="L267">    val publishYear: Int?,</span>
+<span class="fc" id="L268">    val state: BookState,</span>
+<span class="pc" id="L269">    val platform: String?,</span>
+<span class="pc" id="L270">    val currentPage: Int?,</span>
+<span class="pc" id="L271">    val progressPercentage: Double?,</span>
+<span class="pc" id="L272">    val archiveStatus: ArchiveStatus?,</span>
+<span class="pc" id="L273">    val archivedDate: String?,</span>
+<span class="pc" id="L274">    val category: String? = null,</span>
+<span class="fc" id="L275">)</span>
+
+<span class="nc" id="L277">data class BookNote(</span>
+<span class="nc" id="L278">    val id: Long,</span>
+<span class="nc" id="L279">    val bookId: Long,</span>
+<span class="nc" id="L280">    val content: String,</span>
+<span class="nc" id="L281">    val page: Int?,</span>
+<span class="nc" id="L282">    val progressPercentage: Double?,</span>
+)
+
+<span class="fc" id="L285">data class BookDraft(</span>
+<span class="fc" id="L286">    val title: String,</span>
+<span class="fc" id="L287">    val publisher: String? = null,</span>
+<span class="fc" id="L288">    val author: String? = null,</span>
+<span class="fc" id="L289">    val coverUrl: String? = null,</span>
+<span class="fc" id="L290">    val isbn: String? = null,</span>
+<span class="fc" id="L291">    val description: String? = null,</span>
+<span class="fc" id="L292">    val rating: Double? = null,</span>
+<span class="fc" id="L293">    val amazonLink: String? = null,</span>
+<span class="fc" id="L294">    val pages: Int? = null,</span>
+<span class="fc" id="L295">    val publishYear: Int? = null,</span>
+<span class="fc" id="L296">    val category: String? = null,</span>
+<span class="fc" id="L297">)</span>
+
+<span class="fc" id="L299">fun BookDto.toDomain(): Book = Book(</span>
+<span class="fc" id="L300">    id = id,</span>
+<span class="fc" id="L301">    title = title,</span>
+<span class="fc" id="L302">    publisher = publisher,</span>
+<span class="fc" id="L303">    author = author,</span>
+<span class="fc" id="L304">    coverUrl = coverUrl,</span>
+<span class="fc" id="L305">    isbn = isbn,</span>
+<span class="fc" id="L306">    description = description,</span>
+<span class="fc" id="L307">    rating = rating,</span>
+<span class="fc" id="L308">    amazonLink = amazonLink,</span>
+<span class="fc" id="L309">    pages = pages,</span>
+<span class="fc" id="L310">    publishYear = publishYear,</span>
+<span class="fc" id="L311">    state = when (state) {</span>
+<span class="pc bpc" id="L312" title="1 of 2 branches missed.">        &quot;wish&quot; -&gt; BookState.Wish</span>
+<span class="pc bpc" id="L313" title="1 of 2 branches missed.">        &quot;archived&quot; -&gt; BookState.Archived</span>
+<span class="fc" id="L314">        else -&gt; BookState.Reading</span>
+    },
+<span class="fc" id="L316">    platform = platform,</span>
+<span class="fc" id="L317">    currentPage = currentPage,</span>
+<span class="fc" id="L318">    progressPercentage = progressPercentage,</span>
+<span class="fc" id="L319">    archiveStatus = when (archiveStatus) {</span>
+<span class="pc bpc" id="L320" title="1 of 2 branches missed.">        &quot;abandon&quot; -&gt; ArchiveStatus.Abandon</span>
+<span class="pc bpc" id="L321" title="1 of 2 branches missed.">        &quot;done&quot; -&gt; ArchiveStatus.Done</span>
+<span class="fc" id="L322">        else -&gt; null</span>
+    },
+<span class="fc" id="L324">    archivedDate = archivedDate,</span>
+<span class="fc" id="L325">    category = category,</span>
+<span class="fc" id="L326">)</span>
+
+<span class="nc" id="L328">fun BookNoteDto.toDomain(): BookNote = BookNote(</span>
+<span class="nc" id="L329">    id = id,</span>
+<span class="nc" id="L330">    bookId = bookId,</span>
+<span class="nc" id="L331">    content = content,</span>
+<span class="nc" id="L332">    page = page,</span>
+<span class="nc" id="L333">    progressPercentage = progressPercentage,</span>
+<span class="nc" id="L334">)</span>
+
+<span class="fc" id="L336">fun BookDraft.toCreateRequest(): BookCreateRequest = BookCreateRequest(</span>
+<span class="fc" id="L337">    title = title,</span>
+<span class="fc" id="L338">    publisher = publisher,</span>
+<span class="fc" id="L339">    author = author,</span>
+<span class="fc" id="L340">    coverUrl = coverUrl,</span>
+<span class="fc" id="L341">    isbn = isbn,</span>
+<span class="fc" id="L342">    description = description,</span>
+<span class="fc" id="L343">    rating = rating,</span>
+<span class="fc" id="L344">    amazonLink = amazonLink,</span>
+<span class="fc" id="L345">    pages = pages,</span>
+<span class="fc" id="L346">    publishYear = publishYear,</span>
+<span class="fc" id="L347">    category = category,</span>
+<span class="fc" id="L348">)</span>
+
+<span class="fc" id="L350">fun BookSearchResultDto.toDraft(): BookDraft = BookDraft(</span>
+<span class="fc" id="L351">    title = title,</span>
+<span class="fc" id="L352">    publisher = publisher,</span>
+<span class="fc" id="L353">    author = author,</span>
+<span class="fc" id="L354">    coverUrl = coverUrl,</span>
+<span class="fc" id="L355">    isbn = isbn,</span>
+<span class="fc" id="L356">    description = description,</span>
+<span class="fc" id="L357">    rating = rating,</span>
+<span class="fc" id="L358">    amazonLink = amazonLink,</span>
+<span class="fc" id="L359">    pages = pages,</span>
+<span class="fc" id="L360">    publishYear = publishYear,</span>
+<span class="fc" id="L361">)</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

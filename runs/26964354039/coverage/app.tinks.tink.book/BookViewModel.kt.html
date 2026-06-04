@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookViewModel.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.book</a> &gt; <span class="el_source">BookViewModel.kt</span></div><h1>BookViewModel.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.book
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.ui.components.AppSnackbarBus
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import javax.inject.Inject
+
+sealed interface BooksScreenState {
+    data object Home : BooksScreenState
+<span class="fc" id="L20">    data class List(val state: BookState) : BooksScreenState</span>
+    data object Search : BooksScreenState
+<span class="pc" id="L22">    data class Detail(val bookId: Long) : BooksScreenState</span>
+<span class="nc" id="L23">    data class Notes(val bookId: Long) : BooksScreenState</span>
+}
+
+sealed interface BookEvent {
+<span class="fc" id="L27">    data class OpenList(val state: BookState) : BookEvent</span>
+    data object OpenHome : BookEvent
+    data object OpenSearch : BookEvent
+<span class="fc" id="L30">    data class OpenDetail(val bookId: Long) : BookEvent</span>
+<span class="nc" id="L31">    data class OpenNotes(val bookId: Long) : BookEvent</span>
+    data object NavigateBack : BookEvent
+    data object Refresh : BookEvent
+<span class="nc" id="L34">    data class SearchKeywordChanged(val keyword: String) : BookEvent</span>
+    data object SubmitSearch : BookEvent
+<span class="nc" id="L36">    data class AddDraftToWishlist(val draft: BookDraft) : BookEvent</span>
+<span class="nc" id="L37">    data class AddDraftToReading(val draft: BookDraft) : BookEvent</span>
+<span class="nc" id="L38">    data class MoveToReading(val book: Book) : BookEvent</span>
+<span class="fc" id="L39">    data class SelectCategory(val category: String?) : BookEvent</span>
+<span class="nc" id="L40">    data class Archive(val bookId: Long, val status: ArchiveStatus = ArchiveStatus.Done) : BookEvent</span>
+<span class="nc" id="L41">    data class DeleteBook(val bookId: Long) : BookEvent</span>
+<span class="nc" id="L42">    data class SaveBook(</span>
+<span class="nc" id="L43">        val bookId: Long,</span>
+<span class="nc" id="L44">        val title: String,</span>
+<span class="nc" id="L45">        val platform: String?,</span>
+<span class="nc" id="L46">        val category: String?,</span>
+<span class="nc" id="L47">        val currentPage: Int?,</span>
+<span class="nc" id="L48">        val progressPercentage: Double?,</span>
+    ) : BookEvent
+<span class="nc" id="L50">    data class SaveNote(</span>
+<span class="nc" id="L51">        val noteId: Long?,</span>
+<span class="nc" id="L52">        val content: String,</span>
+<span class="nc" id="L53">        val page: Int?,</span>
+<span class="nc" id="L54">        val progressPercentage: Double?,</span>
+    ) : BookEvent
+<span class="nc" id="L56">    data class DeleteNote(val noteId: Long) : BookEvent</span>
+}
+
+<span class="fc" id="L59">data class BookUiState(</span>
+<span class="pc" id="L60">    val isLoading: Boolean = false,</span>
+<span class="fc" id="L61">    val screen: BooksScreenState = BooksScreenState.Home,</span>
+<span class="fc" id="L62">    val readingBooks: List&lt;Book&gt; = emptyList(),</span>
+<span class="fc" id="L63">    val wishlistBooks: List&lt;Book&gt; = emptyList(),</span>
+<span class="fc" id="L64">    val archivedBooks: List&lt;Book&gt; = emptyList(),</span>
+<span class="pc" id="L65">    val selectedBook: Book? = null,</span>
+<span class="pc" id="L66">    val notes: List&lt;BookNote&gt; = emptyList(),</span>
+<span class="pc" id="L67">    val searchKeyword: String = &quot;&quot;,</span>
+<span class="pc" id="L68">    val searchResults: List&lt;BookDraft&gt; = emptyList(),</span>
+<span class="pc" id="L69">    val categories: List&lt;String&gt; = emptyList(),</span>
+<span class="fc" id="L70">    val selectedCategory: String? = null,</span>
+<span class="fc" id="L71">    val navigationStack: List&lt;BooksScreenState&gt; = listOf(BooksScreenState.Home),</span>
+<span class="fc" id="L72">)</span>
+
+<span class="fc" id="L74">@HiltViewModel</span>
+<span class="fc" id="L75">class BookViewModel @Inject constructor(</span>
+<span class="fc" id="L76">    private val repository: BookRepository,</span>
+) : ViewModel() {
+<span class="fc" id="L78">    private val _state = MutableStateFlow(BookUiState())</span>
+<span class="fc" id="L79">    val uiState = _state.map { it }</span>
+<span class="fc" id="L80">        .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value)</span>
+
+    private var searchJob: Job? = null
+    private var mutationJob: Job? = null
+
+<span class="fc" id="L85">    init {</span>
+<span class="fc" id="L86">        loadCategories()</span>
+<span class="fc" id="L87">        refreshAll()</span>
+<span class="fc" id="L88">    }</span>
+
+    fun onEvent(event: BookEvent) {
+<span class="fc" id="L91">        when (event) {</span>
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">            BookEvent.OpenHome -&gt; {</span>
+<span class="nc" id="L93">                _state.update {</span>
+<span class="nc" id="L94">                    it.copy(</span>
+<span class="nc" id="L95">                        screen = BooksScreenState.Home,</span>
+<span class="nc" id="L96">                        navigationStack = listOf(BooksScreenState.Home),</span>
+<span class="nc" id="L97">                        selectedCategory = null,</span>
+<span class="nc" id="L98">                    )</span>
+                }
+<span class="nc" id="L100">                refreshAll()</span>
+            }
+<span class="fc bfc" id="L102" title="All 2 branches covered.">            is BookEvent.OpenList -&gt; {</span>
+<span class="fc" id="L103">                _state.update { it.copy(selectedCategory = null) }</span>
+<span class="fc" id="L104">                navigateTo(BooksScreenState.List(event.state))</span>
+<span class="fc" id="L105">                loadList(event.state, null)</span>
+            }
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">            BookEvent.OpenSearch -&gt; navigateTo(BooksScreenState.Search)</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">            is BookEvent.OpenDetail -&gt; {</span>
+<span class="fc" id="L109">                navigateTo(BooksScreenState.Detail(event.bookId))</span>
+<span class="fc" id="L110">                openDetail(event.bookId)</span>
+            }
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">            is BookEvent.OpenNotes -&gt; {</span>
+<span class="nc" id="L113">                navigateTo(BooksScreenState.Notes(event.bookId))</span>
+<span class="nc" id="L114">                openNotes(event.bookId)</span>
+            }
+<span class="fc bfc" id="L116" title="All 2 branches covered.">            BookEvent.NavigateBack -&gt; {</span>
+<span class="fc" id="L117">                navigateBack()</span>
+<span class="fc" id="L118">                refreshCurrent()</span>
+            }
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">            BookEvent.Refresh -&gt; refreshCurrent()</span>
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">            is BookEvent.SearchKeywordChanged -&gt; _state.update { it.copy(searchKeyword = event.keyword) }</span>
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">            BookEvent.SubmitSearch -&gt; search()</span>
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">            is BookEvent.AddDraftToWishlist -&gt; addDraftToWishlist(event.draft)</span>
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">            is BookEvent.AddDraftToReading -&gt; addDraftToReading(event.draft)</span>
+<span class="pc bpc" id="L125" title="1 of 2 branches missed.">            is BookEvent.MoveToReading -&gt; moveToReading(event.book)</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">            is BookEvent.SelectCategory -&gt; selectCategory(event.category)</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">            is BookEvent.Archive -&gt; archive(event.bookId, event.status)</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">            is BookEvent.DeleteBook -&gt; deleteBook(event.bookId)</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">            is BookEvent.SaveBook -&gt; saveBook(event)</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">            is BookEvent.SaveNote -&gt; saveNote(event)</span>
+<span class="nc" id="L131">            is BookEvent.DeleteNote -&gt; deleteNote(event.noteId)</span>
+        }
+<span class="fc" id="L133">    }</span>
+
+    private fun refreshCurrent() {
+<span class="fc" id="L136">        when (val screen = _state.value.screen) {</span>
+<span class="fc bfc" id="L137" title="All 2 branches covered.">            BooksScreenState.Home -&gt; refreshAll()</span>
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">            is BooksScreenState.List -&gt; loadList(screen.state, _state.value.selectedCategory)</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">            BooksScreenState.Search -&gt; search()</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">            is BooksScreenState.Detail -&gt; openDetail(screen.bookId)</span>
+<span class="nc" id="L141">            is BooksScreenState.Notes -&gt; openNotes(screen.bookId)</span>
+        }
+<span class="fc" id="L143">    }</span>
+
+    private fun refreshAll() {
+<span class="fc" id="L146">        loadList(BookState.Reading, selectedCategoryFor(BookState.Reading))</span>
+<span class="fc" id="L147">        loadList(BookState.Wish, selectedCategoryFor(BookState.Wish))</span>
+<span class="fc" id="L148">        loadList(BookState.Archived, selectedCategoryFor(BookState.Archived))</span>
+<span class="fc" id="L149">    }</span>
+
+    private fun selectedCategoryFor(state: BookState): String? {
+<span class="pc bpc" id="L152" title="2 of 4 branches missed.">        val visibleList = _state.value.screen as? BooksScreenState.List ?: return null</span>
+<span class="nc bnc" id="L153" title="All 4 branches missed.">        return _state.value.selectedCategory.takeIf { visibleList.state == state }</span>
+    }
+
+<span class="nc" id="L156">    private fun loadList(state: BookState, category: String? = null) {</span>
+<span class="fc" id="L157">        repository.getBooks(state, category)</span>
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="fc" id="L159">                when (result) {</span>
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">                    ApiResult.Loading -&gt; _state.update { it.copy(isLoading = true) }</span>
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">                    is ApiResult.Success -&gt; _state.update {</span>
+<span class="fc bfc" id="L162" title="All 3 branches covered.">                        when (state) {</span>
+<span class="fc" id="L163">                            BookState.Reading -&gt; it.copy(readingBooks = result.data, isLoading = false)</span>
+<span class="fc" id="L164">                            BookState.Wish -&gt; it.copy(wishlistBooks = result.data, isLoading = false)</span>
+<span class="fc" id="L165">                            BookState.Archived -&gt; it.copy(archivedBooks = result.data, isLoading = false)</span>
+<span class="fc" id="L166">                        }</span>
+                    }
+<span class="nc" id="L168">                    is ApiResult.Error -&gt; failLoading { loadList(state, category) }</span>
+                }
+<span class="fc" id="L170">            }</span>
+<span class="fc" id="L171">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L172">    }</span>
+
+    private fun loadCategories() {
+<span class="fc" id="L175">        repository.getCategories()</span>
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="fc" id="L177">                when (result) {</span>
+<span class="pc bpc" id="L178" title="1 of 2 branches missed.">                    ApiResult.Loading -&gt; Unit</span>
+<span class="pc bpc" id="L179" title="1 of 2 branches missed.">                    is ApiResult.Success -&gt; _state.update { it.copy(categories = result.data) }</span>
+<span class="nc" id="L180">                    is ApiResult.Error -&gt; failLoading(::loadCategories)</span>
+                }
+<span class="fc" id="L182">            }</span>
+<span class="fc" id="L183">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L184">    }</span>
+
+    private fun selectCategory(category: String?) {
+<span class="fc" id="L187">        _state.update { it.copy(selectedCategory = category) }</span>
+<span class="pc bpc" id="L188" title="3 of 6 branches missed.">        val state = (_state.value.screen as? BooksScreenState.List)?.state ?: return</span>
+<span class="fc" id="L189">        loadList(state, category)</span>
+<span class="fc" id="L190">    }</span>
+
+    private fun openDetail(bookId: Long) {
+<span class="fc" id="L193">        repository.getBook(bookId)</span>
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="fc" id="L195">                when (result) {</span>
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">                    ApiResult.Loading -&gt; _state.update {</span>
+<span class="nc" id="L197">                        it.copy(isLoading = true, screen = BooksScreenState.Detail(bookId))</span>
+                    }
+<span class="pc bpc" id="L199" title="1 of 2 branches missed.">                    is ApiResult.Success -&gt; _state.update {</span>
+<span class="fc" id="L200">                        it.copy(</span>
+<span class="fc" id="L201">                            selectedBook = result.data,</span>
+<span class="fc" id="L202">                            screen = BooksScreenState.Detail(bookId),</span>
+<span class="fc" id="L203">                            isLoading = false,</span>
+<span class="fc" id="L204">                        )</span>
+                    }
+<span class="nc" id="L206">                    is ApiResult.Error -&gt; failLoading { openDetail(bookId) }</span>
+                }
+<span class="fc" id="L208">            }</span>
+<span class="fc" id="L209">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L210">    }</span>
+
+    private fun openNotes(bookId: Long) {
+<span class="nc" id="L213">        repository.getNotes(bookId)</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="nc" id="L215">                when (result) {</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">                    ApiResult.Loading -&gt; _state.update {</span>
+<span class="nc" id="L217">                        it.copy(isLoading = true, screen = BooksScreenState.Notes(bookId))</span>
+                    }
+<span class="nc bnc" id="L219" title="All 2 branches missed.">                    is ApiResult.Success -&gt; _state.update {</span>
+<span class="nc" id="L220">                        it.copy(notes = result.data, screen = BooksScreenState.Notes(bookId), isLoading = false)</span>
+                    }
+<span class="nc" id="L222">                    is ApiResult.Error -&gt; failLoading { openNotes(bookId) }</span>
+                }
+<span class="nc" id="L224">            }</span>
+<span class="nc" id="L225">            .launchIn(viewModelScope)</span>
+<span class="nc" id="L226">    }</span>
+
+    private fun search() {
+<span class="nc" id="L229">        val keyword = _state.value.searchKeyword.trim()</span>
+<span class="nc bnc" id="L230" title="All 4 branches missed.">        if (keyword.isEmpty()) return</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">        searchJob?.cancel()</span>
+<span class="nc" id="L232">        searchJob = repository.searchBooks(keyword)</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="nc" id="L234">                when (result) {</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">                    ApiResult.Loading -&gt; _state.update { it.copy(isLoading = true, searchResults = emptyList()) }</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">                    is ApiResult.Success -&gt; _state.update {</span>
+<span class="nc" id="L237">                        it.copy(searchResults = result.data, isLoading = false)</span>
+                    }
+<span class="nc" id="L239">                    is ApiResult.Error -&gt; failLoading(::search)</span>
+                }
+<span class="nc" id="L241">            }</span>
+<span class="nc" id="L242">            .launchIn(viewModelScope)</span>
+<span class="nc" id="L243">    }</span>
+
+    private fun addDraftToWishlist(draft: BookDraft) {
+<span class="nc" id="L246">        mutate({ repository.addToWishlist(draft) }) { refreshAll() }</span>
+<span class="nc" id="L247">    }</span>
+
+    private fun addDraftToReading(draft: BookDraft) {
+<span class="nc" id="L250">        mutate({ repository.addToReading(draft) }) { refreshAll() }</span>
+<span class="nc" id="L251">    }</span>
+
+    private fun moveToReading(book: Book) {
+<span class="nc" id="L254">        mutate({</span>
+<span class="nc" id="L255">            repository.moveToReading(</span>
+<span class="nc" id="L256">                bookId = book.id,</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">                platform = book.platform ?: &quot;General&quot;,</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">                currentPage = book.currentPage ?: 0,</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">                progressPercentage = book.progressPercentage ?: 0.0,</span>
+<span class="nc" id="L260">            )</span>
+        }) {
+<span class="nc" id="L262">            refreshAll()</span>
+<span class="nc" id="L263">        }</span>
+<span class="nc" id="L264">    }</span>
+
+    private fun archive(bookId: Long, status: ArchiveStatus) {
+<span class="nc" id="L267">        mutate({ repository.archiveBook(bookId, status) }) {</span>
+<span class="nc" id="L268">            refreshAll()</span>
+<span class="nc" id="L269">            _state.update {</span>
+<span class="nc" id="L270">                it.copy(</span>
+<span class="nc" id="L271">                    screen = BooksScreenState.Home,</span>
+<span class="nc" id="L272">                    navigationStack = listOf(BooksScreenState.Home),</span>
+<span class="nc" id="L273">                )</span>
+            }
+<span class="nc" id="L275">        }</span>
+<span class="nc" id="L276">    }</span>
+
+    private fun deleteBook(bookId: Long) {
+<span class="nc bnc" id="L279" title="All 2 branches missed.">        mutationJob?.cancel()</span>
+<span class="nc" id="L280">        mutationJob = repository.deleteBook(bookId)</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="nc" id="L282">                when (result) {</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">                    ApiResult.Loading -&gt; _state.update { it.copy(isLoading = true) }</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">                    is ApiResult.Success -&gt; {</span>
+<span class="nc" id="L285">                        _state.update {</span>
+<span class="nc" id="L286">                            it.copy(</span>
+<span class="nc" id="L287">                                isLoading = false,</span>
+<span class="nc" id="L288">                                screen = BooksScreenState.Home,</span>
+<span class="nc" id="L289">                                navigationStack = listOf(BooksScreenState.Home),</span>
+<span class="nc" id="L290">                            )</span>
+                        }
+<span class="nc" id="L292">                        refreshAll()</span>
+                    }
+<span class="nc" id="L294">                    is ApiResult.Error -&gt; failLoading { deleteBook(bookId) }</span>
+                }
+<span class="nc" id="L296">            }</span>
+<span class="nc" id="L297">            .launchIn(viewModelScope)</span>
+<span class="nc" id="L298">    }</span>
+
+    private fun saveBook(event: BookEvent.SaveBook) {
+<span class="nc" id="L301">        mutate({</span>
+<span class="nc" id="L302">            repository.updateBook(</span>
+<span class="nc" id="L303">                event.bookId,</span>
+<span class="nc" id="L304">                BookUpdateRequest(</span>
+<span class="nc" id="L305">                    title = event.title,</span>
+<span class="nc" id="L306">                    platform = event.platform,</span>
+<span class="nc" id="L307">                    category = event.category,</span>
+<span class="nc" id="L308">                    currentPage = event.currentPage,</span>
+<span class="nc" id="L309">                    progressPercentage = event.progressPercentage,</span>
+                )
+<span class="nc" id="L311">            )</span>
+        }) {
+<span class="nc" id="L313">            openDetail(event.bookId)</span>
+<span class="nc" id="L314">            loadCategories()</span>
+<span class="nc" id="L315">            refreshAll()</span>
+<span class="nc" id="L316">        }</span>
+<span class="nc" id="L317">    }</span>
+
+    private fun saveNote(event: BookEvent.SaveNote) {
+<span class="nc bnc" id="L320" title="All 4 branches missed.">        val bookId = (_state.value.screen as? BooksScreenState.Notes)?.bookId</span>
+<span class="nc bnc" id="L321" title="All 2 branches missed.">            ?: _state.value.selectedBook?.id</span>
+<span class="nc" id="L322">            ?: return</span>
+<span class="nc" id="L323">        mutate({</span>
+<span class="nc" id="L324">            repository.saveNote(</span>
+<span class="nc" id="L325">                bookId = bookId,</span>
+<span class="nc" id="L326">                noteId = event.noteId,</span>
+<span class="nc" id="L327">                content = event.content,</span>
+<span class="nc" id="L328">                page = event.page,</span>
+<span class="nc" id="L329">                progressPercentage = event.progressPercentage,</span>
+<span class="nc" id="L330">            )</span>
+        }) {
+<span class="nc" id="L332">            openNotes(bookId)</span>
+<span class="nc bnc" id="L333" title="All 4 branches missed.">            if (event.page != null || event.progressPercentage != null) {</span>
+<span class="nc" id="L334">                repository.updateBook(</span>
+<span class="nc" id="L335">                    bookId,</span>
+<span class="nc" id="L336">                    BookUpdateRequest(</span>
+<span class="nc" id="L337">                        currentPage = event.page,</span>
+<span class="nc" id="L338">                        progressPercentage = event.progressPercentage,</span>
+                    )
+<span class="nc" id="L340">                ).launchIn(viewModelScope)</span>
+            }
+<span class="nc" id="L342">        }</span>
+<span class="nc" id="L343">    }</span>
+
+    private fun deleteNote(noteId: Long) {
+<span class="nc bnc" id="L346" title="All 4 branches missed.">        val bookId = (_state.value.screen as? BooksScreenState.Notes)?.bookId ?: return</span>
+<span class="nc bnc" id="L347" title="All 2 branches missed.">        mutationJob?.cancel()</span>
+<span class="nc" id="L348">        mutationJob = repository.deleteNote(bookId, noteId)</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="nc" id="L350">                when (result) {</span>
+<span class="nc bnc" id="L351" title="All 2 branches missed.">                    ApiResult.Loading -&gt; _state.update { it.copy(isLoading = true) }</span>
+<span class="nc bnc" id="L352" title="All 2 branches missed.">                    is ApiResult.Success -&gt; openNotes(bookId)</span>
+<span class="nc" id="L353">                    is ApiResult.Error -&gt; failLoading { deleteNote(noteId) }</span>
+                }
+<span class="nc" id="L355">            }</span>
+<span class="nc" id="L356">            .launchIn(viewModelScope)</span>
+<span class="nc" id="L357">    }</span>
+
+    private fun &lt;T&gt; mutate(
+        call: () -&gt; kotlinx.coroutines.flow.Flow&lt;ApiResult&lt;T&gt;&gt;,
+        onSuccess: () -&gt; Unit,
+    ) {
+<span class="nc bnc" id="L363" title="All 2 branches missed.">        mutationJob?.cancel()</span>
+<span class="nc" id="L364">        mutationJob = call()</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="nc" id="L366">                when (result) {</span>
+<span class="nc bnc" id="L367" title="All 2 branches missed.">                    ApiResult.Loading -&gt; _state.update { it.copy(isLoading = true) }</span>
+<span class="nc bnc" id="L368" title="All 2 branches missed.">                    is ApiResult.Success -&gt; {</span>
+<span class="nc" id="L369">                        _state.update { it.copy(isLoading = false) }</span>
+<span class="nc" id="L370">                        onSuccess()</span>
+                    }
+<span class="nc" id="L372">                    is ApiResult.Error -&gt; failLoading { mutate(call, onSuccess) }</span>
+                }
+<span class="nc" id="L374">            }</span>
+<span class="nc" id="L375">            .launchIn(viewModelScope)</span>
+<span class="nc" id="L376">    }</span>
+
+    private fun failLoading(onRetry: () -&gt; Unit) {
+<span class="nc" id="L379">        _state.update { it.copy(isLoading = false) }</span>
+<span class="nc" id="L380">        AppSnackbarBus.showApiFailure(onRetry = onRetry)</span>
+<span class="nc" id="L381">    }</span>
+
+    private fun navigateTo(screen: BooksScreenState) {
+<span class="fc" id="L384">        _state.update {</span>
+<span class="fc" id="L385">            it.copy(</span>
+<span class="fc" id="L386">                screen = screen,</span>
+<span class="fc" id="L387">                navigationStack = it.navigationStack + screen,</span>
+<span class="fc" id="L388">            )</span>
+        }
+<span class="fc" id="L390">    }</span>
+
+    private fun navigateBack() {
+<span class="fc" id="L393">        _state.update {</span>
+<span class="pc bpc" id="L394" title="1 of 2 branches missed.">            val stack = it.navigationStack.dropLast(1).ifEmpty { listOf(BooksScreenState.Home) }</span>
+<span class="fc" id="L395">            it.copy(screen = stack.last(), navigationStack = stack)</span>
+        }
+<span class="fc" id="L397">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

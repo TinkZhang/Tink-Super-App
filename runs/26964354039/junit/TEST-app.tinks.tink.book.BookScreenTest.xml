@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.book.BookScreenTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-04T16:15:54.743Z" hostname="runnervm3jyl0" time="7.745">
+  <properties/>
+  <testcase name="secondaryShelf_displaysBackArrowAndRequestsNavigationBack" classname="app.tinks.tink.book.BookScreenTest" time="6.992"/>
+  <testcase name="home_opensReadingShelfFromIconSummary" classname="app.tinks.tink.book.BookScreenTest" time="0.601"/>
+  <testcase name="shelf_categoryChipRequestsFiltering" classname="app.tinks.tink.book.BookScreenTest" time="0.152"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

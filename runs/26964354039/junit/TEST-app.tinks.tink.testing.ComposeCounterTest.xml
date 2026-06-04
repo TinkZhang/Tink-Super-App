@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.testing.ComposeCounterTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-06-04T16:16:05.269Z" hostname="runnervm3jyl0" time="0.131">
+  <properties/>
+  <testcase name="counter_updatesText_afterClick" classname="app.tinks.tink.testing.ComposeCounterTest" time="0.131"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

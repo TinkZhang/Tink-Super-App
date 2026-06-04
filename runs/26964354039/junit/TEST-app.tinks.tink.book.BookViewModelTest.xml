@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.book.BookViewModelTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-04T16:16:02.493Z" hostname="runnervm3jyl0" time="0.056">
+  <properties/>
+  <testcase name="init_loadsThreeShelves" classname="app.tinks.tink.book.BookViewModelTest" time="0.032"/>
+  <testcase name="listAndDetailNavigation_canReturnToPreviousScreens" classname="app.tinks.tink.book.BookViewModelTest" time="0.012"/>
+  <testcase name="selectingCategory_filtersTheOpenShelf" classname="app.tinks.tink.book.BookViewModelTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

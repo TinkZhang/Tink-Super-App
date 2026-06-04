@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AddTimeEntryTileService.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.time</a> &gt; <span class="el_source">AddTimeEntryTileService.kt</span></div><h1>AddTimeEntryTileService.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.time
+
+import android.app.PendingIntent
+import android.content.Intent
+import android.service.quicksettings.Tile
+import android.service.quicksettings.TileService
+import app.tinks.tink.MainActivity
+import app.tinks.tink.R
+
+<span class="nc" id="L10">class AddTimeEntryTileService : TileService() {</span>
+    override fun onStartListening() {
+<span class="nc" id="L12">        super.onStartListening()</span>
+<span class="nc bnc" id="L13" title="All 2 branches missed.">        qsTile?.apply {</span>
+<span class="nc" id="L14">            state = Tile.STATE_ACTIVE</span>
+<span class="nc" id="L15">            label = getString(R.string.qs_tile_add_time_label)</span>
+<span class="nc" id="L16">            subtitle = getString(R.string.qs_tile_add_time_subtitle)</span>
+<span class="nc" id="L17">            contentDescription = getString(R.string.qs_tile_add_time_content_description)</span>
+<span class="nc" id="L18">            updateTile()</span>
+<span class="nc" id="L19">        }</span>
+<span class="nc" id="L20">    }</span>
+
+    override fun onClick() {
+<span class="nc" id="L23">        super.onClick()</span>
+<span class="nc" id="L24">        val intent = Intent(this, MainActivity::class.java).apply {</span>
+<span class="nc" id="L25">            action = MainActivity.ACTION_ADD_TIME_ENTRY_FROM_TILE</span>
+<span class="nc" id="L26">            flags = Intent.FLAG_ACTIVITY_NEW_TASK or</span>
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                Intent.FLAG_ACTIVITY_SINGLE_TOP
+<span class="nc" id="L29">        }</span>
+<span class="nc" id="L30">        val pendingIntent = PendingIntent.getActivity(</span>
+<span class="nc" id="L31">            this,</span>
+<span class="nc" id="L32">            REQUEST_CODE_ADD_TIME_ENTRY,</span>
+<span class="nc" id="L33">            intent,</span>
+<span class="nc" id="L34">            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,</span>
+        )
+<span class="nc" id="L36">        startActivityAndCollapse(pendingIntent)</span>
+<span class="nc" id="L37">    }</span>
+
+    private companion object {
+        private const val REQUEST_CODE_ADD_TIME_ENTRY = 2606
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
