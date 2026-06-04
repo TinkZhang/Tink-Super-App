@@ -28,12 +28,22 @@ import app.tinks.tink.book.BookScreen
 import app.tinks.tink.book.BookState
 import app.tinks.tink.book.BookUiState
 import app.tinks.tink.book.BooksScreenState
+import app.tinks.tink.lottery.LOTTERY_TYPE_DA_LE_TOU
+import app.tinks.tink.lottery.LotteryMatchSummary
+import app.tinks.tink.lottery.LotteryNumbers
+import app.tinks.tink.lottery.LotteryScreen
+import app.tinks.tink.lottery.LotteryStatsUiState
+import app.tinks.tink.lottery.LotteryTicket
+import app.tinks.tink.lottery.LotteryTicketStatus
+import app.tinks.tink.lottery.LotteryTicketUiState
+import app.tinks.tink.lottery.LotteryUiState
 import app.tinks.tink.weight.TrendChartCardUiState
 import app.tinks.tink.weight.WeightControlCardUiState
 import app.tinks.tink.weight.WeightScreen
 import app.tinks.tink.weight.WeightUiState
 import app.tinks.tink.weight.data.Weight
 import com.android.tools.screenshot.PreviewTest
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 
@@ -81,6 +91,31 @@ fun WeightOverviewScreenshotPreview() {
                     Weight(id = 1, weight = 142.0, createdTime = 1778745600000L),
                 ),
             ),
+        )
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 360, heightDp = 800)
+@Composable
+fun LotteryActiveTicketScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        LotteryScreen(
+            state = LotteryUiState(
+                isLoading = false,
+                activeTicket = lotteryTicketUiState(),
+                historyTickets = listOf(lotteryTicketUiState()),
+                stats = LotteryStatsUiState(
+                    totalTickets = 1,
+                    pendingTickets = 0,
+                    revealedTickets = 1,
+                    winningTickets = 1,
+                    bestPrizeTier = "一等奖",
+                    prizeDistribution = listOf("一等奖" to 1),
+                ),
+                draft = null,
+                luckyOutcome = null,
+            )
         )
     }
 }
@@ -301,3 +336,28 @@ private fun listCardSample(
     archivedDate = archivedDate,
     category = category,
 )
+
+private fun lotteryTicketUiState(): LotteryTicketUiState {
+    val ticket = LotteryTicket(
+        id = 1,
+        type = LOTTERY_TYPE_DA_LE_TOU,
+        issueId = "21126",
+        numbers = LotteryNumbers(listOf(1, 11, 12, 34, 35), listOf(9, 12)),
+        revealTime = Instant.parse("2021-11-03T12:30:00Z"),
+        capturedImageUri = null,
+        checked = true,
+        checkedAt = Instant.parse("2026-06-04T10:00:00Z"),
+        resultId = 2,
+        prizeTier = "一等奖",
+        frontMatchCount = 5,
+        backMatchCount = 2,
+        result = null,
+    )
+    return LotteryTicketUiState(
+        ticket = ticket,
+        status = LotteryTicketStatus.Revealed,
+        revealTimeText = "2021-11-03 12:30:00",
+        checkedTimeText = "2026-06-04 10:00:00",
+        matchSummary = LotteryMatchSummary(5, 2, "一等奖"),
+    )
+}

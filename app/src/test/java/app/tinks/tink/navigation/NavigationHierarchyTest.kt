@@ -17,6 +17,11 @@ class NavigationHierarchyTest {
     }
 
     @Test
+    fun topDestination_mapsLotteryHistoryStatsToLottery() {
+        assertEquals(ScreenLottery, ScreenLotteryHistoryStats.topDestination())
+    }
+
+    @Test
     fun topDestination_mapsStoryFlowToZi() {
         assertEquals(ScreenZi, ScreenStoryList.topDestination())
         assertEquals(ScreenZi, ScreenStoryDetail("story-id").topDestination())
