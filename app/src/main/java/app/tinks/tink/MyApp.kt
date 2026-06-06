@@ -57,6 +57,7 @@ import app.tinks.tink.navigation.ScreenLeeter
 import app.tinks.tink.navigation.ScreenLottery
 import app.tinks.tink.navigation.ScreenLotteryHistoryStats
 import app.tinks.tink.navigation.ScreenMerriam
+import app.tinks.tink.navigation.ScreenSalesforce
 import app.tinks.tink.navigation.ScreenSettings
 import app.tinks.tink.navigation.ScreenStoryDetail
 import app.tinks.tink.navigation.ScreenStoryList
@@ -66,6 +67,7 @@ import app.tinks.tink.navigation.ScreenWeightHistory
 import app.tinks.tink.navigation.ScreenZi
 import app.tinks.tink.navigation.allTopDestinations
 import app.tinks.tink.navigation.topDestination
+import app.tinks.tink.salesforce.SalesforceScreen
 import app.tinks.tink.settings.SettingsScreen
 import app.tinks.tink.story.StoryDetailScreen
 import app.tinks.tink.story.StoryListScreen
@@ -274,6 +276,7 @@ fun MyApp(
                             onOpenHistoryStats = { backStack.add(ScreenLotteryHistoryStats) },
                         )
                         is ScreenLotteryHistoryStats -> LotteryHistoryStatsScreen(hiltViewModel())
+                        is ScreenSalesforce -> SalesforceScreen(hiltViewModel())
                         is ScreenStoryList -> StoryListScreen(
                             hiltViewModel(),
                             onStoryClick = { story ->
@@ -301,6 +304,7 @@ private fun MyNavKey.drawerTestTag(): String = when (this) {
     ScreenTime -> "drawer_destination_time"
     ScreenBooks -> "drawer_destination_books"
     ScreenLottery -> "drawer_destination_lottery"
+    ScreenSalesforce -> "drawer_destination_salesforce"
     ScreenLotteryHistoryStats -> "drawer_destination_lottery_history_stats"
     ScreenSettings -> "drawer_destination_settings"
     ScreenLearntZi -> "drawer_destination_learnt_zi"

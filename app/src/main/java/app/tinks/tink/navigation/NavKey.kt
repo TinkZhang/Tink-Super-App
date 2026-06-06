@@ -80,6 +80,11 @@ data object ScreenLottery : MyNavKey {
     override val icon = Icons.Filled.LocalActivity
 }
 
+data object ScreenSalesforce : MyNavKey {
+    override val label = "Salesforce"
+    override val icon = Icons.Filled.Bookmark
+}
+
 data object ScreenLotteryHistoryStats : MyNavKey {
     override val label = "History & stats"
     override val icon = Icons.Filled.LocalActivity
@@ -102,5 +107,5 @@ data class ScreenStoryDetail(val storyId: String) : MyNavKey {
 
 val allTopDestinations = listOf(
     ScreenA, ScreenB, ScreenWeight, ScreenHair,
-    ScreenLeeter, ScreenZi, ScreenMerriam, ScreenTime, ScreenBooks, ScreenLottery
+    ScreenLeeter, ScreenZi, ScreenMerriam, ScreenTime, ScreenBooks, ScreenLottery, ScreenSalesforce
 )

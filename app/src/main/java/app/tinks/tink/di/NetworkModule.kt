@@ -6,6 +6,7 @@ import app.tinks.tink.book.BookApi
 import app.tinks.tink.haircut.HaircutApi
 import app.tinks.tink.lottery.LotteryApi
 import app.tinks.tink.merriam.network.MerriamApi
+import app.tinks.tink.salesforce.SalesforceApi
 import app.tinks.tink.settings.ApiEnvironment
 import app.tinks.tink.settings.AppEnvironmentRepository
 import app.tinks.tink.story.StoryApi
@@ -153,4 +154,9 @@ object NetworkModule {
     @Singleton
     fun provideLotteryApi(retrofit: Retrofit): LotteryApi =
         retrofit.create(LotteryApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideSalesforceApi(retrofit: Retrofit): SalesforceApi =
+        retrofit.create(SalesforceApi::class.java)
 }
