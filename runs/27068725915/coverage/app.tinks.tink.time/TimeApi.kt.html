@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TimeApi.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.time</a> &gt; <span class="el_source">TimeApi.kt</span></div><h1>TimeApi.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.time
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
+import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+
+interface TimeApi {
+    @GET(&quot;time/statistics&quot;)
+    suspend fun getStatistics(
+        @Query(&quot;start_date&quot;) startDate: String,
+        @Query(&quot;end_date&quot;) endDate: String,
+    ): List&lt;TimeStatisticDto&gt;
+
+    @GET(&quot;time&quot;)
+    suspend fun getTimeEntries(
+        @Query(&quot;start_date&quot;) startDate: String,
+        @Query(&quot;end_date&quot;) endDate: String,
+    ): List&lt;TimeEntryDto&gt;
+
+    @POST(&quot;time&quot;)
+    suspend fun createTimeEntry(
+        @Body payload: TimeUpsertRequest,
+    )
+
+    @PATCH(&quot;time/{timeId}&quot;)
+    suspend fun updateTimeEntry(
+        @Path(&quot;timeId&quot;) timeId: Long,
+        @Body payload: TimeUpsertRequest,
+    )
+
+    @DELETE(&quot;time/{timeId}&quot;)
+    suspend fun deleteTimeEntry(
+        @Path(&quot;timeId&quot;) timeId: Long,
+    )
+
+    @GET(&quot;time/labels&quot;)
+<span class="nc" id="L46">    suspend fun getTimeLabels(</span>
+<span class="nc" id="L47">        @Query(&quot;type&quot;) type: Int? = null,</span>
+<span class="nc" id="L48">    ): List&lt;TimeLabelDto&gt;</span>
+
+    @POST(&quot;time/labels&quot;)
+    suspend fun createTimeLabel(
+        @Body payload: TimeLabelCreateRequest,
+    ): TimeLabelDto
+
+    @PATCH(&quot;time/labels/{labelId}&quot;)
+    suspend fun updateTimeLabel(
+        @Path(&quot;labelId&quot;) labelId: Long,
+        @Body payload: TimeLabelUpdateRequest,
+    ): TimeLabelDto
+
+    @DELETE(&quot;time/labels/{labelId}&quot;)
+    suspend fun deleteTimeLabel(
+        @Path(&quot;labelId&quot;) labelId: Long,
+    )
+}
+
+<span class="pc bnc" id="L67" title="All 2 branches missed.">@Serializable</span>
+<span class="fc" id="L68">data class TimeStatisticDto(</span>
+<span class="fc" id="L69">    val type: Int,</span>
+<span class="fc" id="L70">    val duration: Long,</span>
+)
+
+<span class="pc bnc" id="L73" title="All 26 branches missed.">@Serializable</span>
+<span class="fc" id="L74">data class TimeEntryDto(</span>
+<span class="fc" id="L75">    @SerialName(&quot;id&quot;)</span>
+<span class="pc" id="L76">    val id: Long? = null,</span>
+<span class="fc" id="L77">    @SerialName(&quot;time_id&quot;)</span>
+<span class="pc" id="L78">    val timeId: Long? = null,</span>
+<span class="fc" id="L79">    val type: Int,</span>
+<span class="fc" id="L80">    val start: String,</span>
+<span class="fc" id="L81">    val end: String,</span>
+<span class="fc" id="L82">    val title: String,</span>
+<span class="pc" id="L83">    val description: String? = null,</span>
+<span class="fc" id="L84">)</span>
+
+<span class="pc bnc" id="L86" title="All 10 branches missed.">@Serializable</span>
+<span class="fc" id="L87">data class TimeUpsertRequest(</span>
+<span class="pc" id="L88">    val type: Int,</span>
+<span class="pc" id="L89">    val start: String,</span>
+<span class="pc" id="L90">    val end: String,</span>
+<span class="fc" id="L91">    val title: String,</span>
+<span class="pc" id="L92">    val description: String? = null,</span>
+<span class="fc" id="L93">)</span>
+
+<span class="pc bnc" id="L95" title="All 10 branches missed.">@Serializable</span>
+<span class="fc" id="L96">data class TimeLabelDto(</span>
+<span class="fc" id="L97">    val id: Long,</span>
+<span class="fc" id="L98">    val type: Int,</span>
+<span class="fc" id="L99">    val name: String,</span>
+<span class="fc" id="L100">    @SerialName(&quot;sort_order&quot;)</span>
+<span class="pc" id="L101">    val sortOrder: Int = 0,</span>
+<span class="fc" id="L102">)</span>
+
+<span class="pc bnc" id="L104" title="All 10 branches missed.">@Serializable</span>
+<span class="fc" id="L105">data class TimeLabelCreateRequest(</span>
+<span class="fc" id="L106">    val type: Int,</span>
+<span class="fc" id="L107">    val name: String,</span>
+<span class="fc" id="L108">    @SerialName(&quot;sort_order&quot;)</span>
+<span class="pc" id="L109">    val sortOrder: Int = 0,</span>
+<span class="fc" id="L110">)</span>
+
+<span class="pc bnc" id="L112" title="All 26 branches missed.">@Serializable</span>
+<span class="fc" id="L113">data class TimeLabelUpdateRequest(</span>
+<span class="pc" id="L114">    val type: Int? = null,</span>
+<span class="pc" id="L115">    val name: String? = null,</span>
+<span class="fc" id="L116">    @SerialName(&quot;sort_order&quot;)</span>
+<span class="pc" id="L117">    val sortOrder: Int? = null,</span>
+<span class="fc" id="L118">)</span>
+
+<span class="fc" id="L120">data class TimeStatistic(</span>
+<span class="fc" id="L121">    val type: Int,</span>
+<span class="pc" id="L122">    val duration: Long,</span>
+)
+
+<span class="fc" id="L125">data class TimeEntry(</span>
+<span class="fc" id="L126">    val id: Long,</span>
+<span class="pc" id="L127">    val type: Int,</span>
+<span class="fc" id="L128">    val start: OffsetDateTime,</span>
+<span class="pc" id="L129">    val end: OffsetDateTime,</span>
+<span class="pc" id="L130">    val title: String,</span>
+<span class="pc" id="L131">    val description: String?,</span>
+)
+
+<span class="fc" id="L134">data class TimeDashboard(</span>
+<span class="fc" id="L135">    val statistics: List&lt;TimeStatistic&gt;,</span>
+<span class="fc" id="L136">    val entries: List&lt;TimeEntry&gt;,</span>
+)
+
+<span class="fc" id="L139">data class TimeLabel(</span>
+<span class="pc" id="L140">    val id: Long,</span>
+<span class="fc" id="L141">    val type: Int,</span>
+<span class="fc" id="L142">    val name: String,</span>
+<span class="fc" id="L143">    val sortOrder: Int,</span>
+)
+
+<span class="fc" id="L146">fun TimeStatisticDto.toDomain(): TimeStatistic = TimeStatistic(</span>
+<span class="fc" id="L147">    type = type,</span>
+<span class="fc" id="L148">    duration = duration,</span>
+<span class="fc" id="L149">)</span>
+
+<span class="fc" id="L151">fun TimeEntryDto.toDomain(): TimeEntry = TimeEntry(</span>
+<span class="pc bpc" id="L152" title="3 of 4 branches missed.">    id = id ?: timeId ?: 0L,</span>
+<span class="fc" id="L153">    type = type,</span>
+<span class="fc" id="L154">    start = parseOffsetDateTime(start),</span>
+<span class="fc" id="L155">    end = parseOffsetDateTime(end),</span>
+<span class="fc" id="L156">    title = title,</span>
+<span class="fc" id="L157">    description = description,</span>
+<span class="fc" id="L158">)</span>
+
+<span class="fc" id="L160">fun TimeLabelDto.toDomain(): TimeLabel = TimeLabel(</span>
+<span class="fc" id="L161">    id = id,</span>
+<span class="fc" id="L162">    type = type,</span>
+<span class="fc" id="L163">    name = name,</span>
+<span class="fc" id="L164">    sortOrder = sortOrder,</span>
+<span class="fc" id="L165">)</span>
+
+private fun parseOffsetDateTime(value: String): OffsetDateTime {
+<span class="pc" id="L168">    return runCatching { OffsetDateTime.parse(value) }</span>
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">        .getOrElse {</span>
+<span class="nc" id="L170">            runCatching { Instant.parse(value).atOffset(ZoneOffset.UTC) }</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">                .getOrElse { Instant.EPOCH.atOffset(ZoneOffset.UTC) }</span>
+        }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

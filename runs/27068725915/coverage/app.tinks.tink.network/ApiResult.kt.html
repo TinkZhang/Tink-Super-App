@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiResult.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.network</a> &gt; <span class="el_source">ApiResult.kt</span></div><h1>ApiResult.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.network
+
+import kotlinx.io.IOException
+import retrofit2.HttpException
+
+sealed class ApiResult&lt;out T&gt; {
+<span class="fc" id="L7">    data class Success&lt;T&gt;(val data: T) : ApiResult&lt;T&gt;()</span>
+<span class="fc" id="L8">    data class Error(</span>
+<span class="fc" id="L9">        val message: String,</span>
+<span class="pc" id="L10">        val code: Int? = null,</span>
+<span class="pc" id="L11">        val throwable: Throwable? = null</span>
+<span class="fc" id="L12">    ) : ApiResult&lt;Nothing&gt;()</span>
+
+<span class="fc" id="L14">    object Loading: ApiResult&lt;Nothing&gt;()</span>
+}
+
+<span class="nc" id="L17">suspend inline fun &lt;T&gt; safeApiCall(</span>
+    crossinline apiCall: suspend () -&gt; T
+): ApiResult&lt;T&gt; {
+<span class="fc" id="L20">    return try {</span>
+<span class="fc" id="L21">        println(&quot;safeApiCall: calling api&quot;)</span>
+<span class="fc" id="L22">        ApiResult.Success(apiCall())</span>
+<span class="nc" id="L23">    } catch (e: HttpException) {</span>
+<span class="nc" id="L24">        ApiResult.Error(</span>
+<span class="nc" id="L25">            message = mapHttpError(e.code()),</span>
+<span class="nc" id="L26">            code = e.code(),</span>
+<span class="nc" id="L27">            throwable = e</span>
+        )
+<span class="fc" id="L29">    } catch (e: IOException) {</span>
+<span class="fc" id="L30">        println(&quot;safeApiCall caught exception: ${e.message}&quot;)</span>
+<span class="fc" id="L31">        ApiResult.Error(</span>
+<span class="fc" id="L32">            message = &quot;Network error. Please check your connection.&quot;,</span>
+<span class="fc" id="L33">            throwable = e</span>
+        )
+<span class="fc" id="L35">    } catch (e: Exception) {</span>
+<span class="fc" id="L36">        println(&quot;safeApiCall caught exception: ${e.message}&quot;)</span>
+<span class="fc" id="L37">        ApiResult.Error(</span>
+<span class="fc" id="L38">            message = &quot;Unexpected error occurred&quot;,</span>
+<span class="fc" id="L39">            throwable = e</span>
+        )
+    }
+}
+
+fun mapHttpError(code: Int): String =
+<span class="nc bnc" id="L45" title="All 4 branches missed.">    when (code) {</span>
+<span class="nc" id="L46">        400 -&gt; &quot;Bad request&quot;</span>
+<span class="nc" id="L47">        404 -&gt; &quot;Not found&quot;</span>
+<span class="nc" id="L48">        500 -&gt; &quot;Server error&quot;</span>
+<span class="nc" id="L49">        else -&gt; &quot;HTTP error ($code)&quot;</span>
+<span class="nc" id="L50">    }</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

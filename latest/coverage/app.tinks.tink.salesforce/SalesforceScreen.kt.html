@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesforceScreen.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.salesforce</a> &gt; <span class="el_source">SalesforceScreen.kt</span></div><h1>SalesforceScreen.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.salesforce
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tinks.tink.ui.theme.TinkTheme
+
+@Composable
+<span class="nc bnc" id="L46" title="All 8 branches missed.">fun SalesforceScreen(viewModel: SalesforceViewModel) {</span>
+<span class="nc" id="L47">    val state by viewModel.uiState.collectAsStateWithLifecycle()</span>
+<span class="nc" id="L48">    SalesforceScreen(</span>
+<span class="nc" id="L49">        state = state,</span>
+<span class="nc" id="L50">        onEvent = viewModel::onEvent,</span>
+    )
+<span class="nc" id="L52">}</span>
+
+@Composable
+internal fun SalesforceScreen(
+    state: SalesforceUiState,
+<span class="nc" id="L57">    onEvent: (SalesforceEvent) -&gt; Unit = {},</span>
+<span class="nc bnc" id="L58" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L59">    Box(modifier = Modifier.fillMaxSize()) {</span>
+<span class="nc bnc" id="L60" title="All 6 branches missed.">        when (state.mode) {</span>
+<span class="nc" id="L61">            SalesforceViewMode.Main -&gt; SalesforceMainScreen(state, onEvent)</span>
+<span class="nc" id="L62">            SalesforceViewMode.Practice -&gt; SalesforceQuestionSessionScreen(state, onEvent, SalesforceMode.Practice)</span>
+<span class="nc" id="L63">            SalesforceViewMode.Exam -&gt; SalesforceQuestionSessionScreen(state, onEvent, SalesforceMode.Exam)</span>
+<span class="nc" id="L64">            SalesforceViewMode.ExamResult -&gt; SalesforceExamResultScreen(state, onEvent)</span>
+<span class="nc" id="L65">            SalesforceViewMode.Review -&gt; SalesforceReviewScreen(state, onEvent)</span>
+<span class="nc" id="L66">        }</span>
+
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        if (state.isLoading) {</span>
+<span class="nc" id="L69">            LinearProgressIndicator(</span>
+<span class="nc" id="L70">                modifier = Modifier</span>
+<span class="nc" id="L71">                    .fillMaxWidth()</span>
+<span class="nc" id="L72">                    .align(Alignment.TopCenter)</span>
+<span class="nc" id="L73">                    .testTag(&quot;salesforce_loading_indicator&quot;)</span>
+            )
+<span class="nc" id="L75">        }</span>
+<span class="nc" id="L76">    }</span>
+<span class="nc" id="L77">}</span>
+
+@Composable
+private fun SalesforceMainScreen(
+    state: SalesforceUiState,
+    onEvent: (SalesforceEvent) -&gt; Unit,
+<span class="nc bnc" id="L83" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L84">    LazyColumn(</span>
+<span class="nc" id="L85">        modifier = Modifier</span>
+<span class="nc" id="L86">            .fillMaxSize()</span>
+<span class="nc" id="L87">            .testTag(&quot;salesforce_main&quot;),</span>
+<span class="nc" id="L88">        contentPadding = PaddingValues(16.dp),</span>
+<span class="nc" id="L89">        verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">    ) {</span>
+<span class="nc" id="L91">        item {</span>
+<span class="nc" id="L92">            ElevatedCard(</span>
+<span class="nc" id="L93">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L94">                shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L95">            ) {</span>
+<span class="nc" id="L96">                Column(</span>
+<span class="nc" id="L97">                    modifier = Modifier.padding(16.dp),</span>
+<span class="nc" id="L98">                    verticalArrangement = Arrangement.spacedBy(14.dp),</span>
+                ) {
+<span class="nc" id="L100">                    Text(</span>
+<span class="nc" id="L101">                        text = &quot;Salesforce ADM-201&quot;,</span>
+<span class="nc" id="L102">                        style = MaterialTheme.typography.titleLarge,</span>
+                    )
+<span class="nc" id="L104">                    FlowRow(</span>
+<span class="nc" id="L105">                        horizontalArrangement = Arrangement.spacedBy(10.dp),</span>
+<span class="nc" id="L106">                        verticalArrangement = Arrangement.spacedBy(10.dp),</span>
+<span class="nc" id="L107">                    ) {</span>
+<span class="nc" id="L108">                        StatTile(&quot;Questions&quot;, state.totalQuestions.toString())</span>
+<span class="nc" id="L109">                        StatTile(&quot;DONE&quot;, &quot;${state.doneQuestions}/${state.totalQuestions}&quot;)</span>
+<span class="nc" id="L110">                        StatTile(&quot;Remaining&quot;, state.remainingQuestions.toString())</span>
+<span class="nc" id="L111">                        StatTile(&quot;Attempts&quot;, state.answeredAttempts.toString())</span>
+<span class="nc bnc" id="L112" title="All 4 branches missed.">                        state.remoteSummary?.latestExamScore?.let { StatTile(&quot;Latest exam&quot;, &quot;${it.cleanPercent()}%&quot;) }</span>
+<span class="nc bnc" id="L113" title="All 4 branches missed.">                        state.remoteSummary?.bestExamScore?.let { StatTile(&quot;Best exam&quot;, &quot;${it.cleanPercent()}%&quot;) }</span>
+<span class="nc" id="L114">                    }</span>
+<span class="nc" id="L115">                }</span>
+<span class="nc" id="L116">            }</span>
+<span class="nc" id="L117">        }</span>
+
+<span class="nc" id="L119">        item {</span>
+<span class="nc" id="L120">            ModeCard(</span>
+<span class="nc" id="L121">                title = &quot;Practice&quot;,</span>
+<span class="nc" id="L122">                subtitle = &quot;Review one question at a time, reveal the answer immediately, and sync when you return here.&quot;,</span>
+<span class="nc" id="L123">                icon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },</span>
+<span class="nc" id="L124">                action = &quot;Start&quot;,</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">                enabled = state.questions.isNotEmpty(),</span>
+<span class="nc" id="L126">                onClick = { onEvent(SalesforceEvent.StartPractice) },</span>
+<span class="nc" id="L127">                testTag = &quot;salesforce_start_practice&quot;,</span>
+            )
+<span class="nc" id="L129">        }</span>
+
+<span class="nc" id="L131">        item {</span>
+<span class="nc" id="L132">            ModeCard(</span>
+<span class="nc" id="L133">                title = &quot;Exam&quot;,</span>
+<span class="nc" id="L134">                subtitle = &quot;Take a random 65-question attempt. Answers stay hidden until the final result page.&quot;,</span>
+<span class="nc" id="L135">                icon = { Icon(Icons.Filled.Assignment, contentDescription = null) },</span>
+<span class="nc" id="L136">                action = &quot;Start&quot;,</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">                enabled = state.questions.size &gt;= SALESFORCE_EXAM_QUESTION_COUNT,</span>
+<span class="nc" id="L138">                onClick = { onEvent(SalesforceEvent.StartExam) },</span>
+<span class="nc" id="L139">                testTag = &quot;salesforce_start_exam&quot;,</span>
+            )
+<span class="nc" id="L141">        }</span>
+<span class="nc" id="L142">    }</span>
+<span class="nc" id="L143">}</span>
+
+@Composable
+<span class="nc bnc" id="L146" title="All 12 branches missed.">private fun StatTile(label: String, value: String) {</span>
+<span class="nc" id="L147">    Surface(</span>
+<span class="nc" id="L148">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L149">        color = MaterialTheme.colorScheme.primaryContainer,</span>
+<span class="nc" id="L150">        modifier = Modifier.testTag(&quot;salesforce_stat_${label.lowercase().replace(&quot; &quot;, &quot;_&quot;)}&quot;),</span>
+<span class="nc" id="L151">    ) {</span>
+<span class="nc" id="L152">        Column(</span>
+<span class="nc" id="L153">            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),</span>
+<span class="nc" id="L154">            verticalArrangement = Arrangement.spacedBy(2.dp),</span>
+        ) {
+<span class="nc" id="L156">            Text(text = label, style = MaterialTheme.typography.labelMedium)</span>
+<span class="nc" id="L157">            Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)</span>
+<span class="nc" id="L158">        }</span>
+<span class="nc" id="L159">    }</span>
+<span class="nc" id="L160">}</span>
+
+@Composable
+private fun ModeCard(
+    title: String,
+    subtitle: String,
+    icon: @Composable () -&gt; Unit,
+    action: String,
+    enabled: Boolean,
+    onClick: () -&gt; Unit,
+    testTag: String,
+<span class="nc bnc" id="L171" title="All 32 branches missed.">) {</span>
+<span class="nc" id="L172">    ElevatedCard(</span>
+<span class="nc" id="L173">        modifier = Modifier</span>
+<span class="nc" id="L174">            .fillMaxWidth()</span>
+<span class="nc" id="L175">            .testTag(testTag),</span>
+<span class="nc" id="L176">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L177">    ) {</span>
+<span class="nc" id="L178">        Row(</span>
+<span class="nc" id="L179">            modifier = Modifier</span>
+<span class="nc" id="L180">                .fillMaxWidth()</span>
+<span class="nc" id="L181">                .padding(16.dp),</span>
+<span class="nc" id="L182">            verticalAlignment = Alignment.CenterVertically,</span>
+<span class="nc" id="L183">            horizontalArrangement = Arrangement.spacedBy(14.dp),</span>
+        ) {
+<span class="nc" id="L185">            Surface(</span>
+<span class="nc" id="L186">                shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L187">                color = MaterialTheme.colorScheme.secondaryContainer,</span>
+<span class="nc" id="L188">            ) {</span>
+<span class="nc" id="L189">                Box(modifier = Modifier.padding(10.dp)) {</span>
+<span class="nc" id="L190">                    icon()</span>
+<span class="nc" id="L191">                }</span>
+<span class="nc" id="L192">            }</span>
+<span class="nc" id="L193">            Column(</span>
+<span class="nc" id="L194">                modifier = Modifier.weight(1f),</span>
+<span class="nc" id="L195">                verticalArrangement = Arrangement.spacedBy(4.dp),</span>
+            ) {
+<span class="nc" id="L197">                Text(text = title, style = MaterialTheme.typography.titleMedium)</span>
+<span class="nc" id="L198">                Text(text = subtitle, style = MaterialTheme.typography.bodyMedium)</span>
+<span class="nc" id="L199">            }</span>
+<span class="nc" id="L200">            Button(</span>
+<span class="nc" id="L201">                enabled = enabled,</span>
+<span class="nc" id="L202">                onClick = onClick,</span>
+<span class="nc" id="L203">            ) {</span>
+<span class="nc" id="L204">                Text(action)</span>
+<span class="nc" id="L205">            }</span>
+<span class="nc" id="L206">        }</span>
+<span class="nc" id="L207">    }</span>
+<span class="nc" id="L208">}</span>
+
+@Composable
+private fun SalesforceQuestionSessionScreen(
+    state: SalesforceUiState,
+    onEvent: (SalesforceEvent) -&gt; Unit,
+    mode: SalesforceMode,
+<span class="nc bnc" id="L215" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L216">    val question = state.currentQuestion</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">    if (question == null) {</span>
+<span class="nc" id="L218">        EmptySalesforceState(onEvent)</span>
+<span class="nc" id="L219">        return</span>
+<span class="nc" id="L220">    }</span>
+
+<span class="nc" id="L222">    LazyColumn(</span>
+<span class="nc" id="L223">        modifier = Modifier</span>
+<span class="nc" id="L224">            .fillMaxSize()</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">            .testTag(if (mode == SalesforceMode.Practice) &quot;salesforce_practice&quot; else &quot;salesforce_exam&quot;),</span>
+<span class="nc" id="L226">        contentPadding = PaddingValues(16.dp),</span>
+<span class="nc" id="L227">        verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+<span class="nc bnc" id="L228" title="All 4 branches missed.">    ) {</span>
+<span class="nc" id="L229">        item {</span>
+<span class="nc" id="L230">            QuestionHeader(</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">                title = if (mode == SalesforceMode.Practice) &quot;Practice&quot; else &quot;Exam&quot;,</span>
+<span class="nc" id="L232">                position = state.currentPosition,</span>
+<span class="nc" id="L233">                total = state.totalInMode,</span>
+<span class="nc" id="L234">                questionId = question.id,</span>
+            )
+<span class="nc" id="L236">        }</span>
+
+<span class="nc" id="L238">        item {</span>
+<span class="nc" id="L239">            QuestionCard(</span>
+<span class="nc" id="L240">                question = question,</span>
+<span class="nc" id="L241">                selectedLabels = state.selectedLabels,</span>
+<span class="nc" id="L242">                revealAnswer = state.answerRevealed,</span>
+<span class="nc" id="L243">                onToggle = { onEvent(SalesforceEvent.ToggleAnswer(it)) },</span>
+            )
+<span class="nc" id="L245">        }</span>
+
+<span class="nc bnc" id="L247" title="All 4 branches missed.">        if (mode == SalesforceMode.Practice &amp;&amp; state.answerRevealed) {</span>
+<span class="nc" id="L248">            item {</span>
+<span class="nc" id="L249">                AnswerPanel(</span>
+<span class="nc" id="L250">                    isCorrect = state.isCurrentAnswerCorrect,</span>
+<span class="nc" id="L251">                    explanation = question.explanation,</span>
+                )
+<span class="nc" id="L253">            }</span>
+        }
+
+<span class="nc" id="L256">        item {</span>
+<span class="nc" id="L257">            Row(</span>
+<span class="nc" id="L258">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L259">                horizontalArrangement = Arrangement.spacedBy(10.dp),</span>
+            ) {
+<span class="nc" id="L261">                OutlinedButton(</span>
+<span class="nc" id="L262">                    onClick = { onEvent(SalesforceEvent.FinishPractice) },</span>
+<span class="nc" id="L263">                    modifier = Modifier.weight(1f),</span>
+<span class="nc" id="L264">                ) {</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">                    Text(if (mode == SalesforceMode.Practice) &quot;Finish&quot; else &quot;Exit&quot;)</span>
+<span class="nc" id="L266">                }</span>
+<span class="nc" id="L267">                Button(</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">                    enabled = if (mode == SalesforceMode.Practice) {</span>
+<span class="nc bnc" id="L269" title="All 4 branches missed.">                        state.canSubmit || state.answerRevealed</span>
+                    } else {
+<span class="nc" id="L271">                        state.canSubmit</span>
+                    },
+<span class="nc" id="L273">                    onClick = {</span>
+<span class="nc bnc" id="L274" title="All 2 branches missed.">                        if (mode == SalesforceMode.Practice) {</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">                            if (state.answerRevealed) {</span>
+<span class="nc" id="L276">                                onEvent(SalesforceEvent.NextPracticeQuestion)</span>
+                            } else {
+<span class="nc" id="L278">                                onEvent(SalesforceEvent.SubmitPracticeAnswer)</span>
+                            }
+                        } else {
+<span class="nc" id="L281">                            onEvent(SalesforceEvent.NextExamQuestion)</span>
+                        }
+<span class="nc" id="L283">                    },</span>
+<span class="nc" id="L284">                    modifier = Modifier.weight(1f),</span>
+<span class="nc" id="L285">                ) {</span>
+<span class="nc" id="L286">                    Text(</span>
+<span class="nc" id="L287">                        when {</span>
+<span class="nc bnc" id="L288" title="All 4 branches missed.">                            mode == SalesforceMode.Exam &amp;&amp; state.currentPosition == state.totalInMode -&gt; &quot;Finish exam&quot;</span>
+<span class="nc bnc" id="L289" title="All 2 branches missed.">                            mode == SalesforceMode.Exam -&gt; &quot;Next&quot;</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">                            state.answerRevealed -&gt; &quot;Next&quot;</span>
+<span class="nc" id="L291">                            else -&gt; &quot;Check&quot;</span>
+                        }
+                    )
+<span class="nc" id="L294">                }</span>
+<span class="nc" id="L295">            }</span>
+<span class="nc" id="L296">        }</span>
+<span class="nc" id="L297">    }</span>
+<span class="nc" id="L298">}</span>
+
+@Composable
+private fun QuestionHeader(
+    title: String,
+    position: Int,
+    total: Int,
+    questionId: Int,
+<span class="nc bnc" id="L306" title="All 20 branches missed.">) {</span>
+<span class="nc" id="L307">    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L308">        Row(</span>
+<span class="nc" id="L309">            modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L310">            horizontalArrangement = Arrangement.SpaceBetween,</span>
+<span class="nc" id="L311">            verticalAlignment = Alignment.CenterVertically,</span>
+        ) {
+<span class="nc" id="L313">            Text(text = title, style = MaterialTheme.typography.titleLarge)</span>
+<span class="nc" id="L314">            Text(text = &quot;$position / $total&quot;, style = MaterialTheme.typography.labelLarge)</span>
+<span class="nc" id="L315">        }</span>
+<span class="nc" id="L316">        LinearProgressIndicator(</span>
+<span class="nc bnc" id="L317" title="All 6 branches missed.">            progress = { if (total == 0) 0f else position.toFloat() / total.toFloat() },</span>
+<span class="nc" id="L318">            modifier = Modifier.fillMaxWidth(),</span>
+        )
+<span class="nc" id="L320">        Text(text = &quot;NO. $questionId&quot;, style = MaterialTheme.typography.labelMedium)</span>
+<span class="nc" id="L321">    }</span>
+<span class="nc" id="L322">}</span>
+
+@Composable
+private fun QuestionCard(
+    question: SalesforceQuestion,
+    selectedLabels: Set&lt;String&gt;,
+    revealAnswer: Boolean,
+    onToggle: (String) -&gt; Unit,
+<span class="nc bnc" id="L330" title="All 20 branches missed.">) {</span>
+<span class="nc" id="L331">    ElevatedCard(</span>
+<span class="nc" id="L332">        modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L333">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L334">    ) {</span>
+<span class="nc" id="L335">        Column(</span>
+<span class="nc" id="L336">            modifier = Modifier.padding(16.dp),</span>
+<span class="nc" id="L337">            verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+        ) {
+<span class="nc" id="L339">            Text(</span>
+<span class="nc" id="L340">                text = question.prompt,</span>
+<span class="nc" id="L341">                style = MaterialTheme.typography.titleMedium,</span>
+            )
+<span class="nc" id="L343">            HorizontalDivider()</span>
+<span class="nc" id="L344">            question.choices.forEach { choice -&gt;</span>
+<span class="nc" id="L345">                val isSelected = choice.label in selectedLabels</span>
+<span class="nc" id="L346">                val isCorrect = choice.label in question.answerLabels</span>
+<span class="nc" id="L347">                ChoiceRow(</span>
+<span class="nc" id="L348">                    choice = choice,</span>
+<span class="nc" id="L349">                    selected = isSelected,</span>
+<span class="nc" id="L350">                    revealAnswer = revealAnswer,</span>
+<span class="nc" id="L351">                    isCorrect = isCorrect,</span>
+<span class="nc" id="L352">                    onClick = { onToggle(choice.label) },</span>
+                )
+<span class="nc" id="L354">            }</span>
+<span class="nc" id="L355">        }</span>
+<span class="nc" id="L356">    }</span>
+<span class="nc" id="L357">}</span>
+
+@Composable
+private fun ChoiceRow(
+    choice: SalesforceChoice,
+    selected: Boolean,
+    revealAnswer: Boolean,
+    isCorrect: Boolean,
+    onClick: () -&gt; Unit,
+<span class="nc bnc" id="L366" title="All 24 branches missed.">) {</span>
+<span class="nc" id="L367">    val borderColor = when {</span>
+<span class="nc bnc" id="L368" title="All 4 branches missed.">        revealAnswer &amp;&amp; isCorrect -&gt; MaterialTheme.colorScheme.primary</span>
+<span class="nc bnc" id="L369" title="All 4 branches missed.">        revealAnswer &amp;&amp; selected -&gt; MaterialTheme.colorScheme.error</span>
+<span class="nc bnc" id="L370" title="All 2 branches missed.">        selected -&gt; MaterialTheme.colorScheme.primary</span>
+<span class="nc" id="L371">        else -&gt; MaterialTheme.colorScheme.outlineVariant</span>
+    }
+<span class="nc" id="L373">    Surface(</span>
+<span class="nc" id="L374">        modifier = Modifier</span>
+<span class="nc" id="L375">            .fillMaxWidth()</span>
+<span class="nc bnc" id="L376" title="All 2 branches missed.">            .clickable(enabled = !revealAnswer, onClick = onClick)</span>
+<span class="nc" id="L377">            .testTag(&quot;salesforce_choice_${choice.label}&quot;),</span>
+<span class="nc" id="L378">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L379">        border = BorderStroke(1.dp, borderColor),</span>
+<span class="nc" id="L380">        color = when {</span>
+<span class="nc bnc" id="L381" title="All 4 branches missed.">            revealAnswer &amp;&amp; isCorrect -&gt; MaterialTheme.colorScheme.primaryContainer</span>
+<span class="nc bnc" id="L382" title="All 4 branches missed.">            revealAnswer &amp;&amp; selected -&gt; MaterialTheme.colorScheme.errorContainer</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">            selected -&gt; MaterialTheme.colorScheme.secondaryContainer</span>
+<span class="nc" id="L384">            else -&gt; MaterialTheme.colorScheme.surface</span>
+        },
+<span class="nc" id="L386">    ) {</span>
+<span class="nc" id="L387">        Row(</span>
+<span class="nc" id="L388">            modifier = Modifier.padding(12.dp),</span>
+<span class="nc" id="L389">            horizontalArrangement = Arrangement.spacedBy(10.dp),</span>
+<span class="nc" id="L390">            verticalAlignment = Alignment.Top,</span>
+        ) {
+<span class="nc" id="L392">            FilterChip(</span>
+<span class="nc" id="L393">                selected = selected,</span>
+<span class="nc" id="L394">                onClick = onClick,</span>
+<span class="nc bnc" id="L395" title="All 2 branches missed.">                enabled = !revealAnswer,</span>
+<span class="nc" id="L396">                label = { Text(choice.label) },</span>
+            )
+<span class="nc" id="L398">            Text(</span>
+<span class="nc" id="L399">                text = choice.text,</span>
+<span class="nc" id="L400">                style = MaterialTheme.typography.bodyMedium,</span>
+<span class="nc" id="L401">                modifier = Modifier.weight(1f),</span>
+            )
+<span class="nc" id="L403">        }</span>
+<span class="nc" id="L404">    }</span>
+<span class="nc" id="L405">}</span>
+
+@Composable
+private fun AnswerPanel(
+    isCorrect: Boolean,
+    explanation: String?,
+<span class="nc bnc" id="L411" title="All 12 branches missed.">) {</span>
+<span class="nc" id="L412">    ElevatedCard(</span>
+<span class="nc" id="L413">        modifier = Modifier</span>
+<span class="nc" id="L414">            .fillMaxWidth()</span>
+<span class="nc" id="L415">            .testTag(&quot;salesforce_answer_panel&quot;),</span>
+<span class="nc" id="L416">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L417">        colors = CardDefaults.elevatedCardColors(</span>
+<span class="nc bnc" id="L418" title="All 2 branches missed.">            containerColor = if (isCorrect) {</span>
+<span class="nc" id="L419">                MaterialTheme.colorScheme.primaryContainer</span>
+<span class="nc" id="L420">            } else {</span>
+<span class="nc" id="L421">                MaterialTheme.colorScheme.errorContainer</span>
+            }
+        ),
+<span class="nc" id="L424">    ) {</span>
+<span class="nc" id="L425">        Column(</span>
+<span class="nc" id="L426">            modifier = Modifier.padding(16.dp),</span>
+<span class="nc" id="L427">            verticalArrangement = Arrangement.spacedBy(8.dp),</span>
+        ) {
+<span class="nc" id="L429">            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {</span>
+<span class="nc" id="L430">                Icon(</span>
+<span class="nc bnc" id="L431" title="All 2 branches missed.">                    imageVector = if (isCorrect) Icons.Filled.CheckCircle else Icons.Filled.Close,</span>
+<span class="nc" id="L432">                    contentDescription = null,</span>
+                )
+<span class="nc" id="L434">                Text(</span>
+<span class="nc bnc" id="L435" title="All 2 branches missed.">                    text = if (isCorrect) &quot;Correct. Marked DONE.&quot; else &quot;Not yet. Keep this one in rotation.&quot;,</span>
+<span class="nc" id="L436">                    style = MaterialTheme.typography.titleMedium,</span>
+                )
+<span class="nc" id="L438">            }</span>
+<span class="nc" id="L439">            Text(</span>
+<span class="nc bnc" id="L440" title="All 8 branches missed.">                text = explanation?.takeIf { it.isNotBlank() } ?: &quot;No explanation is included for this question.&quot;,</span>
+<span class="nc" id="L441">                style = MaterialTheme.typography.bodyMedium,</span>
+            )
+<span class="nc" id="L443">        }</span>
+<span class="nc" id="L444">    }</span>
+<span class="nc" id="L445">}</span>
+
+@Composable
+private fun SalesforceExamResultScreen(
+    state: SalesforceUiState,
+    onEvent: (SalesforceEvent) -&gt; Unit,
+<span class="nc bnc" id="L451" title="All 12 branches missed.">) {</span>
+<span class="nc bnc" id="L452" title="All 2 branches missed.">    val result = state.examResult ?: return EmptySalesforceState(onEvent)</span>
+<span class="nc" id="L453">    val questionById = result.questions.associateBy { it.id }</span>
+
+<span class="nc" id="L455">    LazyColumn(</span>
+<span class="nc" id="L456">        modifier = Modifier</span>
+<span class="nc" id="L457">            .fillMaxSize()</span>
+<span class="nc" id="L458">            .testTag(&quot;salesforce_exam_result&quot;),</span>
+<span class="nc" id="L459">        contentPadding = PaddingValues(16.dp),</span>
+<span class="nc" id="L460">        verticalArrangement = Arrangement.spacedBy(10.dp),</span>
+<span class="nc bnc" id="L461" title="All 2 branches missed.">    ) {</span>
+<span class="nc" id="L462">        item {</span>
+<span class="nc" id="L463">            ElevatedCard(</span>
+<span class="nc" id="L464">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L465">                shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L466">            ) {</span>
+<span class="nc" id="L467">                Column(</span>
+<span class="nc" id="L468">                    modifier = Modifier.padding(16.dp),</span>
+<span class="nc" id="L469">                    verticalArrangement = Arrangement.spacedBy(10.dp),</span>
+                ) {
+<span class="nc" id="L471">                    Text(text = &quot;Exam result&quot;, style = MaterialTheme.typography.titleLarge)</span>
+<span class="nc" id="L472">                    Text(</span>
+<span class="nc" id="L473">                        text = &quot;${result.correctCount}/${result.totalCount} · ${result.scorePercent.cleanPercent()}%&quot;,</span>
+<span class="nc" id="L474">                        style = MaterialTheme.typography.headlineSmall,</span>
+                    )
+<span class="nc" id="L476">                    Button(onClick = { onEvent(SalesforceEvent.BackToMain) }) {</span>
+<span class="nc" id="L477">                        Text(&quot;Back to main&quot;)</span>
+<span class="nc" id="L478">                    }</span>
+<span class="nc" id="L479">                }</span>
+<span class="nc" id="L480">            }</span>
+<span class="nc" id="L481">        }</span>
+
+<span class="nc" id="L483">        items(result.events, key = { it.questionId }) { event -&gt;</span>
+<span class="nc" id="L484">            val question = questionById[event.questionId] ?: return@items</span>
+<span class="nc" id="L485">            ResultRow(</span>
+<span class="nc" id="L486">                question = question,</span>
+<span class="nc" id="L487">                event = event,</span>
+<span class="nc" id="L488">                onClick = { onEvent(SalesforceEvent.ReviewExamQuestion(question.id)) },</span>
+<span class="nc" id="L489">            )</span>
+<span class="nc" id="L490">        }</span>
+<span class="nc" id="L491">    }</span>
+<span class="nc" id="L492">}</span>
+
+@Composable
+private fun ResultRow(
+    question: SalesforceQuestion,
+    event: SalesforceAnswerRecord,
+    onClick: () -&gt; Unit,
+<span class="nc bnc" id="L499" title="All 16 branches missed.">) {</span>
+<span class="nc" id="L500">    Surface(</span>
+<span class="nc" id="L501">        modifier = Modifier</span>
+<span class="nc" id="L502">            .fillMaxWidth()</span>
+<span class="nc" id="L503">            .clickable(onClick = onClick)</span>
+<span class="nc" id="L504">            .testTag(&quot;salesforce_exam_result_${question.id}&quot;),</span>
+<span class="nc" id="L505">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L506">        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),</span>
+<span class="nc" id="L507">    ) {</span>
+<span class="nc" id="L508">        Row(</span>
+<span class="nc" id="L509">            modifier = Modifier.padding(12.dp),</span>
+<span class="nc" id="L510">            horizontalArrangement = Arrangement.spacedBy(12.dp),</span>
+<span class="nc" id="L511">            verticalAlignment = Alignment.CenterVertically,</span>
+        ) {
+<span class="nc" id="L513">            Text(</span>
+<span class="nc bnc" id="L514" title="All 2 branches missed.">                text = if (event.correct) &quot;✅&quot; else &quot;❌&quot;,</span>
+<span class="nc" id="L515">                style = MaterialTheme.typography.titleMedium,</span>
+            )
+<span class="nc" id="L517">            Column(modifier = Modifier.weight(1f)) {</span>
+<span class="nc" id="L518">                Text(text = &quot;NO. ${question.id}&quot;, style = MaterialTheme.typography.labelMedium)</span>
+<span class="nc" id="L519">                Text(</span>
+<span class="nc" id="L520">                    text = question.prompt,</span>
+<span class="nc" id="L521">                    style = MaterialTheme.typography.bodyMedium,</span>
+<span class="nc" id="L522">                    maxLines = 2,</span>
+                )
+<span class="nc" id="L524">            }</span>
+<span class="nc" id="L525">            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)</span>
+<span class="nc" id="L526">        }</span>
+<span class="nc" id="L527">    }</span>
+<span class="nc" id="L528">}</span>
+
+@Composable
+private fun SalesforceReviewScreen(
+    state: SalesforceUiState,
+    onEvent: (SalesforceEvent) -&gt; Unit,
+<span class="nc bnc" id="L534" title="All 12 branches missed.">) {</span>
+<span class="nc bnc" id="L535" title="All 2 branches missed.">    val question = state.reviewQuestion ?: return EmptySalesforceState(onEvent)</span>
+<span class="nc" id="L536">    LazyColumn(</span>
+<span class="nc" id="L537">        modifier = Modifier</span>
+<span class="nc" id="L538">            .fillMaxSize()</span>
+<span class="nc" id="L539">            .testTag(&quot;salesforce_exam_review&quot;),</span>
+<span class="nc" id="L540">        contentPadding = PaddingValues(16.dp),</span>
+<span class="nc" id="L541">        verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+<span class="nc bnc" id="L542" title="All 2 branches missed.">    ) {</span>
+<span class="nc" id="L543">        item {</span>
+<span class="nc" id="L544">            QuestionHeader(</span>
+<span class="nc" id="L545">                title = &quot;Review&quot;,</span>
+<span class="nc" id="L546">                position = 1,</span>
+<span class="nc" id="L547">                total = 1,</span>
+<span class="nc" id="L548">                questionId = question.id,</span>
+            )
+<span class="nc" id="L550">        }</span>
+<span class="nc" id="L551">        item {</span>
+<span class="nc" id="L552">            QuestionCard(</span>
+<span class="nc" id="L553">                question = question,</span>
+<span class="nc" id="L554">                selectedLabels = state.selectedLabels,</span>
+<span class="nc" id="L555">                revealAnswer = true,</span>
+<span class="nc" id="L556">                onToggle = {},</span>
+            )
+<span class="nc" id="L558">        }</span>
+<span class="nc" id="L559">        item {</span>
+<span class="nc" id="L560">            AnswerPanel(</span>
+<span class="nc" id="L561">                isCorrect = state.selectedLabels.sorted() == question.answerLabels.sorted(),</span>
+<span class="nc" id="L562">                explanation = question.explanation,</span>
+            )
+<span class="nc" id="L564">        }</span>
+<span class="nc" id="L565">        item {</span>
+<span class="nc" id="L566">            Button(</span>
+<span class="nc" id="L567">                onClick = { onEvent(SalesforceEvent.BackToExamResult) },</span>
+<span class="nc" id="L568">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L569">            ) {</span>
+<span class="nc" id="L570">                Text(&quot;Back to result&quot;)</span>
+<span class="nc" id="L571">            }</span>
+<span class="nc" id="L572">        }</span>
+<span class="nc" id="L573">    }</span>
+<span class="nc" id="L574">}</span>
+
+@Composable
+<span class="nc bnc" id="L577" title="All 8 branches missed.">private fun EmptySalesforceState(onEvent: (SalesforceEvent) -&gt; Unit) {</span>
+<span class="nc" id="L578">    Column(</span>
+<span class="nc" id="L579">        modifier = Modifier</span>
+<span class="nc" id="L580">            .fillMaxSize()</span>
+<span class="nc" id="L581">            .padding(16.dp),</span>
+<span class="nc" id="L582">        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),</span>
+<span class="nc" id="L583">        horizontalAlignment = Alignment.CenterHorizontally,</span>
+    ) {
+<span class="nc" id="L585">        Text(text = &quot;Salesforce questions are not ready yet.&quot;)</span>
+<span class="nc bnc" id="L586" title="All 2 branches missed.">        OutlinedButton(onClick = { onEvent(SalesforceEvent.BackToMain) }) {</span>
+<span class="nc" id="L587">            Text(&quot;Back&quot;)</span>
+<span class="nc" id="L588">        }</span>
+<span class="nc" id="L589">    }</span>
+<span class="nc" id="L590">}</span>
+
+private fun Double.cleanPercent(): String =
+<span class="nc bnc" id="L593" title="All 4 branches missed.">    if (this % 1.0 == 0.0) toInt().toString() else String.format(&quot;%.2f&quot;, this)</span>
+
+@PreviewLightDark
+@Composable
+<span class="nc bnc" id="L597" title="All 4 branches missed.">private fun SalesforceMainPreview() {</span>
+<span class="nc" id="L598">    TinkTheme {</span>
+<span class="nc" id="L599">        SalesforceScreen(</span>
+<span class="nc" id="L600">            state = SalesforceUiState(</span>
+<span class="nc" id="L601">                questions = previewQuestions,</span>
+<span class="nc" id="L602">                progress = mapOf(1 to SalesforceQuestionProgress(1, true, 1, 0, null)),</span>
+<span class="nc" id="L603">                remoteSummary = SalesforceProgressSummary(</span>
+<span class="nc" id="L604">                    totalQuestions = 153,</span>
+<span class="nc" id="L605">                    doneQuestions = 42,</span>
+<span class="nc" id="L606">                    practiceAttempts = 96,</span>
+<span class="nc" id="L607">                    examAttempts = 2,</span>
+<span class="nc" id="L608">                    latestExamScore = 72.31,</span>
+<span class="nc" id="L609">                    bestExamScore = 81.54,</span>
+                )
+            )
+        )
+<span class="nc" id="L613">    }</span>
+<span class="nc" id="L614">}</span>
+
+<span class="nc" id="L616">private val previewQuestions = listOf(</span>
+<span class="nc" id="L617">    SalesforceQuestion(</span>
+<span class="nc" id="L618">        id = 1,</span>
+<span class="nc" id="L619">        prompt = &quot;Which setup option should an administrator use for a private discussion space?&quot;,</span>
+<span class="nc" id="L620">        answerLabels = listOf(&quot;A&quot;),</span>
+<span class="nc" id="L621">        explanation = &quot;Use the option that hides the group from non-members while still allowing members to collaborate.&quot;,</span>
+<span class="nc" id="L622">        choices = listOf(</span>
+<span class="nc" id="L623">            SalesforceChoice(&quot;A&quot;, &quot;Chatter Unlisted Group&quot;),</span>
+<span class="nc" id="L624">            SalesforceChoice(&quot;B&quot;, &quot;Chatter Public Group&quot;),</span>
+<span class="nc" id="L625">            SalesforceChoice(&quot;C&quot;, &quot;Chatter Private Group&quot;),</span>
+<span class="nc" id="L626">            SalesforceChoice(&quot;D&quot;, &quot;Private Chatter Channel&quot;),</span>
+        )
+    )
+)
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesforceApi.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.salesforce</a> &gt; <span class="el_source">SalesforceApi.kt</span></div><h1>SalesforceApi.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.salesforce
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+
+interface SalesforceApi {
+    @GET(&quot;salesforce/progress&quot;)
+    suspend fun getProgress(): SalesforceProgressDto
+
+    @POST(&quot;salesforce/practice-sessions&quot;)
+    suspend fun postPracticeSession(
+        @Body payload: SalesforcePracticeSessionRequest,
+    ): SalesforcePracticeSessionResponseDto
+
+    @POST(&quot;salesforce/exam-attempts&quot;)
+    suspend fun postExamAttempt(
+        @Body payload: SalesforceExamAttemptRequest,
+    ): SalesforceExamAttemptDto
+}
+
+<span class="nc bnc" id="L24" title="All 2 branches missed.">@Serializable</span>
+<span class="nc" id="L25">data class SalesforceAnswerEventRequest(</span>
+<span class="nc" id="L26">    @SerialName(&quot;question_id&quot;)</span>
+<span class="nc" id="L27">    val questionId: Int,</span>
+<span class="nc" id="L28">    val mode: String,</span>
+<span class="nc" id="L29">    @SerialName(&quot;selected_labels&quot;)</span>
+<span class="nc" id="L30">    val selectedLabels: List&lt;String&gt;,</span>
+<span class="nc" id="L31">    @SerialName(&quot;correct_labels&quot;)</span>
+<span class="nc" id="L32">    val correctLabels: List&lt;String&gt;,</span>
+<span class="nc" id="L33">    val correct: Boolean,</span>
+<span class="nc" id="L34">    @SerialName(&quot;answered_at&quot;)</span>
+<span class="nc" id="L35">    val answeredAt: String,</span>
+)
+
+<span class="nc bnc" id="L38" title="All 2 branches missed.">@Serializable</span>
+<span class="nc" id="L39">data class SalesforcePracticeSessionRequest(</span>
+<span class="nc" id="L40">    val events: List&lt;SalesforceAnswerEventRequest&gt;,</span>
+)
+
+<span class="nc bnc" id="L43" title="All 2 branches missed.">@Serializable</span>
+<span class="nc" id="L44">data class SalesforcePracticeSessionResponseDto(</span>
+<span class="nc" id="L45">    @SerialName(&quot;accepted_events&quot;)</span>
+<span class="nc" id="L46">    val acceptedEvents: Int,</span>
+<span class="nc" id="L47">    val progress: SalesforceProgressDto,</span>
+)
+
+<span class="nc bnc" id="L50" title="All 10 branches missed.">@Serializable</span>
+<span class="nc" id="L51">data class SalesforceExamAttemptRequest(</span>
+<span class="nc" id="L52">    @SerialName(&quot;started_at&quot;)</span>
+<span class="nc" id="L53">    val startedAt: String? = null,</span>
+<span class="nc" id="L54">    @SerialName(&quot;finished_at&quot;)</span>
+<span class="nc" id="L55">    val finishedAt: String,</span>
+<span class="nc" id="L56">    val events: List&lt;SalesforceAnswerEventRequest&gt;,</span>
+<span class="nc" id="L57">)</span>
+
+<span class="nc bnc" id="L59" title="All 10 branches missed.">@Serializable</span>
+<span class="nc" id="L60">data class SalesforceExamAttemptDto(</span>
+<span class="nc" id="L61">    val id: Int,</span>
+<span class="nc" id="L62">    @SerialName(&quot;created_at&quot;)</span>
+<span class="nc" id="L63">    val createdAt: String,</span>
+<span class="nc" id="L64">    @SerialName(&quot;started_at&quot;)</span>
+<span class="nc" id="L65">    val startedAt: String? = null,</span>
+<span class="nc" id="L66">    @SerialName(&quot;finished_at&quot;)</span>
+<span class="nc" id="L67">    val finishedAt: String,</span>
+<span class="nc" id="L68">    @SerialName(&quot;total_count&quot;)</span>
+<span class="nc" id="L69">    val totalCount: Int,</span>
+<span class="nc" id="L70">    @SerialName(&quot;correct_count&quot;)</span>
+<span class="nc" id="L71">    val correctCount: Int,</span>
+<span class="nc" id="L72">    @SerialName(&quot;score_percent&quot;)</span>
+<span class="nc" id="L73">    val scorePercent: Double,</span>
+<span class="nc" id="L74">    val results: List&lt;SalesforceAnswerEventRequest&gt;,</span>
+<span class="nc" id="L75">)</span>
+
+<span class="nc bnc" id="L77" title="All 10 branches missed.">@Serializable</span>
+<span class="nc" id="L78">data class SalesforceQuestionProgressDto(</span>
+<span class="nc" id="L79">    @SerialName(&quot;question_id&quot;)</span>
+<span class="nc" id="L80">    val questionId: Int,</span>
+<span class="nc" id="L81">    val done: Boolean,</span>
+<span class="nc" id="L82">    @SerialName(&quot;correct_count&quot;)</span>
+<span class="nc" id="L83">    val correctCount: Int,</span>
+<span class="nc" id="L84">    @SerialName(&quot;incorrect_count&quot;)</span>
+<span class="nc" id="L85">    val incorrectCount: Int,</span>
+<span class="nc" id="L86">    @SerialName(&quot;last_answered_at&quot;)</span>
+<span class="nc" id="L87">    val lastAnsweredAt: String? = null,</span>
+<span class="nc" id="L88">)</span>
+
+<span class="nc bnc" id="L90" title="All 18 branches missed.">@Serializable</span>
+<span class="nc" id="L91">data class SalesforceProgressDto(</span>
+<span class="nc" id="L92">    @SerialName(&quot;total_questions&quot;)</span>
+<span class="nc" id="L93">    val totalQuestions: Int,</span>
+<span class="nc" id="L94">    @SerialName(&quot;done_questions&quot;)</span>
+<span class="nc" id="L95">    val doneQuestions: Int,</span>
+<span class="nc" id="L96">    @SerialName(&quot;practice_attempts&quot;)</span>
+<span class="nc" id="L97">    val practiceAttempts: Int,</span>
+<span class="nc" id="L98">    @SerialName(&quot;exam_attempts&quot;)</span>
+<span class="nc" id="L99">    val examAttempts: Int,</span>
+<span class="nc" id="L100">    @SerialName(&quot;latest_exam_score&quot;)</span>
+<span class="nc" id="L101">    val latestExamScore: Double? = null,</span>
+<span class="nc" id="L102">    @SerialName(&quot;best_exam_score&quot;)</span>
+<span class="nc" id="L103">    val bestExamScore: Double? = null,</span>
+<span class="nc" id="L104">    val questions: List&lt;SalesforceQuestionProgressDto&gt;,</span>
+<span class="nc" id="L105">)</span>
+
+fun SalesforceAnswerRecord.toRequest(): SalesforceAnswerEventRequest =
+<span class="nc" id="L108">    SalesforceAnswerEventRequest(</span>
+<span class="nc" id="L109">        questionId = questionId,</span>
+<span class="nc" id="L110">        mode = mode.wireValue,</span>
+<span class="nc" id="L111">        selectedLabels = selectedLabels.sorted(),</span>
+<span class="nc" id="L112">        correctLabels = correctLabels.sorted(),</span>
+<span class="nc" id="L113">        correct = correct,</span>
+<span class="nc" id="L114">        answeredAt = answeredAt,</span>
+<span class="nc" id="L115">    )</span>
+
+fun SalesforceQuestionProgressDto.toEntity(): SalesforceLocalProgressEntity =
+<span class="nc" id="L118">    SalesforceLocalProgressEntity(</span>
+<span class="nc" id="L119">        questionId = questionId,</span>
+<span class="nc" id="L120">        done = done,</span>
+<span class="nc" id="L121">        correctCount = correctCount,</span>
+<span class="nc" id="L122">        incorrectCount = incorrectCount,</span>
+<span class="nc" id="L123">        lastAnsweredAt = lastAnsweredAt,</span>
+<span class="nc" id="L124">    )</span>
+
+fun SalesforceProgressDto.toSummary(): SalesforceProgressSummary =
+<span class="nc" id="L127">    SalesforceProgressSummary(</span>
+<span class="nc" id="L128">        totalQuestions = totalQuestions,</span>
+<span class="nc" id="L129">        doneQuestions = doneQuestions,</span>
+<span class="nc" id="L130">        practiceAttempts = practiceAttempts,</span>
+<span class="nc" id="L131">        examAttempts = examAttempts,</span>
+<span class="nc" id="L132">        latestExamScore = latestExamScore,</span>
+<span class="nc" id="L133">        bestExamScore = bestExamScore,</span>
+<span class="nc" id="L134">    )</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

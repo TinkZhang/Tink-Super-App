@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LotteryViewModel.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.lottery</a> &gt; <span class="el_source">LotteryViewModel.kt</span></div><h1>LotteryViewModel.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.lottery
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.ui.components.AppSnackbarBus
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import java.time.Instant
+import javax.inject.Inject
+
+sealed interface LotteryEvent {
+    object Refresh : LotteryEvent
+    object UseCapturedTicketPreview : LotteryEvent
+    object DismissReview : LotteryEvent
+    object RetakePhoto : LotteryEvent
+    object SaveDraft : LotteryEvent
+    object DismissHero : LotteryEvent
+<span class="nc" id="L26">    data class UpdateDraftIssueId(val value: String) : LotteryEvent</span>
+<span class="fc" id="L27">    data class UpdateDraftFrontNumbers(val value: String) : LotteryEvent</span>
+<span class="nc" id="L28">    data class UpdateDraftBackNumbers(val value: String) : LotteryEvent</span>
+<span class="nc" id="L29">    data class UpdateDraftRevealTime(val value: String) : LotteryEvent</span>
+<span class="fc" id="L30">    data class CheckLottery(val id: Int) : LotteryEvent</span>
+<span class="nc" id="L31">    data class DeleteLottery(val id: Int) : LotteryEvent</span>
+}
+
+enum class LotteryTicketStatus {
+<span class="fc" id="L35">    Pending,</span>
+<span class="fc" id="L36">    Ready,</span>
+<span class="fc" id="L37">    Revealed,</span>
+}
+
+<span class="fc" id="L40">data class LotteryTicketUiState(</span>
+<span class="fc" id="L41">    val ticket: LotteryTicket,</span>
+<span class="fc" id="L42">    val status: LotteryTicketStatus,</span>
+<span class="pc" id="L43">    val revealTimeText: String,</span>
+<span class="pc" id="L44">    val checkedTimeText: String?,</span>
+<span class="fc" id="L45">    val matchSummary: LotteryMatchSummary?,</span>
+) {
+<span class="nc bnc" id="L47" title="All 2 branches missed.">    val canReveal: Boolean get() = status == LotteryTicketStatus.Ready</span>
+}
+
+<span class="fc" id="L50">data class LotteryStatsUiState(</span>
+<span class="fc" id="L51">    val totalTickets: Int,</span>
+<span class="fc" id="L52">    val pendingTickets: Int,</span>
+<span class="fc" id="L53">    val revealedTickets: Int,</span>
+<span class="fc" id="L54">    val winningTickets: Int,</span>
+<span class="fc" id="L55">    val bestPrizeTier: String,</span>
+<span class="pc" id="L56">    val prizeDistribution: List&lt;Pair&lt;String, Int&gt;&gt;,</span>
+)
+
+<span class="fc" id="L59">data class LotteryUiState(</span>
+<span class="fc" id="L60">    val isLoading: Boolean,</span>
+<span class="fc" id="L61">    val activeTicket: LotteryTicketUiState?,</span>
+<span class="pc" id="L62">    val historyTickets: List&lt;LotteryTicketUiState&gt;,</span>
+<span class="fc" id="L63">    val stats: LotteryStatsUiState,</span>
+<span class="fc" id="L64">    val draft: LotteryDraft?,</span>
+<span class="fc" id="L65">    val luckyOutcome: LotteryCheckOutcome?,</span>
+)
+
+<span class="fc" id="L68">data class LotteryState(</span>
+<span class="fc" id="L69">    val tickets: List&lt;LotteryTicket&gt; = emptyList(),</span>
+<span class="pc" id="L70">    val isLoading: Boolean = false,</span>
+<span class="fc" id="L71">    val draft: LotteryDraft? = null,</span>
+<span class="pc" id="L72">    val luckyOutcome: LotteryCheckOutcome? = null,</span>
+<span class="fc" id="L73">) {</span>
+<span class="fc" id="L74">    fun toUiState(now: Instant = Instant.now()): LotteryUiState {</span>
+<span class="fc" id="L75">        val ticketStates = tickets</span>
+<span class="fc" id="L76">            .sortedWith(compareBy&lt;LotteryTicket&gt; { it.checked }.thenBy { it.revealTime }.thenBy { it.id })</span>
+<span class="fc" id="L77">            .map { it.toUiState(now) }</span>
+<span class="fc bfc" id="L78" title="All 4 branches covered.">        val activeTicket = ticketStates.firstOrNull { it.status != LotteryTicketStatus.Revealed }</span>
+<span class="fc" id="L79">            ?: ticketStates.firstOrNull()</span>
+
+<span class="fc" id="L81">        return LotteryUiState(</span>
+<span class="fc" id="L82">            isLoading = isLoading,</span>
+<span class="fc" id="L83">            activeTicket = activeTicket,</span>
+<span class="fc" id="L84">            historyTickets = tickets.sortedByDescending { it.revealTime }.map { it.toUiState(now) },</span>
+<span class="fc" id="L85">            stats = tickets.toStats(now),</span>
+<span class="fc" id="L86">            draft = draft,</span>
+<span class="fc" id="L87">            luckyOutcome = luckyOutcome,</span>
+        )
+    }
+}
+
+<span class="fc" id="L92">@HiltViewModel</span>
+<span class="fc" id="L93">class LotteryViewModel @Inject constructor(</span>
+<span class="fc" id="L94">    private val repository: LotteryRepository,</span>
+) : ViewModel() {
+<span class="fc" id="L96">    private val _state = MutableStateFlow(LotteryState())</span>
+<span class="fc" id="L97">    val uiState = _state.map { it.toUiState() }</span>
+<span class="fc" id="L98">        .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())</span>
+
+    private var refreshJob: Job? = null
+
+<span class="fc" id="L102">    init {</span>
+<span class="fc" id="L103">        refreshHistory()</span>
+<span class="fc" id="L104">    }</span>
+
+    fun onEvent(event: LotteryEvent) {
+<span class="fc" id="L107">        when (event) {</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">            LotteryEvent.Refresh -&gt; refreshHistory()</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">            LotteryEvent.UseCapturedTicketPreview -&gt; startParsedDraft()</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">            LotteryEvent.DismissReview -&gt; _state.update { it.copy(draft = null) }</span>
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">            LotteryEvent.RetakePhoto -&gt; _state.update { it.copy(draft = null) }</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">            LotteryEvent.SaveDraft -&gt; saveDraft()</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">            LotteryEvent.DismissHero -&gt; _state.update { it.copy(luckyOutcome = null) }</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">            is LotteryEvent.UpdateDraftIssueId -&gt; updateDraft { it.copy(issueId = event.value, parseError = null) }</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">            is LotteryEvent.UpdateDraftFrontNumbers -&gt; updateDraft { it.copy(frontNumbersText = event.value, parseError = null) }</span>
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">            is LotteryEvent.UpdateDraftBackNumbers -&gt; updateDraft { it.copy(backNumbersText = event.value, parseError = null) }</span>
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">            is LotteryEvent.UpdateDraftRevealTime -&gt; updateDraft { it.copy(revealTimeText = event.value, parseError = null) }</span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">            is LotteryEvent.CheckLottery -&gt; checkLottery(event.id)</span>
+<span class="nc" id="L119">            is LotteryEvent.DeleteLottery -&gt; deleteLottery(event.id)</span>
+        }
+<span class="fc" id="L121">    }</span>
+
+    private fun refreshHistory() {
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        refreshJob?.cancel()</span>
+<span class="fc" id="L125">        refreshJob = repository.getLotteryHistory()</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="fc" id="L127">                when (result) {</span>
+<span class="fc bfc" id="L128" title="All 2 branches covered.">                    is ApiResult.Loading -&gt; _state.update { it.copy(isLoading = true) }</span>
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">                    is ApiResult.Success -&gt; _state.update {</span>
+<span class="fc" id="L130">                        it.copy(tickets = result.data, isLoading = false)</span>
+                    }
+<span class="nc" id="L132">                    is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L133">                        it.copy(isLoading = false)</span>
+<span class="nc" id="L134">                    }.also {</span>
+<span class="nc" id="L135">                        AppSnackbarBus.showApiFailure(onRetry = ::refreshHistory)</span>
+<span class="nc" id="L136">                    }</span>
+                }
+<span class="fc" id="L138">            }</span>
+<span class="fc" id="L139">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L140">    }</span>
+
+    private fun startParsedDraft() {
+<span class="fc" id="L143">        _state.update {</span>
+<span class="fc" id="L144">            it.copy(</span>
+<span class="fc" id="L145">                draft = LotteryDraft(</span>
+<span class="fc" id="L146">                    issueId = &quot;21126&quot;,</span>
+<span class="fc" id="L147">                    frontNumbersText = &quot;01 11 12 34 35&quot;,</span>
+<span class="fc" id="L148">                    backNumbersText = &quot;09 12&quot;,</span>
+<span class="fc" id="L149">                    revealTimeText = &quot;2021-11-03T12:30:00Z&quot;,</span>
+                )
+<span class="fc" id="L151">            )</span>
+        }
+<span class="fc" id="L153">    }</span>
+
+    private fun updateDraft(update: (LotteryDraft) -&gt; LotteryDraft) {
+<span class="fc" id="L156">        _state.update { state -&gt;</span>
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">            state.copy(draft = state.draft?.let(update))</span>
+        }
+<span class="fc" id="L159">    }</span>
+
+    private fun saveDraft() {
+<span class="fc" id="L162">        val request = try {</span>
+<span class="pc bpc" id="L163" title="2 of 4 branches missed.">            _state.value.draft?.toCreateRequest() ?: return</span>
+<span class="fc" id="L164">        } catch (error: IllegalArgumentException) {</span>
+<span class="pc bpc" id="L165" title="1 of 2 branches missed.">            updateDraft { it.copy(parseError = error.message ?: &quot;Lottery details are invalid.&quot;) }</span>
+<span class="fc" id="L166">            return</span>
+        }
+
+<span class="fc" id="L169">        repository.createLottery(request)</span>
+<span class="pc bpc" id="L170" title="1 of 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="fc" id="L171">                when (result) {</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">                    is ApiResult.Loading -&gt; _state.update { it.copy(isLoading = true) }</span>
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">                    is ApiResult.Success -&gt; {</span>
+<span class="fc" id="L174">                        _state.update { it.copy(draft = null, isLoading = false) }</span>
+<span class="fc" id="L175">                        refreshHistory()</span>
+                    }
+<span class="nc" id="L177">                    is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L178">                        it.copy(isLoading = false)</span>
+<span class="nc" id="L179">                    }.also {</span>
+<span class="nc" id="L180">                        AppSnackbarBus.showApiFailure(onRetry = ::saveDraft)</span>
+<span class="nc" id="L181">                    }</span>
+                }
+<span class="fc" id="L183">            }</span>
+<span class="fc" id="L184">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L185">    }</span>
+
+    private fun checkLottery(id: Int) {
+<span class="fc" id="L188">        repository.checkLottery(id)</span>
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="fc" id="L190">                when (result) {</span>
+<span class="fc bfc" id="L191" title="All 2 branches covered.">                    is ApiResult.Loading -&gt; _state.update { it.copy(isLoading = true) }</span>
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">                    is ApiResult.Success -&gt; _state.update { state -&gt;</span>
+<span class="fc" id="L193">                        val checkedTicket = result.data.lottery</span>
+<span class="fc" id="L194">                        state.copy(</span>
+<span class="fc" id="L195">                            tickets = state.tickets.map { ticket -&gt;</span>
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">                                if (ticket.id == checkedTicket.id) checkedTicket else ticket</span>
+                            },
+<span class="fc" id="L198">                            isLoading = false,</span>
+<span class="pc bpc" id="L199" title="2 of 4 branches missed.">                            luckyOutcome = result.data.takeIf { it.prizeTier != &quot;未中奖&quot; },</span>
+<span class="fc" id="L200">                        )</span>
+                    }
+<span class="nc" id="L202">                    is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L203">                        it.copy(isLoading = false)</span>
+<span class="nc" id="L204">                    }.also {</span>
+<span class="nc" id="L205">                        AppSnackbarBus.showApiFailure(onRetry = { checkLottery(id) })</span>
+<span class="nc" id="L206">                    }</span>
+                }
+<span class="fc" id="L208">            }</span>
+<span class="fc" id="L209">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L210">    }</span>
+
+    private fun deleteLottery(id: Int) {
+<span class="nc" id="L213">        repository.deleteLottery(id)</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">            .onEach { result -&gt;</span>
+<span class="nc" id="L215">                when (result) {</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">                    is ApiResult.Loading -&gt; _state.update { it.copy(isLoading = true) }</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">                    is ApiResult.Success -&gt; refreshHistory()</span>
+<span class="nc" id="L218">                    is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L219">                        it.copy(isLoading = false)</span>
+<span class="nc" id="L220">                    }.also {</span>
+<span class="nc" id="L221">                        AppSnackbarBus.showApiFailure(onRetry = { deleteLottery(id) })</span>
+<span class="nc" id="L222">                    }</span>
+                }
+<span class="nc" id="L224">            }</span>
+<span class="nc" id="L225">            .launchIn(viewModelScope)</span>
+<span class="nc" id="L226">    }</span>
+}
+
+private fun LotteryTicket.toUiState(now: Instant): LotteryTicketUiState {
+<span class="fc" id="L230">    val status = when {</span>
+<span class="fc bfc" id="L231" title="All 2 branches covered.">        checked -&gt; LotteryTicketStatus.Revealed</span>
+<span class="fc bfc" id="L232" title="All 2 branches covered.">        now.isBefore(revealTime) -&gt; LotteryTicketStatus.Pending</span>
+<span class="fc" id="L233">        else -&gt; LotteryTicketStatus.Ready</span>
+    }
+<span class="fc" id="L235">    return LotteryTicketUiState(</span>
+<span class="fc" id="L236">        ticket = this,</span>
+<span class="fc" id="L237">        status = status,</span>
+<span class="fc" id="L238">        revealTimeText = revealTime.toLotteryDateTimeText(),</span>
+<span class="fc bfc" id="L239" title="All 2 branches covered.">        checkedTimeText = checkedAt?.toLotteryDateTimeText(),</span>
+<span class="fc" id="L240">        matchSummary = matchSummary(),</span>
+    )
+}
+
+private fun List&lt;LotteryTicket&gt;.toStats(now: Instant): LotteryStatsUiState {
+<span class="fc" id="L245">    val ticketStates = map { it.toUiState(now) }</span>
+<span class="fc bfc" id="L246" title="All 4 branches covered.">    val winningTickets = ticketStates.count { it.matchSummary?.isWinning == true }</span>
+<span class="fc" id="L247">    val distribution = ticketStates</span>
+<span class="fc bfc" id="L248" title="All 2 branches covered.">        .mapNotNull { it.matchSummary?.prizeTier }</span>
+<span class="fc" id="L249">        .groupingBy { it }</span>
+<span class="fc" id="L250">        .eachCount()</span>
+<span class="fc" id="L251">        .toList()</span>
+<span class="fc" id="L252">        .sortedBy { prizeRank(it.first) }</span>
+
+<span class="fc" id="L254">    return LotteryStatsUiState(</span>
+<span class="fc" id="L255">        totalTickets = size,</span>
+<span class="fc bfc" id="L256" title="All 2 branches covered.">        pendingTickets = ticketStates.count { it.status == LotteryTicketStatus.Pending },</span>
+<span class="fc bfc" id="L257" title="All 2 branches covered.">        revealedTickets = ticketStates.count { it.status == LotteryTicketStatus.Revealed },</span>
+<span class="fc" id="L258">        winningTickets = winningTickets,</span>
+<span class="pc bpc" id="L259" title="1 of 4 branches missed.">        bestPrizeTier = distribution.minByOrNull { prizeRank(it.first) }?.first ?: &quot;暂无&quot;,</span>
+<span class="fc" id="L260">        prizeDistribution = distribution,</span>
+    )
+}
+
+private fun prizeRank(tier: String): Int =
+<span class="pc bpc" id="L265" title="9 of 11 branches missed.">    when (tier) {</span>
+<span class="nc" id="L266">        &quot;一等奖&quot; -&gt; 1</span>
+<span class="nc" id="L267">        &quot;二等奖&quot; -&gt; 2</span>
+<span class="nc" id="L268">        &quot;三等奖&quot; -&gt; 3</span>
+<span class="nc" id="L269">        &quot;四等奖&quot; -&gt; 4</span>
+<span class="fc" id="L270">        &quot;五等奖&quot; -&gt; 5</span>
+<span class="nc" id="L271">        &quot;六等奖&quot; -&gt; 6</span>
+<span class="nc" id="L272">        &quot;七等奖&quot; -&gt; 7</span>
+<span class="nc" id="L273">        &quot;八等奖&quot; -&gt; 8</span>
+<span class="nc" id="L274">        &quot;九等奖&quot; -&gt; 9</span>
+<span class="fc" id="L275">        &quot;未中奖&quot; -&gt; 10</span>
+<span class="nc" id="L276">        else -&gt; 99</span>
+<span class="fc" id="L277">    }</span>
+
+<span class="fc" id="L279">private fun Instant.toLotteryDateTimeText(): String = toString()</span>
+<span class="fc" id="L280">    .replace(&quot;T&quot;, &quot; &quot;)</span>
+<span class="fc" id="L281">    .removeSuffix(&quot;Z&quot;)</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
