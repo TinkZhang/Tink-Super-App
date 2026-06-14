@@ -23,6 +23,7 @@ sealed interface SalesforceEvent {
     object StartExam : SalesforceEvent
     object SubmitPracticeAnswer : SalesforceEvent
     object NextPracticeQuestion : SalesforceEvent
+    object MarkPracticeQuestionDone : SalesforceEvent
     object FinishPractice : SalesforceEvent
     object NextExamQuestion : SalesforceEvent
     object BackToMain : SalesforceEvent
@@ -51,6 +52,7 @@ data class SalesforceUiState(
     val selectedLabels: Set<String> = emptySet(),
     val answerRevealed: Boolean = false,
     val practiceEvents: List<SalesforceAnswerRecord> = emptyList(),
+    val practiceDoneQuestionIds: Set<Int> = emptySet(),
     val examQuestions: List<SalesforceQuestion> = emptyList(),
     val examEvents: List<SalesforceAnswerRecord> = emptyList(),
     val examStartedAt: String? = null,
@@ -111,6 +113,7 @@ class SalesforceViewModel @Inject constructor(
             is SalesforceEvent.ToggleAnswer -> toggleAnswer(event.label)
             SalesforceEvent.SubmitPracticeAnswer -> submitPracticeAnswer()
             SalesforceEvent.NextPracticeQuestion -> moveToNextPracticeQuestion()
+            SalesforceEvent.MarkPracticeQuestionDone -> markPracticeQuestionDone()
             SalesforceEvent.FinishPractice -> finishPractice()
             SalesforceEvent.NextExamQuestion -> nextExamQuestion()
             SalesforceEvent.BackToMain -> finishPractice()
@@ -143,6 +146,7 @@ class SalesforceViewModel @Inject constructor(
                 selectedLabels = emptySet(),
                 answerRevealed = false,
                 practiceEvents = emptyList(),
+                practiceDoneQuestionIds = emptySet(),
             )
         }
     }
@@ -199,12 +203,7 @@ class SalesforceViewModel @Inject constructor(
     private fun moveToNextPracticeQuestion() {
         val state = _state.value
         val current = state.currentQuestion ?: return
-        val nextQuestion = state.questions
-            .filter { it.id > current.id }
-            .firstOrNull { state.progress[it.id]?.done != true }
-            ?: state.questions.firstOrNull { state.progress[it.id]?.done != true && it.id != current.id }
-            ?: state.questions.firstOrNull { it.id > current.id }
-            ?: state.questions.firstOrNull()
+        val nextQuestion = state.nextPracticeQuestionAfter(current.id)
             ?: return
 
         _state.update {
@@ -217,8 +216,32 @@ class SalesforceViewModel @Inject constructor(
         }
     }
 
+    private fun markPracticeQuestionDone() {
+        val questionId = _state.value.currentQuestion?.id ?: return
+        viewModelScope.launch {
+            repository.markLocalDone(questionId)
+            _state.update { state ->
+                state.copy(practiceDoneQuestionIds = state.practiceDoneQuestionIds + questionId)
+            }
+            val nextQuestion = _state.value.nextPracticeQuestionAfter(questionId, extraDoneQuestionIds = setOf(questionId))
+            if (nextQuestion == null) {
+                finishPractice()
+            } else {
+                _state.update {
+                    it.copy(
+                        currentQuestion = nextQuestion,
+                        currentPosition = nextQuestion.practicePosition(it.questions),
+                        selectedLabels = emptySet(),
+                        answerRevealed = false,
+                    )
+                }
+            }
+        }
+    }
+
     private fun finishPractice() {
         val events = _state.value.practiceEvents
+        val doneQuestionIds = _state.value.practiceDoneQuestionIds.toList()
         _state.update {
             it.copy(
                 mode = SalesforceViewMode.Main,
@@ -226,10 +249,11 @@ class SalesforceViewModel @Inject constructor(
                 selectedLabels = emptySet(),
                 answerRevealed = false,
                 practiceEvents = emptyList(),
+                practiceDoneQuestionIds = emptySet(),
             )
         }
-        if (events.isEmpty()) return
-        repository.postPracticeSession(events)
+        if (events.isEmpty() && doneQuestionIds.isEmpty()) return
+        repository.postPracticeSession(events, doneQuestionIds)
             .onEach(::handleSummaryResult)
             .launchIn(viewModelScope)
     }
@@ -333,3 +357,18 @@ class SalesforceViewModel @Inject constructor(
 
 private fun SalesforceQuestion.practicePosition(questions: List<SalesforceQuestion>): Int =
     questions.indexOfFirst { it.id == id }.takeIf { it >= 0 }?.plus(1) ?: id
+
+private fun SalesforceUiState.nextPracticeQuestionAfter(
+    currentQuestionId: Int,
+    extraDoneQuestionIds: Set<Int> = emptySet(),
+): SalesforceQuestion? {
+    fun isPracticeCandidate(question: SalesforceQuestion): Boolean =
+        question.id != currentQuestionId &&
+            progress[question.id]?.done != true &&
+            question.id !in extraDoneQuestionIds
+
+    return questions
+        .filter { it.id > currentQuestionId }
+        .firstOrNull(::isPracticeCandidate)
+        ?: questions.firstOrNull(::isPracticeCandidate)
+}

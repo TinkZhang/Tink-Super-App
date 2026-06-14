@@ -292,6 +292,16 @@ private fun SalesforceQuestionSessionScreen(
                         }
                     )
                 }
+                if (mode == SalesforceMode.Practice) {
+                    Button(
+                        onClick = { onEvent(SalesforceEvent.MarkPracticeQuestionDone) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("salesforce_done_button"),
+                    ) {
+                        Text("DONE")
+                    }
+                }
             }
         }
     }
@@ -432,7 +442,11 @@ private fun AnswerPanel(
                     contentDescription = null,
                 )
                 Text(
-                    text = if (isCorrect) "Correct. Marked DONE." else "Not yet. Keep this one in rotation.",
+                    text = if (isCorrect) {
+                        "Correct. Use DONE when you have mastered it."
+                    } else {
+                        "Not yet. Keep this one in rotation."
+                    },
                     style = MaterialTheme.typography.titleMedium,
                 )
             }

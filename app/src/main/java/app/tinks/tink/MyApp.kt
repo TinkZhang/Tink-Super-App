@@ -2,6 +2,7 @@ package app.tinks.tink
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -37,12 +38,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import app.tinks.tink.book.BookScreen
+import app.tinks.tink.geography.GeographyScreen
 import app.tinks.tink.haircut.HaircutScreen
 import app.tinks.tink.lottery.LotteryHistoryStatsScreen
 import app.tinks.tink.lottery.LotteryScreen
@@ -51,6 +55,7 @@ import app.tinks.tink.navigation.MyNavKey
 import app.tinks.tink.navigation.ScreenA
 import app.tinks.tink.navigation.ScreenB
 import app.tinks.tink.navigation.ScreenBooks
+import app.tinks.tink.navigation.ScreenGeography
 import app.tinks.tink.navigation.ScreenHair
 import app.tinks.tink.navigation.ScreenLearntZi
 import app.tinks.tink.navigation.ScreenLeeter
@@ -150,7 +155,18 @@ fun MyApp(
                 allTopDestinations.forEach { dest ->
                     NavigationDrawerItem(
                         label = { Text(dest.label) },
-                        icon = { Icon(dest.icon, dest.label) },
+                        icon = {
+                            if (dest is ScreenBooks) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_readkeeperlogo),
+                                    contentDescription = dest.label,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = Color.Unspecified,
+                                )
+                            } else {
+                                Icon(dest.icon, dest.label)
+                            }
+                        },
                         selected = currentTopDestination == dest,
                         onClick = {
                             onNavigate(dest)
@@ -277,6 +293,7 @@ fun MyApp(
                         )
                         is ScreenLotteryHistoryStats -> LotteryHistoryStatsScreen(hiltViewModel())
                         is ScreenSalesforce -> SalesforceScreen(hiltViewModel())
+                        is ScreenGeography -> GeographyScreen()
                         is ScreenStoryList -> StoryListScreen(
                             hiltViewModel(),
                             onStoryClick = { story ->
@@ -307,6 +324,7 @@ private fun MyNavKey.drawerTestTag(): String = when (this) {
     ScreenSalesforce -> "drawer_destination_salesforce"
     ScreenLotteryHistoryStats -> "drawer_destination_lottery_history_stats"
     ScreenSettings -> "drawer_destination_settings"
+    ScreenGeography -> "drawer_destination_geography"
     ScreenLearntZi -> "drawer_destination_learnt_zi"
     ScreenStoryList -> "drawer_destination_story_list"
     is ScreenStoryDetail -> "drawer_destination_story_detail"

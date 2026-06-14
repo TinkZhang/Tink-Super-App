@@ -34,7 +34,27 @@ class SalesforceViewModelTest {
 
         assertEquals(SalesforceViewMode.Main, viewModel.uiState.value.mode)
         assertEquals(1, repository.practicePosts.single().size)
+        assertTrue(repository.donePosts.single().isEmpty())
         assertTrue(repository.localEvents.single().correct)
+        assertFalse(viewModel.uiState.value.progress[1]?.done == true)
+    }
+
+    @Test
+    fun practiceDone_marksQuestionMasteredAndSyncsAtFinish() = runTest {
+        val repository = FakeSalesforceRepository(questionCount = 2)
+        val viewModel = SalesforceViewModel(repository)
+
+        viewModel.onEvent(SalesforceEvent.StartPractice)
+        viewModel.onEvent(SalesforceEvent.MarkPracticeQuestionDone)
+
+        assertEquals(2, viewModel.uiState.value.currentQuestion?.id)
+        assertTrue(viewModel.uiState.value.progress[1]?.done == true)
+        assertTrue(repository.practicePosts.isEmpty())
+
+        viewModel.onEvent(SalesforceEvent.FinishPractice)
+
+        assertTrue(repository.practicePosts.single().isEmpty())
+        assertEquals(listOf(1), repository.donePosts.single())
     }
 
     @Test
@@ -65,6 +85,7 @@ class SalesforceViewModelTest {
 
         val localEvents = mutableListOf<SalesforceAnswerRecord>()
         val practicePosts = mutableListOf<List<SalesforceAnswerRecord>>()
+        val donePosts = mutableListOf<List<Int>>()
         val examPosts = mutableListOf<List<SalesforceAnswerRecord>>()
 
         override fun observeQuestions(): Flow<List<SalesforceQuestion>> = questions
@@ -77,7 +98,7 @@ class SalesforceViewModelTest {
             progress.value = progress.value + (
                 event.questionId to SalesforceQuestionProgress(
                     questionId = event.questionId,
-                    done = (current?.done == true) || event.correct,
+                    done = current?.done == true,
                     correctCount = (current?.correctCount ?: 0) + if (event.correct) 1 else 0,
                     incorrectCount = (current?.incorrectCount ?: 0) + if (event.correct) 0 else 1,
                     lastAnsweredAt = event.answeredAt,
@@ -85,11 +106,28 @@ class SalesforceViewModelTest {
                 )
         }
 
+        override suspend fun markLocalDone(questionId: Int) {
+            val current = progress.value[questionId]
+            progress.value = progress.value + (
+                questionId to SalesforceQuestionProgress(
+                    questionId = questionId,
+                    done = true,
+                    correctCount = current?.correctCount ?: 0,
+                    incorrectCount = current?.incorrectCount ?: 0,
+                    lastAnsweredAt = current?.lastAnsweredAt,
+                )
+                )
+        }
+
         override fun syncRemoteProgress(): Flow<ApiResult<SalesforceProgressSummary>> =
             flowOf(ApiResult.Loading, ApiResult.Success(SalesforceProgressSummary(totalQuestions = questions.value.size)))
 
-        override fun postPracticeSession(events: List<SalesforceAnswerRecord>): Flow<ApiResult<SalesforceProgressSummary>> {
+        override fun postPracticeSession(
+            events: List<SalesforceAnswerRecord>,
+            doneQuestionIds: List<Int>,
+        ): Flow<ApiResult<SalesforceProgressSummary>> {
             practicePosts.add(events)
+            donePosts.add(doneQuestionIds)
             return flowOf(ApiResult.Loading, ApiResult.Success(SalesforceProgressSummary(totalQuestions = questions.value.size)))
         }
 

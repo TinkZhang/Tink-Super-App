@@ -13,30 +13,52 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.Serializable
+import androidx.navigation3.runtime.NavKey
 import javax.inject.Inject
 
-sealed interface BooksScreenState {
+sealed interface BooksScreenState : NavKey {
+    @Serializable
     data object Home : BooksScreenState
+
+    @Serializable
     data class List(val state: BookState) : BooksScreenState
+
+    @Serializable
     data object Search : BooksScreenState
+
+    @Serializable
+    data object YearlySummary : BooksScreenState
+
+    @Serializable
+    data object SummaryImage : BooksScreenState
+
+    @Serializable
     data class Detail(val bookId: Long) : BooksScreenState
+
+    @Serializable
     data class Notes(val bookId: Long) : BooksScreenState
 }
 
 sealed interface BookEvent {
     data class OpenList(val state: BookState) : BookEvent
+    data class OpenArchivedStatus(val status: ArchiveStatus?) : BookEvent
     data object OpenHome : BookEvent
     data object OpenSearch : BookEvent
+    data object OpenYearlySummary : BookEvent
+    data object OpenSummaryImage : BookEvent
     data class OpenDetail(val bookId: Long) : BookEvent
     data class OpenNotes(val bookId: Long) : BookEvent
     data object NavigateBack : BookEvent
     data object Refresh : BookEvent
     data class SearchKeywordChanged(val keyword: String) : BookEvent
     data object SubmitSearch : BookEvent
+    data class SelectSummaryYear(val year: Int) : BookEvent
     data class AddDraftToWishlist(val draft: BookDraft) : BookEvent
     data class AddDraftToReading(val draft: BookDraft) : BookEvent
     data class MoveToReading(val book: Book) : BookEvent
     data class SelectCategory(val category: String?) : BookEvent
+    data class SelectArchiveStatus(val status: ArchiveStatus?) : BookEvent
     data class Archive(val bookId: Long, val status: ArchiveStatus = ArchiveStatus.Done) : BookEvent
     data class DeleteBook(val bookId: Long) : BookEvent
     data class SaveBook(
@@ -68,6 +90,8 @@ data class BookUiState(
     val searchResults: List<BookDraft> = emptyList(),
     val categories: List<String> = emptyList(),
     val selectedCategory: String? = null,
+    val selectedArchiveStatus: ArchiveStatus? = null,
+    val selectedSummaryYear: Int? = null,
     val navigationStack: List<BooksScreenState> = listOf(BooksScreenState.Home),
 )
 
@@ -95,16 +119,24 @@ class BookViewModel @Inject constructor(
                         screen = BooksScreenState.Home,
                         navigationStack = listOf(BooksScreenState.Home),
                         selectedCategory = null,
+                        selectedArchiveStatus = null,
                     )
                 }
                 refreshAll()
             }
             is BookEvent.OpenList -> {
-                _state.update { it.copy(selectedCategory = null) }
+                _state.update { it.copy(selectedCategory = null, selectedArchiveStatus = null) }
                 navigateTo(BooksScreenState.List(event.state))
                 loadList(event.state, null)
             }
+            is BookEvent.OpenArchivedStatus -> {
+                _state.update { it.copy(selectedCategory = null, selectedArchiveStatus = event.status) }
+                navigateTo(BooksScreenState.List(BookState.Archived))
+                loadList(BookState.Archived, null)
+            }
             BookEvent.OpenSearch -> navigateTo(BooksScreenState.Search)
+            BookEvent.OpenYearlySummary -> navigateTo(BooksScreenState.YearlySummary)
+            BookEvent.OpenSummaryImage -> navigateTo(BooksScreenState.SummaryImage)
             is BookEvent.OpenDetail -> {
                 navigateTo(BooksScreenState.Detail(event.bookId))
                 openDetail(event.bookId)
@@ -120,10 +152,12 @@ class BookViewModel @Inject constructor(
             BookEvent.Refresh -> refreshCurrent()
             is BookEvent.SearchKeywordChanged -> _state.update { it.copy(searchKeyword = event.keyword) }
             BookEvent.SubmitSearch -> search()
+            is BookEvent.SelectSummaryYear -> _state.update { it.copy(selectedSummaryYear = event.year) }
             is BookEvent.AddDraftToWishlist -> addDraftToWishlist(event.draft)
             is BookEvent.AddDraftToReading -> addDraftToReading(event.draft)
             is BookEvent.MoveToReading -> moveToReading(event.book)
             is BookEvent.SelectCategory -> selectCategory(event.category)
+            is BookEvent.SelectArchiveStatus -> _state.update { it.copy(selectedArchiveStatus = event.status) }
             is BookEvent.Archive -> archive(event.bookId, event.status)
             is BookEvent.DeleteBook -> deleteBook(event.bookId)
             is BookEvent.SaveBook -> saveBook(event)
@@ -137,6 +171,8 @@ class BookViewModel @Inject constructor(
             BooksScreenState.Home -> refreshAll()
             is BooksScreenState.List -> loadList(screen.state, _state.value.selectedCategory)
             BooksScreenState.Search -> search()
+            BooksScreenState.YearlySummary -> loadList(BookState.Archived, _state.value.selectedCategory)
+            BooksScreenState.SummaryImage -> loadList(BookState.Archived, _state.value.selectedCategory)
             is BooksScreenState.Detail -> openDetail(screen.bookId)
             is BooksScreenState.Notes -> openNotes(screen.bookId)
         }
@@ -190,11 +226,12 @@ class BookViewModel @Inject constructor(
     }
 
     private fun openDetail(bookId: Long) {
+        loadDetailNotes(bookId)
         repository.getBook(bookId)
             .onEach { result ->
                 when (result) {
                     ApiResult.Loading -> _state.update {
-                        it.copy(isLoading = true, screen = BooksScreenState.Detail(bookId))
+                        it.copy(isLoading = true, screen = BooksScreenState.Detail(bookId), notes = emptyList())
                     }
                     is ApiResult.Success -> _state.update {
                         it.copy(
@@ -204,6 +241,18 @@ class BookViewModel @Inject constructor(
                         )
                     }
                     is ApiResult.Error -> failLoading { openDetail(bookId) }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun loadDetailNotes(bookId: Long) {
+        repository.getNotes(bookId)
+            .onEach { result ->
+                when (result) {
+                    ApiResult.Loading -> _state.update { it.copy(notes = emptyList()) }
+                    is ApiResult.Success -> _state.update { it.copy(notes = result.data) }
+                    is ApiResult.Error -> _state.update { it.copy(notes = emptyList()) }
                 }
             }
             .launchIn(viewModelScope)
@@ -382,6 +431,9 @@ class BookViewModel @Inject constructor(
 
     private fun navigateTo(screen: BooksScreenState) {
         _state.update {
+            if (it.navigationStack.lastOrNull() == screen) {
+                return@update it.copy(screen = screen)
+            }
             it.copy(
                 screen = screen,
                 navigationStack = it.navigationStack + screen,

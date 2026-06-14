@@ -38,6 +38,8 @@ data class SalesforceAnswerEventRequest(
 @Serializable
 data class SalesforcePracticeSessionRequest(
     val events: List<SalesforceAnswerEventRequest>,
+    @SerialName("done_question_ids")
+    val doneQuestionIds: List<Int> = emptyList(),
 )
 
 @Serializable

@@ -242,12 +242,14 @@ data class BookNoteUpdateRequest(
     val progressPercentage: Double? = null,
 )
 
+@Serializable
 enum class BookState(val wireValue: String, val label: String) {
     Wish("wish", "Wishlist"),
     Reading("reading", "Reading"),
     Archived("archived", "Archived"),
 }
 
+@Serializable
 enum class ArchiveStatus(val wireValue: String, val label: String) {
     Done("done", "Done"),
     Abandon("abandon", "Abandoned"),
@@ -272,6 +274,8 @@ data class Book(
     val archiveStatus: ArchiveStatus?,
     val archivedDate: String?,
     val category: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
 )
 
 data class BookNote(
@@ -323,6 +327,8 @@ fun BookDto.toDomain(): Book = Book(
     },
     archivedDate = archivedDate,
     category = category,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
 )
 
 fun BookNoteDto.toDomain(): BookNote = BookNote(

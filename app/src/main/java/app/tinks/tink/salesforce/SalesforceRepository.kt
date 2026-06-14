@@ -36,10 +36,23 @@ open class SalesforceRepository @Inject constructor(
         dao.upsertProgress(
             SalesforceLocalProgressEntity(
                 questionId = event.questionId,
-                done = (current?.done == true) || event.correct,
+                done = current?.done == true,
                 correctCount = (current?.correctCount ?: 0) + if (event.correct) 1 else 0,
                 incorrectCount = (current?.incorrectCount ?: 0) + if (event.correct) 0 else 1,
                 lastAnsweredAt = event.answeredAt,
+            )
+        )
+    }
+
+    open suspend fun markLocalDone(questionId: Int) {
+        val current = dao.getProgress(questionId)
+        dao.upsertProgress(
+            SalesforceLocalProgressEntity(
+                questionId = questionId,
+                done = true,
+                correctCount = current?.correctCount ?: 0,
+                incorrectCount = current?.incorrectCount ?: 0,
+                lastAnsweredAt = current?.lastAnsweredAt,
             )
         )
     }
@@ -55,11 +68,19 @@ open class SalesforceRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    open fun postPracticeSession(events: List<SalesforceAnswerRecord>): Flow<ApiResult<SalesforceProgressSummary>> = flow {
+    open fun postPracticeSession(
+        events: List<SalesforceAnswerRecord>,
+        doneQuestionIds: List<Int>,
+    ): Flow<ApiResult<SalesforceProgressSummary>> = flow {
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
-                api.postPracticeSession(SalesforcePracticeSessionRequest(events.map { it.toRequest() }))
+                api.postPracticeSession(
+                    SalesforcePracticeSessionRequest(
+                        events = events.map { it.toRequest() },
+                        doneQuestionIds = doneQuestionIds.distinct().sorted(),
+                    )
+                )
                     .progress
                     .also { progress -> dao.upsertProgress(progress.questions.map { it.toEntity() }) }
                     .toSummary()

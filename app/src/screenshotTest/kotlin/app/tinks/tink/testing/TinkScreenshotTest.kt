@@ -232,7 +232,7 @@ fun BookSearchResultCardScreenshotPreview() {
 }
 
 @PreviewTest
-@Preview(showBackground = true, widthDp = 400, heightDp = 164)
+@Preview(showBackground = true, widthDp = 400, heightDp = 188)
 @Composable
 fun BookReadingListCardScreenshotPreview() {
     TinkTheme(dynamicColor = false) {
@@ -251,7 +251,7 @@ fun BookReadingListCardScreenshotPreview() {
 }
 
 @PreviewTest
-@Preview(showBackground = true, widthDp = 400, heightDp = 164)
+@Preview(showBackground = true, widthDp = 400, heightDp = 188)
 @Composable
 fun BookWishlistCardScreenshotPreview() {
     TinkTheme(dynamicColor = false) {
@@ -265,7 +265,7 @@ fun BookWishlistCardScreenshotPreview() {
 }
 
 @PreviewTest
-@Preview(showBackground = true, widthDp = 400, heightDp = 164)
+@Preview(showBackground = true, widthDp = 400, heightDp = 188)
 @Composable
 fun BookArchivedCardScreenshotPreview() {
     TinkTheme(dynamicColor = false) {
@@ -281,6 +281,36 @@ fun BookArchivedCardScreenshotPreview() {
                 onEvent = {},
             )
         }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 900)
+@Composable
+fun BookYearlySummaryScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        BookScreen(
+            state = BookUiState(
+                screen = BooksScreenState.YearlySummary,
+                archivedBooks = listOf(
+                    listCardSample(
+                        state = BookState.Archived,
+                        archiveStatus = ArchiveStatus.Done,
+                        archivedDate = "2026-01-18",
+                    ).copy(title = "The Left Hand of Darkness"),
+                    listCardSample(
+                        state = BookState.Archived,
+                        archiveStatus = ArchiveStatus.Done,
+                        archivedDate = "2026-03-08",
+                    ).copy(title = "Designing Data-Intensive Applications", pages = 616),
+                    listCardSample(
+                        state = BookState.Archived,
+                        archiveStatus = ArchiveStatus.Done,
+                        archivedDate = "2026-05-22",
+                    ).copy(title = "Clean Code", pages = 464),
+                ),
+            ),
+        )
     }
 }
 
