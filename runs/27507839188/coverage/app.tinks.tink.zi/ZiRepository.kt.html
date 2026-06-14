@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ZiRepository.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.zi</a> &gt; <span class="el_source">ZiRepository.kt</span></div><h1>ZiRepository.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.zi
+
+import android.content.Context
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.network.safeApiCall
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
+
+<span class="nc" id="L18">@Singleton</span>
+<span class="nc" id="L19">class ZiRepository @Inject constructor(</span>
+<span class="nc" id="L20">    @ApplicationContext private val context: Context,</span>
+<span class="nc" id="L21">    private val api: ZiApi,</span>
+) {
+<span class="nc" id="L23">    private val allZis = MutableStateFlow&lt;List&lt;Zi&gt;&gt;(emptyList())</span>
+<span class="nc" id="L24">    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)</span>
+
+<span class="nc" id="L26">    fun getAllLearntZisFlow(): Flow&lt;List&lt;Zi&gt;&gt; = allZis.asStateFlow().map { zis -&gt;</span>
+<span class="nc" id="L27">        zis.filter { it.proficiency &gt;= 5 }</span>
+<span class="nc" id="L28">    }</span>
+
+<span class="nc bnc" id="L30" title="All 5 branches missed.">    fun putZi(zi: String, proficiency: Int) = flow {</span>
+<span class="nc bnc" id="L31" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">        emit(safeApiCall {</span>
+<span class="nc" id="L33">            try {</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">                api.putZi(</span>
+<span class="nc" id="L35">                    request = PutZiRequest(zi, proficiency)</span>
+                )
+<span class="nc" id="L37">            } catch (e: Exception) {</span>
+<span class="nc" id="L38">                println(&quot;API call failed with exception: ${e.message}&quot;)</span>
+<span class="nc" id="L39">                println(&quot;Exception stack trace: $e&quot;)</span>
+<span class="nc" id="L40">                throw e</span>
+            }
+<span class="nc" id="L42">        })</span>
+<span class="nc" id="L43">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L45" title="All 5 branches missed.">    fun getAllZis(): Flow&lt;ApiResult&lt;List&lt;Zi&gt;&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        emit(safeApiCall {</span>
+<span class="nc" id="L48">            try {</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">                api.getZis().map { it.toDomain() }</span>
+<span class="nc" id="L50">            } catch (e: Exception) {</span>
+<span class="nc" id="L51">                println(&quot;API call failed with exception: ${e.message}&quot;)</span>
+<span class="nc" id="L52">                println(&quot;Exception stack trace: $e&quot;)</span>
+<span class="nc" id="L53">                throw e</span>
+<span class="nc" id="L54">            }</span>
+        })
+<span class="nc" id="L56">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc bnc" id="L58" title="All 5 branches missed.">    fun generateStory(length: Int): Flow&lt;ApiResult&lt;Unit&gt;&gt; = flow {</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        emit(ApiResult.Loading)</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        emit(safeApiCall {</span>
+<span class="nc" id="L61">            try {</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">                api.generateStory(</span>
+<span class="nc" id="L63">                    request = StoryGenerateRequest(length = length)</span>
+                )
+<span class="nc" id="L65">            } catch (e: Exception) {</span>
+<span class="nc" id="L66">                println(&quot;API call failed with exception: ${e.message}&quot;)</span>
+<span class="nc" id="L67">                println(&quot;Exception stack trace: $e&quot;)</span>
+<span class="nc" id="L68">                throw e</span>
+            }
+<span class="nc" id="L70">        })</span>
+<span class="nc" id="L71">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc" id="L73">    suspend fun getStoryLength(): Int = withContext(Dispatchers.IO) {</span>
+<span class="nc" id="L74">        prefs.getInt(KEY_STORY_LENGTH, DEFAULT_STORY_LENGTH)</span>
+<span class="nc" id="L75">    }</span>
+
+<span class="nc" id="L77">    suspend fun setStoryLength(length: Int) = withContext(Dispatchers.IO) {</span>
+<span class="nc" id="L78">        prefs.edit().putInt(KEY_STORY_LENGTH, length).apply()</span>
+<span class="nc" id="L79">    }</span>
+
+    private companion object {
+        const val PREFS_NAME = &quot;zi_prefs&quot;
+        const val KEY_STORY_LENGTH = &quot;story_length&quot;
+        const val DEFAULT_STORY_LENGTH = 200
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

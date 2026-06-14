@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.geography.GeographyDataTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-14T18:21:43.849Z" hostname="runnervm1li68" time="0.152">
+  <properties/>
+  <testcase name="buildGeographyQuestion_returnsFourOptionsContainingAnswer" classname="app.tinks.tink.geography.GeographyDataTest" time="0.068"/>
+  <testcase name="assetCountries_containsWorldScaleCountryData" classname="app.tinks.tink.geography.GeographyDataTest" time="0.036"/>
+  <testcase name="filterByCountryName_matchesChineseEnglishAndLocalNames" classname="app.tinks.tink.geography.GeographyDataTest" time="0.048"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
