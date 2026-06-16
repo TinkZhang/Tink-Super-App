@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.gradle.testing.jacoco.tasks.JacocoReport
 import java.util.Properties
 
@@ -21,9 +22,9 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.screenshot)
-    kotlin("plugin.serialization") version "2.2.21"
-    id("com.google.dagger.hilt.android")
-    kotlin("kapt")
+    alias(libs.plugins.jetbrains.kotlin.serialization)
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.ksp)
     jacoco
 }
 
@@ -35,7 +36,7 @@ android {
 
     defaultConfig {
         applicationId = "app.tinks.tink"
-        minSdk = 35
+        minSdk = 36
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -61,9 +62,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
         buildConfig = true
@@ -73,6 +71,12 @@ android {
         unitTests {
             isIncludeAndroidResources = true
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
     }
 }
 
@@ -102,17 +106,17 @@ tasks.register<JacocoReport>("jacocoDebugUnitTestReport") {
 
     classDirectories.setFrom(
         files(
-            fileTree("$buildDir/tmp/kotlin-classes/debug") {
+            fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug")) {
                 exclude(coverageExclusions)
             },
-            fileTree("$buildDir/intermediates/javac/debug/compileDebugJavaWithJavac/classes") {
+            fileTree(layout.buildDirectory.dir("intermediates/javac/debug/compileDebugJavaWithJavac/classes")) {
                 exclude(coverageExclusions)
             },
         )
     )
     sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
     executionData.setFrom(
-        fileTree(buildDir) {
+        fileTree(layout.buildDirectory) {
             include(
                 "jacoco/testDebugUnitTest.exec",
                 "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
@@ -166,15 +170,15 @@ dependencies {
     implementation(libs.retrofit2.kotlinx.serialization.converter)
 
 
-//    Hilt
+    //    Hilt
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
     androidTestImplementation(libs.hilt.android.testing)
-    kaptAndroidTest(libs.hilt.android.compiler)
-    implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
+    kspAndroidTest(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose.v100)
 
     implementation(libs.androidx.room.runtime)
-    kapt(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
     // Navigation3

@@ -16,7 +16,7 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class, sdk = [35])
+@Config(application = Application::class, sdk = [36])
 class TimeScreenTest {
 
     @get:Rule

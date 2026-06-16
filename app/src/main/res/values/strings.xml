@@ -5,4 +5,6 @@
     <string name="qs_tile_add_time_content_description">Open add time entry</string>
     <string name="widget_digital_detox_name">Digital Detox</string>
     <string name="widget_digital_detox_description">Shows a focus reminder based on time and day.</string>
+    <string name="widget_readkeeper_name">ReadKeeper</string>
+    <string name="widget_readkeeper_description">Shows your latest reading book and progress.</string>
 </resources>

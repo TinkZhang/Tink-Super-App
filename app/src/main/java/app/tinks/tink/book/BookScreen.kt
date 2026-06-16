@@ -1,9 +1,18 @@
 package app.tinks.tink.book
 
+import android.Manifest
+import android.app.Activity
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Color as AndroidColor
+import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
@@ -44,10 +53,12 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -113,16 +124,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.drawToBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import app.tinks.tink.MainActivity
 import app.tinks.tink.R
 import coil.compose.AsyncImage
 import java.io.File
 import java.io.FileOutputStream
+import java.time.Instant
+import java.time.ZoneId
 import java.time.Year
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -144,6 +160,7 @@ internal fun BookScreen(
 ) {
     val navigationBackStack = state.navigationBackStack()
     val currentScreen = navigationBackStack.last()
+    ReadingSessionNotificationEffect(state.readingSession)
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
@@ -231,15 +248,17 @@ private fun ReadKeeperDestination(
             onEvent = onEvent,
         )
         BooksScreenState.Search -> BookSearch(state, onEvent)
+        is BooksScreenState.SearchResults -> BookSearch(state, onEvent)
         BooksScreenState.YearlySummary -> YearlySummaryScreen(state, onEvent)
         BooksScreenState.SummaryImage -> SummaryImageScreen(state, onEvent)
         is BooksScreenState.Detail -> BookDetail(
             book = state.selectedBook,
             notes = state.notes,
             categories = state.categories,
+            readingSession = state.readingSession,
             onEvent = onEvent,
         )
-        is BooksScreenState.Notes -> NotesList(state.notes, onEvent)
+        is BooksScreenState.Notes -> NotesList(state.notes, state.selectedBook, onEvent)
     }
 }
 
@@ -254,6 +273,7 @@ private fun BooksTopBar(
     val title = when (screen) {
         BooksScreenState.Home -> "ReadKeeper"
         BooksScreenState.Search -> "Find a book"
+        is BooksScreenState.SearchResults -> "Search results"
         is BooksScreenState.List -> screen.state.label
         BooksScreenState.YearlySummary -> "Reading summary"
         BooksScreenState.SummaryImage -> "Share image"
@@ -281,7 +301,7 @@ private fun BooksTopBar(
             }
         },
         actions = {
-            if (screen is BooksScreenState.List) {
+            if (screen is BooksScreenState.List || screen is BooksScreenState.SearchResults) {
                 IconButton(onClick = onSearch) {
                     Icon(Icons.Filled.Search, contentDescription = "Search books")
                 }
@@ -300,65 +320,96 @@ private fun BooksHome(
     val continueBooks = state.readingBooks.drop(if (current == null) 0 else 1).ifEmpty {
         current?.let(::listOf).orEmpty()
     }
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag("book_home_content"),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        item {
-            CurrentReadingCard(current, onEvent)
-        }
-        item {
-            Row(
-                horizontalArrangement = Arrangement.SpaceAround,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                SummaryBadgeButton(
-                    "Reading",
-                    state.readingBooks.size,
-                    Icons.Filled.Bookmark,
-                ) {
-                    onEvent(BookEvent.OpenList(BookState.Reading))
-                }
-                SummaryBadgeButton(
-                    "Wishlist",
-                    state.wishlistBooks.size,
-                    Icons.Filled.Favorite,
-                ) {
-                    onEvent(BookEvent.OpenList(BookState.Wish))
-                }
-                SummaryBadgeButton(
-                    "Archived",
-                    state.archivedBooks.size,
-                    Icons.Filled.Archive,
-                ) {
-                    onEvent(BookEvent.OpenList(BookState.Archived))
-                }
-                SummaryBadgeButton(
-                    "Done",
-                    doneCount,
-                    Icons.Outlined.CheckCircle,
-                ) {
-                    onEvent(BookEvent.OpenArchivedStatus(ArchiveStatus.Done))
-                }
-            }
-        }
-        if (continueBooks.isNotEmpty()) {
+    var showStopSession by remember(current?.id) { mutableStateOf(false) }
+    val activeReadingSession = state.readingSession?.takeIf { current != null && it.bookId == current.id }
+
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag("book_home_content"),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
             item {
-                SectionHeader(title = "Continue reading", action = "All") {
-                    onEvent(BookEvent.OpenList(BookState.Reading))
+                CurrentReadingCard(current, onEvent)
+            }
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    SummaryBadgeButton(
+                        "Reading",
+                        state.readingBooks.size,
+                        Icons.Filled.Bookmark,
+                    ) {
+                        onEvent(BookEvent.OpenList(BookState.Reading))
+                    }
+                    SummaryBadgeButton(
+                        "Wishlist",
+                        state.wishlistBooks.size,
+                        Icons.Filled.Favorite,
+                    ) {
+                        onEvent(BookEvent.OpenList(BookState.Wish))
+                    }
+                    SummaryBadgeButton(
+                        "Archived",
+                        state.archivedBooks.size,
+                        Icons.Filled.Archive,
+                    ) {
+                        onEvent(BookEvent.OpenList(BookState.Archived))
+                    }
+                    SummaryBadgeButton(
+                        "Done",
+                        doneCount,
+                        Icons.Outlined.CheckCircle,
+                    ) {
+                        onEvent(BookEvent.OpenArchivedStatus(ArchiveStatus.Done))
+                    }
                 }
             }
-            items(continueBooks.take(2), key = { it.id }) { book ->
-                BookListCard(book, onEvent)
+            if (continueBooks.isNotEmpty()) {
+                item {
+                    SectionHeader(title = "Continue reading", action = "All") {
+                        onEvent(BookEvent.OpenList(BookState.Reading))
+                    }
+                }
+                items(continueBooks.take(2), key = { it.id }) { book ->
+                    BookListCard(book, onEvent)
+                }
+            }
+            item {
+                YearlySummaryEntry(state.currentYearlySummary()) {
+                    onEvent(BookEvent.OpenYearlySummary)
+                }
             }
         }
-        item {
-            YearlySummaryEntry(state.currentYearlySummary()) {
-                onEvent(BookEvent.OpenYearlySummary)
-            }
+
+        current?.let { book ->
+            ReadingSessionFab(
+                isActive = activeReadingSession != null,
+                onStart = {
+                    requestPostNotificationsPermissionIfNeeded(it)
+                    onEvent(BookEvent.StartReadingSession(book))
+                },
+                onStop = { showStopSession = true },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp),
+            )
+        }
+
+        if (showStopSession && current != null && activeReadingSession != null) {
+            StopReadingSessionDialog(
+                session = activeReadingSession,
+                book = current,
+                onDismiss = { showStopSession = false },
+                onSave = { page, progress ->
+                    onEvent(BookEvent.StopReadingSession(page, progress))
+                    showStopSession = false
+                },
+            )
         }
     }
 }
@@ -799,14 +850,68 @@ private fun BookSearch(
     state: BookUiState,
     onEvent: (BookEvent) -> Unit,
 ) {
+    val isResultPage = state.screen is BooksScreenState.SearchResults
+    val context = LocalContext.current
+    LaunchedEffect(state.searchErrorMessage) {
+        state.searchErrorMessage?.takeIf { isResultPage }?.let { message ->
+            Toast.makeText(context, "Book search failed: $message", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        items(state.searchResults) { draft ->
-            BookSearchResultCard(draft, onEvent)
+        when {
+            isResultPage && state.searchResults.isNotEmpty() -> {
+                items(state.searchResults) { draft ->
+                    BookSearchResultCard(draft, onEvent)
+                }
+            }
+            isResultPage && state.searchErrorMessage != null -> {
+                item {
+                    SearchStateMessage(
+                        title = "Search failed",
+                        message = state.searchErrorMessage,
+                    )
+                }
+            }
+            isResultPage && !state.isLoading -> {
+                item {
+                    SearchStateMessage(
+                        title = "No books found",
+                        message = "Try a different title, author, or ISBN.",
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun SearchStateMessage(
+    title: String,
+    message: String,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 32.dp)
+            .testTag("book_search_state_message"),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -1390,6 +1495,102 @@ private fun shareBookSummaryImage(
 }
 
 @Composable
+private fun ReadingSessionNotificationEffect(session: ReadingSessionState?) {
+    val context = LocalContext.current
+    LaunchedEffect(session) {
+        if (session == null) {
+            context.cancelReadingSessionNotification()
+        } else {
+            context.showReadingSessionNotification(session)
+        }
+    }
+}
+
+private fun requestPostNotificationsPermissionIfNeeded(context: Context) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+    if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+        return
+    }
+    context.findActivity()?.let { activity ->
+        ActivityCompat.requestPermissions(
+            activity,
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            READKEEPER_NOTIFICATION_PERMISSION_REQUEST,
+        )
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? =
+    when (this) {
+        is Activity -> this
+        is android.content.ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
+
+private fun Context.showReadingSessionNotification(session: ReadingSessionState) {
+    val manager = getSystemService(NotificationManager::class.java)
+    manager.createNotificationChannel(
+        NotificationChannel(
+            READKEEPER_READING_SESSION_CHANNEL,
+            "ReadKeeper reading",
+            NotificationManager.IMPORTANCE_LOW,
+        ).apply {
+            description = "Active ReadKeeper reading sessions"
+        }
+    )
+
+    if (
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+    ) {
+        return
+    }
+
+    val launchIntent = Intent(this, MainActivity::class.java)
+    val pendingIntent = PendingIntent.getActivity(
+        this,
+        0,
+        launchIntent,
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+    val notification = Notification.Builder(this, READKEEPER_READING_SESSION_CHANNEL)
+        .setSmallIcon(R.drawable.ic_qs_add_time)
+        .setContentTitle("Reading ${session.bookTitle}")
+        .setContentText("Started at ${session.startTime.formatSessionTime()} · ${session.startProgressLabel}")
+        .setContentIntent(pendingIntent)
+        .setOngoing(true)
+        .setOnlyAlertOnce(true)
+        .setShowWhen(true)
+        .setWhen(session.startTime.toEpochMilli())
+        .setCategory(
+            if (Build.VERSION.SDK_INT >= 36) Notification.CATEGORY_PROGRESS else Notification.CATEGORY_STATUS
+        )
+        .setProgress(0, 0, true)
+        .apply {
+            if (Build.VERSION.SDK_INT >= 36) {
+                setStyle(
+                    Notification.ProgressStyle()
+                        .setProgressIndeterminate(true)
+                        .setStyledByProgress(true)
+                        .addProgressSegment(
+                            Notification.ProgressStyle.Segment(100)
+                                .setColor(AndroidColor.rgb(46, 125, 50))
+                        )
+                )
+                setShortCriticalText("Reading")
+            }
+        }
+        .build()
+
+    manager.notify(READKEEPER_READING_SESSION_NOTIFICATION_ID, notification)
+}
+
+private fun Context.cancelReadingSessionNotification() {
+    getSystemService(NotificationManager::class.java)
+        .cancel(READKEEPER_READING_SESSION_NOTIFICATION_ID)
+}
+
+@Composable
 private fun BookMetadataRow(
     rating: Double?,
     pages: Int?,
@@ -1446,12 +1647,18 @@ private fun BookDetail(
     book: Book?,
     notes: List<BookNote>,
     categories: List<String>,
+    readingSession: ReadingSessionState?,
     onEvent: (BookEvent) -> Unit,
 ) {
-    if (book == null) return
+    if (book == null) {
+        BookDetailLoading(onEvent)
+        return
+    }
     var showEdit by remember(book.id) { mutableStateOf(false) }
     var showProgress by remember(book.id) { mutableStateOf(false) }
+    var showStopSession by remember(book.id) { mutableStateOf(false) }
     var showDelete by remember(book.id) { mutableStateOf(false) }
+    val activeReadingSession = readingSession?.takeIf { it.bookId == book.id }
     val topBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topBarState)
 
@@ -1512,37 +1719,54 @@ private fun BookDetail(
             }
         },
     ) { padding ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            item { BookDetailHero(book) }
-            if (book.state != BookState.Wish) {
-                item { ProgressLine(book) }
-            }
-            if (book.state == BookState.Wish) {
-                book.description?.takeIf { it.isNotBlank() }?.let { description ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                item { BookDetailHero(book) }
+                if (book.state != BookState.Wish) {
+                    item { ProgressLine(book) }
+                }
+                if (book.state == BookState.Wish) {
+                    book.description?.takeIf { it.isNotBlank() }?.let { description ->
+                        item {
+                            DetailSectionTitle("Introduction")
+                            Text(
+                                description,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                } else {
                     item {
-                        DetailSectionTitle("Introduction")
-                        Text(
-                            description,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        DetailNotesSection(
+                            notes = notes,
+                            onOpenAllNotes = { onEvent(BookEvent.OpenNotes(book.id)) },
                         )
                     }
                 }
-            } else {
-                item {
-                    DetailNotesSection(
-                        notes = notes,
-                        onOpenAllNotes = { onEvent(BookEvent.OpenNotes(book.id)) },
-                    )
-                }
+                item { Spacer(Modifier.height(72.dp)) }
             }
-            item { Spacer(Modifier.height(72.dp)) }
+            if (book.state == BookState.Reading) {
+                ReadingSessionFab(
+                    isActive = activeReadingSession != null,
+                    onStart = {
+                        requestPostNotificationsPermissionIfNeeded(it)
+                        onEvent(BookEvent.StartReadingSession(book))
+                    },
+                    onStop = { showStopSession = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(16.dp),
+                )
+            }
         }
     }
 
@@ -1551,15 +1775,17 @@ private fun BookDetail(
             book = book,
             categories = categories,
             onDismiss = { showEdit = false },
-            onSave = { title, platform, category ->
+            onSave = { title, platform, category, pages, pageFormat ->
                 onEvent(
                     BookEvent.SaveBook(
                         bookId = book.id,
                         title = title,
                         platform = platform,
                         category = category,
-                        currentPage = book.currentPage,
-                        progressPercentage = book.progressPercentage,
+                        pages = pages,
+                        pageFormat = pageFormat,
+                        currentPage = null,
+                        progressPercentage = null,
                     )
                 )
                 showEdit = false
@@ -1576,12 +1802,25 @@ private fun BookDetail(
                         title = book.title,
                         platform = book.platform,
                         category = book.category,
+                        pages = book.pages,
+                        pageFormat = book.pageFormat,
                         currentPage = page,
                         progressPercentage = progress,
                     )
                 )
                 showProgress = false
             })
+    }
+    if (showStopSession && activeReadingSession != null) {
+        StopReadingSessionDialog(
+            session = activeReadingSession,
+            book = book,
+            onDismiss = { showStopSession = false },
+            onSave = { page, progress ->
+                onEvent(BookEvent.StopReadingSession(page, progress))
+                showStopSession = false
+            },
+        )
     }
     if (showDelete) {
         AlertDialog(
@@ -1602,6 +1841,127 @@ private fun BookDetail(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun BookDetailLoading(onEvent: (BookEvent) -> Unit) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0.dp),
+        topBar = {
+            MediumFlexibleTopAppBar(
+                title = { Text("Book details") },
+                windowInsets = WindowInsets(0.dp),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { onEvent(BookEvent.NavigateBack) },
+                        modifier = Modifier.testTag("book_back_button"),
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回上级")
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .testTag("book_detail_loading"),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+    }
+}
+
+@Composable
+private fun ReadingSessionFab(
+    isActive: Boolean,
+    onStart: (Context) -> Unit,
+    onStop: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    ExtendedFloatingActionButton(
+        onClick = {
+            if (isActive) {
+                onStop()
+            } else {
+                onStart(context)
+            }
+        },
+        icon = {
+            Icon(
+                if (isActive) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                contentDescription = null,
+            )
+        },
+        text = { Text(if (isActive) "Stop" else "Start") },
+        modifier = modifier.testTag("book_reading_session_fab"),
+    )
+}
+
+@Composable
+private fun StopReadingSessionDialog(
+    session: ReadingSessionState,
+    book: Book,
+    onDismiss: () -> Unit,
+    onSave: (Int?, Double?) -> Unit,
+) {
+    val stopTime = remember(session.bookId) { Instant.now() }
+    var pageText by remember(session.bookId) { mutableStateOf(book.currentPage?.toString().orEmpty()) }
+    var progressText by remember(session.bookId) {
+        mutableStateOf(book.progressPercentage?.formatPercentInput(book.pageFormat).orEmpty())
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSave(
+                        if (session.pageFormat.usesPages) pageText.toIntOrNull() else null,
+                        if (session.pageFormat.usesPages) null else progressText.toDoubleOrNull()?.coerceIn(0.0, 100.0),
+                    )
+                },
+                modifier = Modifier.testTag("book_stop_reading_session_save"),
+            ) {
+                Text("Log")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+        title = { Text("Reading session") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                BookDetailMetadata("Start", session.startTime.formatSessionTime())
+                BookDetailMetadata("Stop", stopTime.formatSessionTime())
+                BookDetailMetadata("From", session.startProgressLabel)
+                if (session.pageFormat.usesPages) {
+                    OutlinedTextField(
+                        value = pageText,
+                        onValueChange = { pageText = it.filter(Char::isDigit) },
+                        label = { Text("Stop page") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.testTag("book_session_stop_page"),
+                    )
+                } else {
+                    OutlinedTextField(
+                        value = progressText,
+                        onValueChange = { progressText = it.asPercentInput() },
+                        label = { Text("Stop progress %") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.testTag("book_session_stop_percent"),
+                    )
+                }
+            }
+        },
+    )
+}
+
 @Composable
 private fun BookDetailHero(book: Book) {
     Row(
@@ -1617,6 +1977,8 @@ private fun BookDetailHero(book: Book) {
             BookDetailMetadata("Author", book.author)
             BookDetailMetadata("Press", book.publisher)
             BookDetailPlatformMetadata(book.platform)
+            BookDetailMetadata("Pages", book.pages?.toString())
+            BookDetailMetadata("Page type", if (book.pageFormat.usesPages) "Pages" else book.pageFormat.label)
             BookDetailMetadata("Publish year", book.publishYear?.toString())
             BookDetailMetadata("ISBN", book.isbn)
             BookDetailMetadata("Rating", book.rating?.let { String.format(Locale.US, "%.1f", it) })
@@ -1792,6 +2154,7 @@ private fun BookMetadataSection(book: Book) {
 @Composable
 private fun NotesList(
     notes: List<BookNote>,
+    book: Book?,
     onEvent: (BookEvent) -> Unit,
 ) {
     var editingNote by remember { mutableStateOf<BookNote?>(null) }
@@ -1848,13 +2211,13 @@ private fun NotesList(
         }
     }
     if (showCreate) {
-        NoteDialog(note = null, onDismiss = { showCreate = false }, onSave = {
+        NoteDialog(book = book, note = null, onDismiss = { showCreate = false }, onSave = {
             onEvent(it)
             showCreate = false
         })
     }
     if (editingNote != null) {
-        NoteDialog(note = editingNote, onDismiss = { editingNote = null }, onSave = {
+        NoteDialog(book = book, note = editingNote, onDismiss = { editingNote = null }, onSave = {
             onEvent(it)
             editingNote = null
         })
@@ -1866,11 +2229,13 @@ private fun EditBookDialog(
     book: Book,
     categories: List<String>,
     onDismiss: () -> Unit,
-    onSave: (String, String?, String?) -> Unit,
+    onSave: (String, String?, String?, Int?, BookPageFormat) -> Unit,
 ) {
     var title by remember(book.id) { mutableStateOf(book.title) }
     var platform by remember(book.id) { mutableStateOf(book.platform.orEmpty()) }
     var category by remember(book.id) { mutableStateOf(book.category.orEmpty()) }
+    var pageText by remember(book.id) { mutableStateOf(book.pages?.toString().orEmpty()) }
+    var pageFormat by remember(book.id) { mutableStateOf(book.pageFormat) }
     val platformOptions = listOf("Paper", "Kindle", "PDF", "WeRead")
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1880,6 +2245,8 @@ private fun EditBookDialog(
                     title.trim(),
                     platform.trim().ifBlank { null },
                     category.trim().ifBlank { null },
+                    pageText.toIntOrNull(),
+                    pageFormat,
                 )
             }) {
                 Text("Save")
@@ -1918,6 +2285,18 @@ private fun EditBookDialog(
                     label = { Text("Custom platform") },
                     singleLine = true,
                 )
+                Text("Page type", style = MaterialTheme.typography.labelLarge)
+                PageFormatSelector(pageFormat) { pageFormat = it }
+                if (pageFormat.usesPages) {
+                    OutlinedTextField(
+                        value = pageText,
+                        onValueChange = { pageText = it.filter(Char::isDigit) },
+                        label = { Text("Pages") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.testTag("book_pages_input"),
+                    )
+                }
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
@@ -1941,11 +2320,6 @@ private fun EditBookDialog(
     )
 }
 
-private enum class ProgressInputMode {
-    Page,
-    Percent,
-}
-
 @Composable
 private fun ProgressDialog(
     book: Book,
@@ -1954,23 +2328,16 @@ private fun ProgressDialog(
 ) {
     var pageText by remember(book.id) { mutableStateOf(book.currentPage?.toString().orEmpty()) }
     var progressText by remember(book.id) {
-        mutableStateOf(
-            book.progressPercentage?.toInt()?.toString().orEmpty()
-        )
-    }
-    var inputMode by remember(book.id) {
-        mutableStateOf(
-            if (book.progressPercentage != null && book.currentPage == null) ProgressInputMode.Percent else ProgressInputMode.Page
-        )
+        mutableStateOf(book.progressPercentage?.formatPercentInput(book.pageFormat).orEmpty())
     }
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                if (inputMode == ProgressInputMode.Page) {
+                if (book.pageFormat.usesPages) {
                     onSave(pageText.toIntOrNull(), null)
                 } else {
-                    onSave(null, progressText.toDoubleOrNull())
+                    onSave(null, progressText.toDoubleOrNull()?.coerceIn(0.0, 100.0))
                 }
             }) { Text("Save") }
         },
@@ -1980,11 +2347,10 @@ private fun ProgressDialog(
         title = { Text("Update progress") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                ProgressModeChips(inputMode) { inputMode = it }
-                if (inputMode == ProgressInputMode.Page) {
+                if (book.pageFormat.usesPages) {
                     OutlinedTextField(
                         value = pageText,
-                        onValueChange = { pageText = it },
+                        onValueChange = { pageText = it.filter(Char::isDigit) },
                         label = { Text("Current page") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
@@ -1992,9 +2358,9 @@ private fun ProgressDialog(
                 } else {
                     OutlinedTextField(
                         value = progressText,
-                        onValueChange = { progressText = it },
+                        onValueChange = { progressText = it.asPercentInput() },
                         label = { Text("Progress %") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                     )
                 }
@@ -2004,45 +2370,56 @@ private fun ProgressDialog(
 }
 
 @Composable
-private fun ProgressModeChips(
-    inputMode: ProgressInputMode,
-    onModeSelected: (ProgressInputMode) -> Unit,
+private fun PageFormatSelector(
+    selectedFormat: BookPageFormat,
+    onFormatSelected: (BookPageFormat) -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(
-            selected = inputMode == ProgressInputMode.Page,
-            onClick = { onModeSelected(ProgressInputMode.Page) },
-            label = { Text("Page") },
-        )
-        FilterChip(
-            selected = inputMode == ProgressInputMode.Percent,
-            onClick = { onModeSelected(ProgressInputMode.Percent) },
-            label = { Text("Percent") },
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = selectedFormat.usesPages,
+                onClick = { onFormatSelected(BookPageFormat.Page) },
+                label = { Text("Pages") },
+            )
+            FilterChip(
+                selected = !selectedFormat.usesPages,
+                onClick = {
+                    onFormatSelected(
+                        if (selectedFormat.usesPages) BookPageFormat.Percent100 else selectedFormat
+                    )
+                },
+                label = { Text("Percent") },
+            )
+        }
+        if (!selectedFormat.usesPages) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(
+                    listOf(BookPageFormat.Percent100, BookPageFormat.Percent1000, BookPageFormat.Percent10000),
+                    key = { it.wireValue },
+                ) { format ->
+                    FilterChip(
+                        selected = selectedFormat == format,
+                        onClick = { onFormatSelected(format) },
+                        label = { Text(format.label) },
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
 private fun NoteDialog(
+    book: Book?,
     note: BookNote?,
     onDismiss: () -> Unit,
     onSave: (BookEvent.SaveNote) -> Unit,
 ) {
+    val pageFormat = book?.pageFormat ?: BookPageFormat.Page
     var content by remember(note?.id) { mutableStateOf(note?.content.orEmpty()) }
     var pageText by remember(note?.id) { mutableStateOf(note?.page?.toString().orEmpty()) }
     var progressText by remember(note?.id) {
-        mutableStateOf(
-            note?.progressPercentage?.toInt()?.toString().orEmpty()
-        )
-    }
-    var inputMode by remember(note?.id) {
-        mutableStateOf(
-            if (note?.let { it.progressPercentage != null && it.page == null } == true) {
-                ProgressInputMode.Percent
-            } else {
-                ProgressInputMode.Page
-            }
-        )
+        mutableStateOf(note?.progressPercentage?.formatPercentInput(pageFormat).orEmpty())
     }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -2054,8 +2431,12 @@ private fun NoteDialog(
                             BookEvent.SaveNote(
                                 noteId = note?.id,
                                 content = content.trim(),
-                                page = if (inputMode == ProgressInputMode.Page) pageText.toIntOrNull() else null,
-                                progressPercentage = if (inputMode == ProgressInputMode.Percent) progressText.toDoubleOrNull() else null,
+                                page = if (pageFormat.usesPages) pageText.toIntOrNull() else null,
+                                progressPercentage = if (pageFormat.usesPages) {
+                                    null
+                                } else {
+                                    progressText.toDoubleOrNull()?.coerceIn(0.0, 100.0)
+                                },
                             )
                         )
                     }
@@ -2075,11 +2456,10 @@ private fun NoteDialog(
                     modifier = Modifier.testTag("book_note_content"),
                     label = { Text("Note") },
                 )
-                ProgressModeChips(inputMode) { inputMode = it }
-                if (inputMode == ProgressInputMode.Page) {
+                if (pageFormat.usesPages) {
                     OutlinedTextField(
                         value = pageText,
-                        onValueChange = { pageText = it },
+                        onValueChange = { pageText = it.filter(Char::isDigit) },
                         modifier = Modifier.testTag("book_note_page"),
                         label = { Text("Page") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -2088,9 +2468,9 @@ private fun NoteDialog(
                 } else {
                     OutlinedTextField(
                         value = progressText,
-                        onValueChange = { progressText = it },
+                        onValueChange = { progressText = it.asPercentInput() },
                         label = { Text("Progress %") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                     )
                 }
@@ -2108,24 +2488,70 @@ private fun ProgressLine(book: Book) {
             modifier = Modifier.fillMaxWidth(),
         )
         Text(
-            text = listOfNotNull(
-                book.pageProgressLabel(),
-                "${progress.toInt()}%",
-            ).joinToString(" · "),
+            text = if (book.pageFormat.usesPages) {
+                listOfNotNull(
+                    book.pageProgressLabel(),
+                    "${progress.toInt()}%",
+                ).joinToString(" · ")
+            } else {
+                progress.formatPercentLabel(book.pageFormat)
+            },
             style = MaterialTheme.typography.labelSmall,
         )
     }
 }
 
 private fun Book.progressPercentageForDisplay(): Double? =
-    currentPage?.let { page ->
-        pages?.takeIf { it > 0 }?.let { totalPages ->
-            page * 100.0 / totalPages
-        }
-    } ?: progressPercentage
+    if (pageFormat.usesPages) {
+        currentPage?.let { page ->
+            pages?.takeIf { it > 0 }?.let { totalPages ->
+                page * 100.0 / totalPages
+            }
+        } ?: progressPercentage
+    } else {
+        progressPercentage
+    }
 
 private fun Book.pageProgressLabel(): String? =
-    currentPage?.let { page -> pages?.let { "$page / $it pages" } ?: "Page $page" }
+    if (pageFormat.usesPages) {
+        currentPage?.let { page -> pages?.let { "$page / $it pages" } ?: "Page $page" }
+    } else {
+        progressPercentage?.let { it.formatPercentLabel(pageFormat) }
+    }
+
+private fun Double.formatPercentInput(format: BookPageFormat): String =
+    if (format.precision == 0) {
+        roundToInt().toString()
+    } else {
+        String.format(Locale.US, "%.${format.precision}f", this)
+    }
+
+private fun Double.formatPercentLabel(format: BookPageFormat): String =
+    "${formatPercentInput(format)}%"
+
+private fun String.asPercentInput(): String {
+    var hasDecimal = false
+    return buildString {
+        this@asPercentInput.forEach { char ->
+            when {
+                char.isDigit() -> append(char)
+                char == '.' && !hasDecimal -> {
+                    append(char)
+                    hasDecimal = true
+                }
+            }
+        }
+    }
+}
+
+private fun Instant.formatSessionTime(): String =
+    atZone(ZoneId.systemDefault()).format(READING_SESSION_TIME_FORMATTER)
+
+private const val READKEEPER_READING_SESSION_CHANNEL = "readkeeper_reading_session"
+private const val READKEEPER_READING_SESSION_NOTIFICATION_ID = 4101
+private const val READKEEPER_NOTIFICATION_PERMISSION_REQUEST = 4102
+private val READING_SESSION_TIME_FORMATTER: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("HH:mm")
 
 @Composable
 private fun MetadataRow(book: Book) {
@@ -2263,6 +2689,7 @@ private fun BookScreenPreview() {
                     publishYear = 2017,
                     state = BookState.Reading,
                     platform = "Kindle",
+                    pageFormat = BookPageFormat.Page,
                     currentPage = 120,
                     progressPercentage = 19.0,
                     archiveStatus = null,

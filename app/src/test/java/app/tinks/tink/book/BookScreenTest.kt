@@ -20,7 +20,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class, sdk = [35])
+@Config(application = Application::class, sdk = [36])
 class BookScreenTest {
 
     @get:Rule
@@ -42,6 +42,25 @@ class BookScreenTest {
         composeRule.onNodeWithTag("book_list_reading").performClick()
 
         assertEquals(BookEvent.OpenList(BookState.Reading), events.single())
+    }
+
+    @Test
+    fun home_startFabStartsLatestReadingBook() {
+        val events = mutableListOf<BookEvent>()
+        val latestBook = sampleBook(BookState.Reading)
+
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                BookScreen(
+                    state = BookUiState(readingBooks = listOf(latestBook)),
+                    onEvent = events::add,
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("book_reading_session_fab").performClick()
+
+        assertEquals(BookEvent.StartReadingSession(latestBook), events.single())
     }
 
     @Test
@@ -82,6 +101,124 @@ class BookScreenTest {
         composeRule.onNodeWithText("Science Fiction").performClick()
 
         assertEquals(BookEvent.SelectCategory("Science Fiction"), events.single())
+    }
+
+    @Test
+    fun search_displaysBackendResults() {
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                BookScreen(
+                    state = BookUiState(
+                        screen = BooksScreenState.SearchResults("left hand"),
+                        searchKeyword = "left hand",
+                        searchResults = listOf(
+                            BookDraft(
+                                title = "The Left Hand of Darkness",
+                                author = "Ursula K. Le Guin",
+                                isbn = "9780441478125",
+                                pages = 304,
+                                publishYear = 1969,
+                            )
+                        ),
+                    ),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("The Left Hand of Darkness").assertIsDisplayed()
+        composeRule.onNodeWithText("Ursula K. Le Guin").assertIsDisplayed()
+    }
+
+    @Test
+    fun search_displaysEmptyResultMessage() {
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                BookScreen(
+                    state = BookUiState(
+                        screen = BooksScreenState.SearchResults("unknown book"),
+                        searchKeyword = "unknown book",
+                        hasSubmittedSearch = true,
+                    ),
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("book_search_state_message").assertIsDisplayed()
+        composeRule.onNodeWithText("No books found").assertIsDisplayed()
+    }
+
+    @Test
+    fun search_displaysErrorMessage() {
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                BookScreen(
+                    state = BookUiState(
+                        screen = BooksScreenState.SearchResults("earthsea"),
+                        searchKeyword = "earthsea",
+                        hasSubmittedSearch = true,
+                        searchErrorMessage = "Unexpected error occurred",
+                    ),
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("book_search_state_message").assertIsDisplayed()
+        composeRule.onNodeWithText("Search failed").assertIsDisplayed()
+    }
+
+    @Test
+    fun detailEdit_savesMetadataWithoutProgressFields() {
+        val events = mutableListOf<BookEvent>()
+
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                BookScreen(
+                    state = BookUiState(
+                        screen = BooksScreenState.Detail(2),
+                        selectedBook = sampleBook(BookState.Reading),
+                    ),
+                    onEvent = events::add,
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Edit book").performClick()
+        composeRule.onNodeWithText("Kindle").performClick()
+        composeRule.onNodeWithText("Save").performClick()
+
+        assertEquals(
+            BookEvent.SaveBook(
+                bookId = 2,
+                title = "Currently reading",
+                platform = "Kindle",
+                category = null,
+                pages = 200,
+                pageFormat = BookPageFormat.Page,
+                currentPage = null,
+                progressPercentage = null,
+            ),
+            events.single(),
+        )
+    }
+
+    @Test
+    fun detail_displaysLoadingShellBeforeBookArrives() {
+        val events = mutableListOf<BookEvent>()
+
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                BookScreen(
+                    state = BookUiState(screen = BooksScreenState.Detail(2), selectedBook = null),
+                    onEvent = events::add,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Book details").assertIsDisplayed()
+        composeRule.onNodeWithTag("book_detail_loading").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("返回上级").performClick()
+
+        assertEquals(BookEvent.NavigateBack, events.single())
     }
 
     @Test

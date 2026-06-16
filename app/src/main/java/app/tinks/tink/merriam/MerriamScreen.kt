@@ -186,7 +186,7 @@ private fun MerriamScreenPreview() {
     TinkTheme {
         MerriamScreen(
             units = listOf(
-                _root_ide_package_.app.tinks.tink.merriam.data.Unit(
+                app.tinks.tink.merriam.data.Unit(
                     id = 1,
                     roots = listOf(
                         Root(
@@ -210,7 +210,7 @@ private fun MerriamScreenPreview() {
                         ),
                     ),
                 ),
-                _root_ide_package_.app.tinks.tink.merriam.data.Unit(
+                app.tinks.tink.merriam.data.Unit(
                     id = 2,
                     roots = listOf(
                         Root(

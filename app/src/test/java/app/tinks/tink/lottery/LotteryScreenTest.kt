@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class, sdk = [35])
+@Config(application = Application::class, sdk = [36])
 class LotteryScreenTest {
 
     @get:Rule

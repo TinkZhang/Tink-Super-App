@@ -12,7 +12,7 @@ import org.robolectric.annotation.Config
 import kotlin.random.Random
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class, sdk = [35])
+@Config(application = Application::class, sdk = [36])
 class GeographyDataTest {
 
     @Test
