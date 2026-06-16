@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReadKeeperWidget.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.widget</a> &gt; <span class="el_source">ReadKeeperWidget.kt</span></div><h1>ReadKeeperWidget.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.widget
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.glance.GlanceId
+import androidx.glance.GlanceModifier
+import androidx.glance.Image
+import androidx.glance.ImageProvider
+import androidx.glance.action.actionStartActivity
+import androidx.glance.action.clickable
+import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.LinearProgressIndicator
+import androidx.glance.appwidget.provideContent
+import androidx.glance.background
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Column
+import androidx.glance.layout.ContentScale
+import androidx.glance.layout.Row
+import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
+import androidx.glance.layout.padding
+import androidx.glance.layout.size
+import androidx.glance.layout.width
+import androidx.glance.text.FontWeight
+import androidx.glance.text.Text
+import androidx.glance.text.TextStyle
+import androidx.glance.unit.ColorProvider
+import app.tinks.tink.BuildConfig
+import app.tinks.tink.MainActivity
+import app.tinks.tink.R
+import app.tinks.tink.book.Book
+import app.tinks.tink.book.BookDto
+import app.tinks.tink.book.BookPageFormat
+import app.tinks.tink.book.toDomain
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.Locale
+
+<span class="nc" id="L50">class ReadKeeperWidget : GlanceAppWidget() {</span>
+<span class="nc" id="L51">    override suspend fun provideGlance(context: Context, id: GlanceId) {</span>
+<span class="nc" id="L52">        val state = ReadKeeperWidgetLoader.load()</span>
+<span class="nc" id="L53">        provideContent {</span>
+<span class="nc" id="L54">            ReadKeeperWidgetContent(state)</span>
+<span class="nc" id="L55">        }</span>
+    }
+}
+
+<span class="nc" id="L59">class ReadKeeperWidgetReceiver : GlanceAppWidgetReceiver() {</span>
+<span class="nc" id="L60">    override val glanceAppWidget: GlanceAppWidget = ReadKeeperWidget()</span>
+}
+
+@Composable
+<span class="nc" id="L64">private fun ReadKeeperWidgetContent(state: ReadKeeperWidgetState) {</span>
+<span class="nc" id="L65">    Column(</span>
+<span class="nc" id="L66">        modifier = GlanceModifier</span>
+<span class="nc" id="L67">            .fillMaxSize()</span>
+<span class="nc" id="L68">            .background(ColorProvider(Color(0xFFF3F7F0)))</span>
+<span class="nc" id="L69">            .clickable(actionStartActivity&lt;MainActivity&gt;())</span>
+<span class="nc" id="L70">            .padding(14.dp),</span>
+<span class="nc" id="L71">        verticalAlignment = Alignment.Vertical.CenterVertically,</span>
+<span class="nc" id="L72">    ) {</span>
+<span class="nc" id="L73">        Text(</span>
+<span class="nc" id="L74">            text = &quot;ReadKeeper&quot;,</span>
+<span class="nc" id="L75">            style = TextStyle(</span>
+<span class="nc" id="L76">                color = ColorProvider(Color(0xFF31503B)),</span>
+<span class="nc" id="L77">                fontSize = 13.sp,</span>
+<span class="nc" id="L78">                fontWeight = FontWeight.Medium,</span>
+            ),
+<span class="nc" id="L80">            maxLines = 1,</span>
+        )
+<span class="nc" id="L82">        Spacer(GlanceModifier.height(8.dp))</span>
+<span class="nc" id="L83">        when (state) {</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">            ReadKeeperWidgetState.Empty -&gt; EmptyWidgetContent()</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">            ReadKeeperWidgetState.Error -&gt; ErrorWidgetContent()</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">            is ReadKeeperWidgetState.Loaded -&gt; LatestBookContent(state)</span>
+<span class="nc" id="L87">        }</span>
+<span class="nc" id="L88">    }</span>
+<span class="nc" id="L89">}</span>
+
+@Composable
+<span class="nc" id="L92">private fun LatestBookContent(state: ReadKeeperWidgetState.Loaded) {</span>
+<span class="nc" id="L93">    Row(</span>
+<span class="nc" id="L94">        modifier = GlanceModifier.fillMaxWidth(),</span>
+<span class="nc" id="L95">        verticalAlignment = Alignment.Vertical.CenterVertically,</span>
+<span class="nc" id="L96">    ) {</span>
+<span class="nc" id="L97">        Image(</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">            provider = state.cover ?: ImageProvider(R.drawable.ic_readkeeperlogo),</span>
+<span class="nc" id="L99">            contentDescription = state.book.title,</span>
+<span class="nc" id="L100">            contentScale = ContentScale.Crop,</span>
+<span class="nc" id="L101">            modifier = GlanceModifier.size(72.dp),</span>
+        )
+<span class="nc" id="L103">        Spacer(GlanceModifier.width(12.dp))</span>
+<span class="nc" id="L104">        Column(modifier = GlanceModifier.defaultWeight()) {</span>
+<span class="nc" id="L105">            Text(</span>
+<span class="nc" id="L106">                text = state.book.title,</span>
+<span class="nc" id="L107">                style = TextStyle(</span>
+<span class="nc" id="L108">                    color = ColorProvider(Color(0xFF111827)),</span>
+<span class="nc" id="L109">                    fontSize = 16.sp,</span>
+<span class="nc" id="L110">                    fontWeight = FontWeight.Bold,</span>
+                ),
+<span class="nc" id="L112">                maxLines = 2,</span>
+            )
+<span class="nc" id="L114">            Spacer(GlanceModifier.height(6.dp))</span>
+<span class="nc" id="L115">            Text(</span>
+<span class="nc" id="L116">                text = state.progressLabel,</span>
+<span class="nc" id="L117">                style = TextStyle(</span>
+<span class="nc" id="L118">                    color = ColorProvider(Color(0xFF4B5563)),</span>
+<span class="nc" id="L119">                    fontSize = 12.sp,</span>
+                ),
+<span class="nc" id="L121">                maxLines = 1,</span>
+            )
+<span class="nc" id="L123">            Spacer(GlanceModifier.height(8.dp))</span>
+<span class="nc" id="L124">            LinearProgressIndicator(</span>
+<span class="nc" id="L125">                progress = state.progressFraction,</span>
+<span class="nc" id="L126">                modifier = GlanceModifier.fillMaxWidth(),</span>
+<span class="nc" id="L127">                color = ColorProvider(Color(0xFF2E7D32)),</span>
+<span class="nc" id="L128">                backgroundColor = ColorProvider(Color(0xFFDDE7D8)),</span>
+            )
+<span class="nc" id="L130">        }</span>
+<span class="nc" id="L131">    }</span>
+<span class="nc" id="L132">}</span>
+
+@Composable
+<span class="nc" id="L135">private fun EmptyWidgetContent() {</span>
+<span class="nc" id="L136">    Text(</span>
+<span class="nc" id="L137">        text = &quot;No reading book yet&quot;,</span>
+<span class="nc" id="L138">        style = TextStyle(</span>
+<span class="nc" id="L139">            color = ColorProvider(Color(0xFF111827)),</span>
+<span class="nc" id="L140">            fontSize = 18.sp,</span>
+<span class="nc" id="L141">            fontWeight = FontWeight.Bold,</span>
+        ),
+<span class="nc" id="L143">        maxLines = 2,</span>
+    )
+<span class="nc" id="L145">    Spacer(GlanceModifier.height(6.dp))</span>
+<span class="nc" id="L146">    Text(</span>
+<span class="nc" id="L147">        text = &quot;Open ReadKeeper to start one.&quot;,</span>
+<span class="nc" id="L148">        style = TextStyle(color = ColorProvider(Color(0xFF4B5563)), fontSize = 12.sp),</span>
+<span class="nc" id="L149">        maxLines = 2,</span>
+    )
+<span class="nc" id="L151">}</span>
+
+@Composable
+<span class="nc" id="L154">private fun ErrorWidgetContent() {</span>
+<span class="nc" id="L155">    Text(</span>
+<span class="nc" id="L156">        text = &quot;Unable to load reading book&quot;,</span>
+<span class="nc" id="L157">        style = TextStyle(</span>
+<span class="nc" id="L158">            color = ColorProvider(Color(0xFF111827)),</span>
+<span class="nc" id="L159">            fontSize = 16.sp,</span>
+<span class="nc" id="L160">            fontWeight = FontWeight.Bold,</span>
+        ),
+<span class="nc" id="L162">        maxLines = 2,</span>
+    )
+<span class="nc" id="L164">    Spacer(GlanceModifier.height(6.dp))</span>
+<span class="nc" id="L165">    Text(</span>
+<span class="nc" id="L166">        text = &quot;Tap to open ReadKeeper.&quot;,</span>
+<span class="nc" id="L167">        style = TextStyle(color = ColorProvider(Color(0xFF4B5563)), fontSize = 12.sp),</span>
+<span class="nc" id="L168">        maxLines = 2,</span>
+    )
+<span class="nc" id="L170">}</span>
+
+private sealed interface ReadKeeperWidgetState {
+    data object Empty : ReadKeeperWidgetState
+    data object Error : ReadKeeperWidgetState
+<span class="nc" id="L175">    data class Loaded(</span>
+<span class="nc" id="L176">        val book: Book,</span>
+<span class="nc" id="L177">        val cover: ImageProvider?,</span>
+<span class="nc" id="L178">        val progressLabel: String,</span>
+<span class="nc" id="L179">        val progressFraction: Float,</span>
+    ) : ReadKeeperWidgetState
+}
+
+private object ReadKeeperWidgetLoader {
+<span class="nc" id="L184">    private val json = Json { ignoreUnknownKeys = true }</span>
+
+<span class="nc" id="L186">    suspend fun load(): ReadKeeperWidgetState = withContext(Dispatchers.IO) {</span>
+<span class="nc" id="L187">        runCatching {</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">            val book = fetchLatestReadingBook() ?: return@withContext ReadKeeperWidgetState.Empty</span>
+<span class="nc" id="L189">            ReadKeeperWidgetState.Loaded(</span>
+<span class="nc" id="L190">                book = book,</span>
+<span class="nc bnc" id="L191" title="All 4 branches missed.">                cover = book.coverUrl?.let(::downloadCover)?.let { ImageProvider(it) },</span>
+<span class="nc" id="L192">                progressLabel = book.widgetProgressLabel(),</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">                progressFraction = ((book.widgetProgressPercent() ?: 0.0) / 100.0).toFloat()</span>
+<span class="nc" id="L194">                    .coerceIn(0f, 1f),</span>
+<span class="nc" id="L195">            )</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">        }.getOrElse {</span>
+<span class="nc" id="L197">            ReadKeeperWidgetState.Error</span>
+<span class="nc" id="L198">        }</span>
+<span class="nc" id="L199">    }</span>
+
+    private fun fetchLatestReadingBook(): Book? {
+<span class="nc" id="L202">        val url = URL(&quot;${BuildConfig.TINK_API_BASE_URL.ensureTrailingSlash()}book/reading?page=0&amp;size=1&quot;)</span>
+<span class="nc" id="L203">        val connection = (url.openConnection() as HttpURLConnection).apply {</span>
+<span class="nc" id="L204">            connectTimeout = 8_000</span>
+<span class="nc" id="L205">            readTimeout = 8_000</span>
+<span class="nc" id="L206">            requestMethod = &quot;GET&quot;</span>
+<span class="nc" id="L207">        }</span>
+<span class="nc" id="L208">        return try {</span>
+<span class="nc bnc" id="L209" title="All 6 branches missed.">            if (connection.responseCode !in 200..299) return null</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">            val body = connection.inputStream.bufferedReader().use { it.readText() }</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">            json.decodeFromString&lt;List&lt;BookDto&gt;&gt;(body).firstOrNull()?.toDomain()</span>
+        } finally {
+<span class="nc" id="L213">            connection.disconnect()</span>
+        }
+    }
+
+    private fun downloadCover(url: String): Bitmap? {
+<span class="nc" id="L218">        val connection = (URL(url).openConnection() as HttpURLConnection).apply {</span>
+<span class="nc" id="L219">            connectTimeout = 8_000</span>
+<span class="nc" id="L220">            readTimeout = 8_000</span>
+<span class="nc" id="L221">            requestMethod = &quot;GET&quot;</span>
+<span class="nc" id="L222">        }</span>
+<span class="nc" id="L223">        return try {</span>
+<span class="nc bnc" id="L224" title="All 6 branches missed.">            if (connection.responseCode !in 200..299) return null</span>
+<span class="nc" id="L225">            connection.inputStream.use(BitmapFactory::decodeStream)</span>
+        } finally {
+<span class="nc" id="L227">            connection.disconnect()</span>
+        }
+    }
+}
+
+private fun String.ensureTrailingSlash(): String =
+<span class="nc bnc" id="L233" title="All 2 branches missed.">    if (endsWith(&quot;/&quot;)) this else &quot;$this/&quot;</span>
+
+private fun Book.widgetProgressPercent(): Double? =
+<span class="nc bnc" id="L236" title="All 2 branches missed.">    if (pageFormat.usesPages) {</span>
+<span class="nc bnc" id="L237" title="All 4 branches missed.">        currentPage?.let { page -&gt;</span>
+<span class="nc bnc" id="L238" title="All 8 branches missed.">            pages?.takeIf { it &gt; 0 }?.let { totalPages -&gt; page * 100.0 / totalPages }</span>
+<span class="nc" id="L239">        } ?: progressPercentage</span>
+    } else {
+<span class="nc" id="L241">        progressPercentage</span>
+<span class="nc" id="L242">    }</span>
+
+private fun Book.widgetProgressLabel(): String {
+<span class="nc" id="L245">    val percent = widgetProgressPercent()</span>
+<span class="nc bnc" id="L246" title="All 2 branches missed.">    return if (pageFormat.usesPages) {</span>
+<span class="nc bnc" id="L247" title="All 6 branches missed.">        val pageLabel = currentPage?.let { page -&gt; pages?.let { &quot;$page / $it pages&quot; } ?: &quot;Page $page&quot; }</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        listOfNotNull(pageLabel, percent?.let { &quot;${it.toInt()}%&quot; }).joinToString(&quot; · &quot;)</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">            .ifBlank { &quot;Not started&quot; }</span>
+    } else {
+<span class="nc bnc" id="L251" title="All 4 branches missed.">        percent?.formatWidgetPercent(pageFormat) ?: &quot;Not started&quot;</span>
+    }
+}
+
+private fun Double.formatWidgetPercent(format: BookPageFormat): String =
+<span class="nc bnc" id="L256" title="All 2 branches missed.">    if (format.precision == 0) {</span>
+<span class="nc" id="L257">        &quot;${toInt()}%&quot;</span>
+    } else {
+<span class="nc" id="L259">        String.format(Locale.US, &quot;%.${format.precision}f%%&quot;, this)</span>
+<span class="nc" id="L260">    }</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
