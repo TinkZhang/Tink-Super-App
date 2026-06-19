@@ -50,16 +50,30 @@ fun TinkTheme(
     }
 
     MaterialTheme(
-        colorScheme = colorScheme.withPrimary(Color(0, 135, 119)),
+        colorScheme = colorScheme.withPrimary(TinkPrimary, darkTheme),
         typography = Typography,
         content = content
     )
 }
 
-fun ColorScheme.withPrimary(primary: Color): ColorScheme {
+fun ColorScheme.withPrimary(
+    primary: Color,
+    darkTheme: Boolean,
+): ColorScheme {
+    val primaryContainer = if (darkTheme) {
+        TinkPrimaryDarkContainer
+    } else {
+        TinkPrimaryLightContainer
+    }
+    val onPrimaryContainer = if (darkTheme) {
+        TinkOnPrimaryDarkContainer
+    } else {
+        TinkOnPrimaryLightContainer
+    }
     return copy(
         primary = primary,
-        primaryContainer = primary.copy(alpha = 0.2f),
-        onPrimaryContainer = primary
+        onPrimary = Color.White,
+        primaryContainer = primaryContainer,
+        onPrimaryContainer = onPrimaryContainer,
     )
 }

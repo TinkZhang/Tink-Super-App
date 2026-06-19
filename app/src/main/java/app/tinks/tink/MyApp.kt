@@ -93,12 +93,16 @@ fun MyApp(
     quickAddRequestId: Int = 0,
     openAddFromQuickSettings: Boolean = false,
     onQuickSettingsRequestConsumed: () -> Unit = {},
+    readKeeperStopRequestId: Int = 0,
+    openReadKeeperFromNotification: Boolean = false,
+    onReadKeeperNotificationRequestConsumed: () -> Unit = {},
 ) {
     val backStack = remember { mutableStateListOf<MyNavKey>(ScreenA) }
     val currentKey = backStack.lastOrNull()
     val currentTopDestination = currentKey?.topDestination()
     var pendingQuickAddRequestId by remember { mutableStateOf<Int?>(null) }
     var handledQuickAddRequestId by remember { mutableStateOf<Int?>(null) }
+    var pendingReadKeeperStopRequestId by remember { mutableStateOf<Int?>(null) }
 
     val onNavigate: (MyNavKey) -> Unit = { destination ->
         if (currentKey != destination) {
@@ -140,6 +144,14 @@ fun MyApp(
             onNavigate(ScreenTime)
             pendingQuickAddRequestId = quickAddRequestId
             onQuickSettingsRequestConsumed()
+        }
+    }
+
+    LaunchedEffect(openReadKeeperFromNotification, readKeeperStopRequestId) {
+        if (openReadKeeperFromNotification) {
+            onNavigate(ScreenBooks)
+            pendingReadKeeperStopRequestId = readKeeperStopRequestId.takeIf { it > 0 }
+            onReadKeeperNotificationRequestConsumed()
         }
     }
 
@@ -286,6 +298,10 @@ fun MyApp(
                         is ScreenBooks -> BookScreen(
                             hiltViewModel(),
                             onOpenDrawer = { scope.launch { drawerState.open() } },
+                            stopReadingSessionRequestId = pendingReadKeeperStopRequestId ?: 0,
+                            onStopReadingSessionRequestConsumed = {
+                                pendingReadKeeperStopRequestId = null
+                            },
                         )
                         is ScreenLottery -> LotteryScreen(
                             hiltViewModel(),

@@ -24,6 +24,8 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private var quickAddRequestId by mutableIntStateOf(0)
     private var openAddFromQuickSettings by mutableStateOf(false)
+    private var readKeeperStopRequestId by mutableIntStateOf(0)
+    private var openReadKeeperFromNotification by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +47,11 @@ class MainActivity : ComponentActivity() {
                         onQuickSettingsRequestConsumed = {
                             openAddFromQuickSettings = false
                         },
+                        readKeeperStopRequestId = readKeeperStopRequestId,
+                        openReadKeeperFromNotification = openReadKeeperFromNotification,
+                        onReadKeeperNotificationRequestConsumed = {
+                            openReadKeeperFromNotification = false
+                        },
                     )
                 }
             }
@@ -58,15 +65,27 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleLaunchIntent(intent: Intent?) {
-        if (intent?.action == ACTION_ADD_TIME_ENTRY_FROM_TILE) {
-            quickAddRequestId += 1
-            openAddFromQuickSettings = true
-            intent.action = null
+        when (intent?.action) {
+            ACTION_ADD_TIME_ENTRY_FROM_TILE -> {
+                quickAddRequestId += 1
+                openAddFromQuickSettings = true
+                intent.action = null
+            }
+            ACTION_STOP_READKEEPER_SESSION,
+            ACTION_OPEN_READKEEPER_SESSION -> {
+                if (intent.action == ACTION_STOP_READKEEPER_SESSION) {
+                    readKeeperStopRequestId += 1
+                }
+                openReadKeeperFromNotification = true
+                intent.action = null
+            }
         }
     }
 
     companion object {
         const val ACTION_ADD_TIME_ENTRY_FROM_TILE = "app.tinks.tink.action.ADD_TIME_ENTRY_FROM_TILE"
+        const val ACTION_OPEN_READKEEPER_SESSION = "app.tinks.tink.action.OPEN_READKEEPER_SESSION"
+        const val ACTION_STOP_READKEEPER_SESSION = "app.tinks.tink.action.STOP_READKEEPER_SESSION"
     }
 }
 

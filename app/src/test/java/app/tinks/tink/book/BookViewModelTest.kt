@@ -3,6 +3,8 @@ package app.tinks.tink.book
 import app.tinks.tink.network.ApiResult
 import app.tinks.tink.testing.MainDispatcherRule
 import app.tinks.tink.time.TimeApi
+import app.tinks.tink.time.TimeDashboard
+import app.tinks.tink.time.TimeEntry
 import app.tinks.tink.time.TimeEntryDto
 import app.tinks.tink.time.TimeLabelCreateRequest
 import app.tinks.tink.time.TimeLabelDto
@@ -19,6 +21,9 @@ import kotlinx.serialization.json.JsonElement
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import java.time.Instant
+import java.time.LocalDate
+import java.time.OffsetDateTime
 
 class BookViewModelTest {
 
@@ -32,6 +37,24 @@ class BookViewModelTest {
         assertEquals("Currently reading", viewModel.uiState.value.readingBooks.single().title)
         assertEquals("Next book", viewModel.uiState.value.wishlistBooks.single().title)
         assertEquals("Finished book", viewModel.uiState.value.archivedBooks.single().title)
+    }
+
+    @Test
+    fun init_loadsCurrentYearReadingRecordDates() = runTest {
+        val readingDate = LocalDate.now().withDayOfYear(12)
+        val otherDate = readingDate.plusDays(1)
+        val viewModel = BookViewModel(
+            FakeRepository(),
+            FakeTimeRepository(
+                entries = listOf(
+                    timeEntry(type = 2, start = readingDate.atStartOfDay().atOffset(OffsetDateTime.now().offset)),
+                    timeEntry(type = 1, start = otherDate.atStartOfDay().atOffset(OffsetDateTime.now().offset)),
+                )
+            )
+        )
+        advanceUntilIdle()
+
+        assertEquals(setOf(readingDate), viewModel.uiState.value.readingRecordDates)
     }
 
     @Test
@@ -74,23 +97,129 @@ class BookViewModelTest {
     }
 
     @Test
+    fun navigatingBackFromSearchResults_returnsHomeAndClearsSearch() = runTest {
+        val viewModel = BookViewModel(FakeRepository(), FakeTimeRepository())
+
+        viewModel.onEvent(BookEvent.OpenSearch)
+        viewModel.onEvent(BookEvent.SearchKeywordChanged("earthsea"))
+        viewModel.onEvent(BookEvent.SubmitSearch)
+        advanceUntilIdle()
+
+        viewModel.onEvent(BookEvent.NavigateBack)
+        advanceUntilIdle()
+
+        assertEquals(BooksScreenState.Home, viewModel.uiState.value.screen)
+        assertEquals(listOf(BooksScreenState.Home), viewModel.uiState.value.navigationStack)
+        assertEquals("", viewModel.uiState.value.searchKeyword)
+        assertEquals(emptyList<BookDraft>(), viewModel.uiState.value.searchResults)
+        assertEquals(false, viewModel.uiState.value.hasSubmittedSearch)
+        assertEquals(null, viewModel.uiState.value.searchErrorMessage)
+    }
+
+    @Test
+    fun addSearchResultToWishlist_marksToggleCheckedAndShowsToast() = runTest {
+        val repository = FakeRepository()
+        val viewModel = BookViewModel(repository, FakeTimeRepository())
+        val draft = BookDraft(
+            title = "A Wizard of Earthsea",
+            author = "Ursula K. Le Guin",
+        )
+
+        viewModel.onEvent(BookEvent.AddDraftToWishlist(draft))
+        advanceUntilIdle()
+
+        assertEquals(listOf(draft), repository.wishlistDrafts)
+        assertEquals(true, draft.searchResultKey() in viewModel.uiState.value.wishlistSearchResultKeys)
+        assertEquals("Added to wishlist", viewModel.uiState.value.toastMessage)
+
+        viewModel.onEvent(BookEvent.UncheckDraftWishlist(draft))
+
+        assertEquals(false, draft.searchResultKey() in viewModel.uiState.value.wishlistSearchResultKeys)
+    }
+
+    @Test
+    fun addSearchResultToReading_marksToggleCheckedAndShowsToast() = runTest {
+        val repository = FakeRepository()
+        val viewModel = BookViewModel(repository, FakeTimeRepository())
+        val draft = BookDraft(
+            title = "A Wizard of Earthsea",
+            author = "Ursula K. Le Guin",
+        )
+
+        viewModel.onEvent(BookEvent.AddDraftToReading(draft))
+        advanceUntilIdle()
+
+        assertEquals(listOf(draft), repository.readingDrafts)
+        assertEquals(true, draft.searchResultKey() in viewModel.uiState.value.readingSearchResultKeys)
+        assertEquals("Added to reading", viewModel.uiState.value.toastMessage)
+
+        viewModel.onEvent(BookEvent.UncheckDraftReading(draft))
+
+        assertEquals(false, draft.searchResultKey() in viewModel.uiState.value.readingSearchResultKeys)
+    }
+
+    @Test
     fun stoppingReadingSession_logsTimeEntryAndClearsSession() = runTest {
         val timeRepository = FakeTimeRepository()
         val viewModel = BookViewModel(FakeRepository(), timeRepository)
         val book = sampleBook(BookState.Reading)
+        val startTime = Instant.parse("2026-06-17T12:00:00Z")
+        val stopTime = Instant.parse("2026-06-17T12:42:00Z")
 
         viewModel.onEvent(BookEvent.StartReadingSession(book))
-        viewModel.onEvent(BookEvent.StopReadingSession(stopPage = 96, stopProgressPercentage = null))
+        viewModel.onEvent(
+            BookEvent.StopReadingSession(
+                startTime = startTime,
+                stopTime = stopTime,
+                stopPage = 96,
+                stopProgressPercentage = null,
+            )
+        )
         advanceUntilIdle()
 
         val payload = timeRepository.createdEntries.single()
-        assertEquals(1, payload.type)
+        assertEquals(2, payload.type)
+        assertEquals(startTime.toString(), payload.start)
+        assertEquals(stopTime.toString(), payload.end)
         assertEquals("Currently reading Page 80 - Page 96", payload.title)
         assertEquals(null, viewModel.uiState.value.readingSession)
     }
 
+    @Test
+    fun updatingReadingProgress_logsTimeEntryAndUpdatesBook() = runTest {
+        val repository = FakeRepository()
+        val timeRepository = FakeTimeRepository()
+        val viewModel = BookViewModel(repository, timeRepository)
+        val readingBookId = sampleBook(BookState.Reading).id
+        val startTime = Instant.parse("2026-06-17T12:00:00Z")
+        val stopTime = Instant.parse("2026-06-17T12:10:00Z")
+
+        viewModel.onEvent(BookEvent.OpenDetail(readingBookId))
+        advanceUntilIdle()
+        viewModel.onEvent(
+            BookEvent.UpdateReadingProgress(
+                bookId = readingBookId,
+                startTime = startTime,
+                stopTime = stopTime,
+                stopPage = 100,
+                stopProgressPercentage = null,
+            )
+        )
+        advanceUntilIdle()
+
+        val payload = timeRepository.createdEntries.single()
+        assertEquals(2, payload.type)
+        assertEquals(startTime.toString(), payload.start)
+        assertEquals(stopTime.toString(), payload.end)
+        assertEquals("Currently reading Page 80 - Page 100", payload.title)
+        assertEquals(100, repository.updatePayloads.last().currentPage)
+    }
+
     private class FakeRepository : BookRepository(NoopBookApi) {
         val requests = mutableListOf<Pair<BookState, String?>>()
+        val wishlistDrafts = mutableListOf<BookDraft>()
+        val readingDrafts = mutableListOf<BookDraft>()
+        val updatePayloads = mutableListOf<BookUpdateRequest>()
 
         override fun getBooks(state: BookState, category: String?): Flow<ApiResult<List<Book>>> {
             requests.add(state to category)
@@ -103,8 +232,20 @@ class BookViewModelTest {
         override fun getBook(bookId: Long): Flow<ApiResult<Book>> =
             flowOf(ApiResult.Success(sampleBook(BookState.Reading)))
 
-        override fun updateBook(bookId: Long, payload: BookUpdateRequest): Flow<ApiResult<Book>> =
-            flowOf(ApiResult.Success(sampleBook(BookState.Reading)))
+        override fun updateBook(bookId: Long, payload: BookUpdateRequest): Flow<ApiResult<Book>> {
+            updatePayloads.add(payload)
+            return flowOf(ApiResult.Success(sampleBook(BookState.Reading)))
+        }
+
+        override fun addToWishlist(draft: BookDraft): Flow<ApiResult<Book>> {
+            wishlistDrafts.add(draft)
+            return flowOf(ApiResult.Success(sampleBook(BookState.Wish)))
+        }
+
+        override fun addToReading(draft: BookDraft, platform: String): Flow<ApiResult<Book>> {
+            readingDrafts.add(draft)
+            return flowOf(ApiResult.Success(sampleBook(BookState.Reading)))
+        }
 
         override fun searchBooks(keyword: String): Flow<ApiResult<List<BookDraft>>> =
             flowOf(
@@ -120,8 +261,16 @@ class BookViewModelTest {
             )
     }
 
-    private class FakeTimeRepository : TimeRepository(NoopTimeApi) {
+    private class FakeTimeRepository(
+        private val entries: List<TimeEntry> = emptyList(),
+    ) : TimeRepository(NoopTimeApi) {
         val createdEntries = mutableListOf<TimeUpsertRequest>()
+
+        override fun getTimeDashboard(
+            startDate: LocalDate,
+            endDate: LocalDate,
+        ): Flow<ApiResult<TimeDashboard>> =
+            flowOf(ApiResult.Success(TimeDashboard(statistics = emptyList(), entries = entries)))
 
         override fun createTimeEntry(payload: TimeUpsertRequest): Flow<ApiResult<Unit>> {
             createdEntries.add(payload)
@@ -129,6 +278,18 @@ class BookViewModelTest {
         }
     }
 }
+
+private fun timeEntry(
+    type: Int,
+    start: OffsetDateTime,
+): TimeEntry = TimeEntry(
+    id = 1,
+    type = type,
+    start = start,
+    end = start.plusMinutes(30),
+    title = "Reading",
+    description = null,
+)
 
 private object NoopBookApi : BookApi {
     override suspend fun search(keyword: String, limit: Int): JsonElement = JsonArray(emptyList())

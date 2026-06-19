@@ -6,18 +6,25 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
+import android.graphics.drawable.Icon as AndroidIcon
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.provider.Settings
 import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -74,6 +81,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -83,6 +91,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -100,8 +109,10 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -132,23 +143,39 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import app.tinks.tink.MainActivity
 import app.tinks.tink.R
+import app.tinks.tink.ui.components.YearContributionGraph
 import coil.compose.AsyncImage
+import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileOutputStream
+import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.Year
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.Locale
+import kotlin.math.ceil
 import kotlin.math.roundToInt
+import org.json.JSONObject
 
 @Composable
 fun BookScreen(
     viewModel: BookViewModel,
     onOpenDrawer: () -> Unit = {},
+    stopReadingSessionRequestId: Int = 0,
+    onStopReadingSessionRequestConsumed: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    BookScreen(state = state, onEvent = viewModel::onEvent, onOpenDrawer = onOpenDrawer)
+    BookScreen(
+        state = state,
+        onEvent = viewModel::onEvent,
+        onOpenDrawer = onOpenDrawer,
+        stopReadingSessionRequestId = stopReadingSessionRequestId,
+        onStopReadingSessionRequestConsumed = onStopReadingSessionRequestConsumed,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -157,10 +184,28 @@ internal fun BookScreen(
     state: BookUiState,
     onEvent: (BookEvent) -> Unit = {},
     onOpenDrawer: () -> Unit = {},
+    stopReadingSessionRequestId: Int = 0,
+    onStopReadingSessionRequestConsumed: () -> Unit = {},
 ) {
     val navigationBackStack = state.navigationBackStack()
     val currentScreen = navigationBackStack.last()
     ReadingSessionNotificationEffect(state.readingSession)
+    var showStopSession by remember { mutableStateOf(false) }
+    var handledStopReadingSessionRequestId by remember { mutableIntStateOf(0) }
+    val activeReadingSession = state.readingSession
+    val activeReadingSessionBook = activeReadingSession?.let(state::findReadingSessionBook)
+    LaunchedEffect(stopReadingSessionRequestId, activeReadingSession?.bookId, activeReadingSessionBook?.id) {
+        if (
+            stopReadingSessionRequestId > 0 &&
+            stopReadingSessionRequestId != handledStopReadingSessionRequestId &&
+            activeReadingSession != null &&
+            activeReadingSessionBook != null
+        ) {
+            handledStopReadingSessionRequestId = stopReadingSessionRequestId
+            showStopSession = true
+            onStopReadingSessionRequestConsumed()
+        }
+    }
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
@@ -187,6 +232,7 @@ internal fun BookScreen(
                     backStack = navigationBackStack,
                     state = state,
                     onEvent = onEvent,
+                    onRequestStopReadingSession = { showStopSession = true },
                     modifier = Modifier.fillMaxSize(),
                 )
                 if (state.isLoading) {
@@ -196,6 +242,17 @@ internal fun BookScreen(
                 }
             }
         }
+    }
+    if (showStopSession && activeReadingSession != null && activeReadingSessionBook != null) {
+        StopReadingSessionDialog(
+            session = activeReadingSession,
+            book = activeReadingSessionBook,
+            onDismiss = { showStopSession = false },
+            onSave = { startTime, stopTime, page, progress ->
+                onEvent(BookEvent.StopReadingSession(startTime, stopTime, page, progress))
+                showStopSession = false
+            },
+        )
     }
 }
 
@@ -211,15 +268,24 @@ private fun ReadKeeperNavDisplay(
     backStack: List<BooksScreenState>,
     state: BookUiState,
     onEvent: (BookEvent) -> Unit,
+    onRequestStopReadingSession: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val latestState by rememberUpdatedState(state)
+    val latestOnEvent by rememberUpdatedState(onEvent)
+    val latestOnRequestStopReadingSession by rememberUpdatedState(onRequestStopReadingSession)
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
-        onBack = { onEvent(BookEvent.NavigateBack) },
+        onBack = { latestOnEvent(BookEvent.NavigateBack) },
     ) { screen ->
         NavEntry(screen) {
-            ReadKeeperDestination(screen = screen, state = state, onEvent = onEvent)
+            ReadKeeperDestination(
+                screen = screen,
+                state = latestState,
+                onEvent = latestOnEvent,
+                onRequestStopReadingSession = latestOnRequestStopReadingSession,
+            )
         }
     }
 }
@@ -229,9 +295,10 @@ private fun ReadKeeperDestination(
     screen: BooksScreenState,
     state: BookUiState,
     onEvent: (BookEvent) -> Unit,
+    onRequestStopReadingSession: () -> Unit,
 ) {
     when (screen) {
-        BooksScreenState.Home -> BooksHome(state, onEvent)
+        BooksScreenState.Home -> BooksHome(state, onEvent, onRequestStopReadingSession)
         is BooksScreenState.List -> BookList(
             state = screen.state,
             books = when (screen.state) {
@@ -257,6 +324,7 @@ private fun ReadKeeperDestination(
             categories = state.categories,
             readingSession = state.readingSession,
             onEvent = onEvent,
+            onRequestStopReadingSession = onRequestStopReadingSession,
         )
         is BooksScreenState.Notes -> NotesList(state.notes, state.selectedBook, onEvent)
     }
@@ -314,13 +382,13 @@ private fun BooksTopBar(
 private fun BooksHome(
     state: BookUiState,
     onEvent: (BookEvent) -> Unit,
+    onRequestStopReadingSession: () -> Unit,
 ) {
     val current = state.readingBooks.firstOrNull()
     val doneCount = state.archivedBooks.count { it.archiveStatus == ArchiveStatus.Done }
     val continueBooks = state.readingBooks.drop(if (current == null) 0 else 1).ifEmpty {
         current?.let(::listOf).orEmpty()
     }
-    var showStopSession by remember(current?.id) { mutableStateOf(false) }
     val activeReadingSession = state.readingSession?.takeIf { current != null && it.bookId == current.id }
 
     Box(Modifier.fillMaxSize()) {
@@ -331,18 +399,32 @@ private fun BooksHome(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item {
-                CurrentReadingCard(current, onEvent)
+            if (current == null) {
+                item {
+                    CurrentReadingCard(null, onEvent)
+                }
+            }
+            if (current != null && activeReadingSession != null) {
+                item {
+                    ActiveReadingSessionCard(
+                        session = activeReadingSession,
+                        book = current,
+                        onStop = onRequestStopReadingSession,
+                    )
+                }
             }
             item {
                 Row(
-                    horizontalArrangement = Arrangement.SpaceAround,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     SummaryBadgeButton(
                         "Reading",
                         state.readingBooks.size,
                         Icons.Filled.Bookmark,
+                        containerColor = ReadKeeperYellow,
+                        contentColor = ReadKeeperOnYellow,
+                        modifier = Modifier.weight(1f),
                     ) {
                         onEvent(BookEvent.OpenList(BookState.Reading))
                     }
@@ -350,6 +432,9 @@ private fun BooksHome(
                         "Wishlist",
                         state.wishlistBooks.size,
                         Icons.Filled.Favorite,
+                        containerColor = ReadKeeperRed,
+                        contentColor = Color.White,
+                        modifier = Modifier.weight(1f),
                     ) {
                         onEvent(BookEvent.OpenList(BookState.Wish))
                     }
@@ -357,6 +442,9 @@ private fun BooksHome(
                         "Archived",
                         state.archivedBooks.size,
                         Icons.Filled.Archive,
+                        containerColor = ReadKeeperBlue,
+                        contentColor = Color.White,
+                        modifier = Modifier.weight(1f),
                     ) {
                         onEvent(BookEvent.OpenList(BookState.Archived))
                     }
@@ -364,6 +452,9 @@ private fun BooksHome(
                         "Done",
                         doneCount,
                         Icons.Outlined.CheckCircle,
+                        containerColor = ReadKeeperGreen,
+                        contentColor = Color.White,
+                        modifier = Modifier.weight(1f),
                     ) {
                         onEvent(BookEvent.OpenArchivedStatus(ArchiveStatus.Done))
                     }
@@ -380,36 +471,149 @@ private fun BooksHome(
                 }
             }
             item {
+                ReadingContributionCard(
+                    year = Year.now().value,
+                    markedDates = state.readingRecordDates,
+                )
+            }
+            item {
                 YearlySummaryEntry(state.currentYearlySummary()) {
                     onEvent(BookEvent.OpenYearlySummary)
                 }
             }
         }
 
-        current?.let { book ->
+        current?.takeIf { activeReadingSession == null }?.let { book ->
             ReadingSessionFab(
-                isActive = activeReadingSession != null,
                 onStart = {
                     requestPostNotificationsPermissionIfNeeded(it)
                     onEvent(BookEvent.StartReadingSession(book))
                 },
-                onStop = { showStopSession = true },
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(16.dp),
             )
         }
+    }
+}
 
-        if (showStopSession && current != null && activeReadingSession != null) {
-            StopReadingSessionDialog(
-                session = activeReadingSession,
-                book = current,
-                onDismiss = { showStopSession = false },
-                onSave = { page, progress ->
-                    onEvent(BookEvent.StopReadingSession(page, progress))
-                    showStopSession = false
-                },
+@Composable
+private fun ReadingContributionCard(
+    year: Int,
+    markedDates: Set<LocalDate>,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("book_reading_contribution"),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        "Reading records",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        "$year · ${markedDates.size.contributionDayText()}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            YearContributionGraph(
+                year = year,
+                markedDates = markedDates,
+                markedColor = MaterialTheme.colorScheme.primary,
             )
+        }
+    }
+}
+
+private fun Int.contributionDayText(): String =
+    if (this == 1) "1 day" else "$this days"
+
+private data class ReadingProgressLogDraft(
+    val startTime: Instant,
+    val stopTime: Instant,
+    val startProgressLabel: String,
+    val stopPage: Int?,
+    val stopProgressPercentage: Double?,
+)
+
+@Composable
+private fun ActiveReadingSessionCard(
+    session: ReadingSessionState,
+    book: Book,
+    onStop: () -> Unit,
+) {
+    var now by remember(session.bookId, session.startTime) { mutableStateOf(Instant.now()) }
+    LaunchedEffect(session.bookId, session.startTime) {
+        while (true) {
+            now = Instant.now()
+            delay(1_000)
+        }
+    }
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("book_active_reading_session"),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+        ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = "Reading now",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Text(
+                    text = book.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Text(
+                    text = formatElapsedReadingDuration(session.startTime, now),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.testTag("book_reading_session_duration"),
+                )
+                Text(
+                    text = "Started ${session.startTime.formatSessionTime()} · ${session.startProgressLabel}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+            FilledTonalIconButton(
+                onClick = onStop,
+                modifier = Modifier.testTag("book_active_reading_session_stop"),
+            ) {
+                Icon(Icons.Filled.Stop, contentDescription = "Stop reading")
+            }
         }
     }
 }
@@ -562,31 +766,36 @@ private fun SummaryBadgeButton(
     label: String,
     count: Int,
     icon: ImageVector,
+    containerColor: Color,
+    contentColor: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     Box(
-        modifier = modifier.height(72.dp),
+        modifier = modifier.height(88.dp),
         contentAlignment = Alignment.Center,
     ) {
-        IconButton(
-            onClick = onClick,
-            modifier = Modifier
-                .size(64.dp)
-                .testTag("book_list_${label.lowercase()}"),
+        BadgedBox(
+            badge = {
+                Badge {
+                    Text(count.badgeText())
+                }
+            },
         ) {
-            BadgedBox(
-                badge = {
-                    Badge {
-                        Text(count.badgeText())
-                    }
-                },
+            FilledTonalIconButton(
+                onClick = onClick,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = containerColor,
+                    contentColor = contentColor,
+                ),
+                modifier = Modifier
+                    .size(72.dp)
+                    .testTag("book_list_${label.lowercase()}"),
             ) {
                 Icon(
                     icon,
                     contentDescription = "$label ${count.badgeText()}",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(34.dp),
+                    modifier = Modifier.size(36.dp),
                 )
             }
         }
@@ -857,6 +1066,11 @@ private fun BookSearch(
             Toast.makeText(context, "Book search failed: $message", Toast.LENGTH_SHORT).show()
         }
     }
+    LaunchedEffect(state.toastId) {
+        state.toastMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -866,7 +1080,12 @@ private fun BookSearch(
         when {
             isResultPage && state.searchResults.isNotEmpty() -> {
                 items(state.searchResults) { draft ->
-                    BookSearchResultCard(draft, onEvent)
+                    BookSearchResultCard(
+                        draft = draft,
+                        isWishlistChecked = draft.searchResultKey() in state.wishlistSearchResultKeys,
+                        isReadingChecked = draft.searchResultKey() in state.readingSearchResultKeys,
+                        onEvent = onEvent,
+                    )
                 }
             }
             isResultPage && state.searchErrorMessage != null -> {
@@ -966,13 +1185,23 @@ private fun ActiveBookSearchBar(
     ) {}
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun BookSearchResultCard(
     draft: BookDraft,
+    isWishlistChecked: Boolean = false,
+    isReadingChecked: Boolean = false,
     onEvent: (BookEvent) -> Unit,
 ) {
+    val context = LocalContext.current
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = {},
+                onLongClick = { context.copyBookTitleAndOpenZlib(draft.title) },
+            )
+            .testTag("book_search_result_item"),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
@@ -1007,21 +1236,89 @@ internal fun BookSearchResultCard(
                     modifier = Modifier.align(Alignment.End),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    IconButton(
-                        onClick = { onEvent(BookEvent.AddDraftToWishlist(draft)) },
+                    SearchResultToggleButton(
+                        checked = isWishlistChecked,
+                        checkedColor = ReadKeeperRed,
+                        uncheckedColor = ReadKeeperRed,
+                        checkedIcon = Icons.Filled.Favorite,
+                        uncheckedIcon = Icons.Outlined.FavoriteBorder,
+                        checkedContentDescription = "Added to wishlist",
+                        uncheckedContentDescription = "Add to wishlist",
                         modifier = Modifier.testTag("book_add_wishlist"),
                     ) {
-                        Icon(Icons.Outlined.FavoriteBorder, contentDescription = "Add to wishlist")
+                        onEvent(
+                            if (isWishlistChecked) {
+                                BookEvent.UncheckDraftWishlist(draft)
+                            } else {
+                                BookEvent.AddDraftToWishlist(draft)
+                            }
+                        )
                     }
-                    FilledTonalIconButton(
-                        onClick = { onEvent(BookEvent.AddDraftToReading(draft)) },
+                    SearchResultToggleButton(
+                        checked = isReadingChecked,
+                        checkedColor = ReadKeeperYellow,
+                        uncheckedColor = ReadKeeperYellow,
+                        checkedIcon = Icons.Filled.Bookmark,
+                        uncheckedIcon = Icons.Outlined.BookmarkAdd,
+                        checkedContentDescription = "Added to reading",
+                        uncheckedContentDescription = "Add to reading",
                         modifier = Modifier.testTag("book_add_reading"),
                     ) {
-                        Icon(Icons.Outlined.BookmarkAdd, contentDescription = "Add to reading")
+                        onEvent(
+                            if (isReadingChecked) {
+                                BookEvent.UncheckDraftReading(draft)
+                            } else {
+                                BookEvent.AddDraftToReading(draft)
+                            }
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+private fun Context.copyBookTitleAndOpenZlib(title: String) {
+    getSystemService(ClipboardManager::class.java)
+        .setPrimaryClip(ClipData.newPlainText("Book title", title))
+
+    val launchIntent = packageManager.getLaunchIntentForPackage(ZLIB_PACKAGE_NAME)
+    if (launchIntent == null) {
+        Toast.makeText(this, "Unable to open Z-Library app", Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    startActivity(launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+}
+
+@Composable
+private fun SearchResultToggleButton(
+    checked: Boolean,
+    checkedColor: Color,
+    uncheckedColor: Color,
+    checkedIcon: ImageVector,
+    uncheckedIcon: ImageVector,
+    checkedContentDescription: String,
+    uncheckedContentDescription: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    FilledTonalIconButton(
+        onClick = onClick,
+        colors = IconButtonDefaults.filledTonalIconButtonColors(
+            containerColor = if (checked) checkedColor else uncheckedColor.copy(alpha = 0.14f),
+            contentColor = if (checked) {
+                if (checkedColor == ReadKeeperYellow) ReadKeeperOnYellow else Color.White
+            } else {
+                uncheckedColor
+            },
+        ),
+        modifier = modifier,
+    ) {
+        Icon(
+            imageVector = if (checked) checkedIcon else uncheckedIcon,
+            contentDescription = if (checked) checkedContentDescription else uncheckedContentDescription,
+        )
     }
 }
 
@@ -1546,13 +1843,29 @@ private fun Context.showReadingSessionNotification(session: ReadingSessionState)
         return
     }
 
-    val launchIntent = Intent(this, MainActivity::class.java)
+    val launchIntent = Intent(this, MainActivity::class.java).apply {
+        action = MainActivity.ACTION_OPEN_READKEEPER_SESSION
+    }
     val pendingIntent = PendingIntent.getActivity(
         this,
-        0,
+        READKEEPER_READING_SESSION_OPEN_REQUEST,
         launchIntent,
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
+    val stopIntent = Intent(this, MainActivity::class.java).apply {
+        action = MainActivity.ACTION_STOP_READKEEPER_SESSION
+    }
+    val stopPendingIntent = PendingIntent.getActivity(
+        this,
+        READKEEPER_READING_SESSION_STOP_REQUEST,
+        stopIntent,
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+    val stopAction = Notification.Action.Builder(
+        AndroidIcon.createWithResource(this, R.drawable.ic_qs_add_time),
+        "Stop",
+        stopPendingIntent,
+    ).build()
     val notification = Notification.Builder(this, READKEEPER_READING_SESSION_CHANNEL)
         .setSmallIcon(R.drawable.ic_qs_add_time)
         .setContentTitle("Reading ${session.bookTitle}")
@@ -1562,6 +1875,8 @@ private fun Context.showReadingSessionNotification(session: ReadingSessionState)
         .setOnlyAlertOnce(true)
         .setShowWhen(true)
         .setWhen(session.startTime.toEpochMilli())
+        .setUsesChronometer(true)
+        .addAction(stopAction)
         .setCategory(
             if (Build.VERSION.SDK_INT >= 36) Notification.CATEGORY_PROGRESS else Notification.CATEGORY_STATUS
         )
@@ -1581,6 +1896,9 @@ private fun Context.showReadingSessionNotification(session: ReadingSessionState)
             }
         }
         .build()
+        .apply {
+            addXiaomiIslandExtras(context = this@showReadingSessionNotification, session = session, stopAction = stopAction)
+        }
 
     manager.notify(READKEEPER_READING_SESSION_NOTIFICATION_ID, notification)
 }
@@ -1588,6 +1906,150 @@ private fun Context.showReadingSessionNotification(session: ReadingSessionState)
 private fun Context.cancelReadingSessionNotification() {
     getSystemService(NotificationManager::class.java)
         .cancel(READKEEPER_READING_SESSION_NOTIFICATION_ID)
+}
+
+private fun Notification.addXiaomiIslandExtras(
+    context: Context,
+    session: ReadingSessionState,
+    stopAction: Notification.Action,
+) {
+    if (!context.supportsXiaomiIslandNotification()) return
+
+    val actionKey = "miui.focus.action_readkeeper_stop"
+    val iconKey = "miui.focus.pic_readkeeper"
+    val actions = Bundle().apply {
+        putParcelable(actionKey, stopAction)
+    }
+    val pics = Bundle().apply {
+        putParcelable(iconKey, AndroidIcon.createWithResource(context, R.drawable.ic_readkeeperlogo))
+    }
+    extras.putBundle("miui.focus.actions", actions)
+    extras.putBundle("miui.focus.pics", pics)
+    extras.putString(
+        "miui.focus.param",
+        buildReadKeeperIslandParams(
+            session = session,
+            actionKey = actionKey,
+            iconKey = iconKey,
+        )
+    )
+}
+
+private fun Context.supportsXiaomiIslandNotification(): Boolean =
+    isXiaomiDevice() &&
+        isSupportIsland("persist.sys.feature.island", false) &&
+        focusProtocolVersion() >= XIAOMI_ISLAND_PROTOCOL_VERSION
+
+private fun Context.isXiaomiDevice(): Boolean =
+    Build.MANUFACTURER.equals("Xiaomi", ignoreCase = true) ||
+        Build.BRAND.equals("Xiaomi", ignoreCase = true) ||
+        Build.BRAND.equals("Redmi", ignoreCase = true) ||
+        Build.BRAND.equals("POCO", ignoreCase = true)
+
+private fun isSupportIsland(key: String, defaultValue: Boolean): Boolean =
+    runCatching {
+        val clazz = Class.forName("android.os.SystemProperties")
+        val method = clazz.getDeclaredMethod("getBoolean", String::class.java, java.lang.Boolean.TYPE)
+        method.invoke(null, key, defaultValue) as? Boolean ?: defaultValue
+    }.getOrDefault(defaultValue)
+
+private fun Context.focusProtocolVersion(): Int =
+    runCatching {
+        Settings.System.getInt(contentResolver, "notification_focus_protocol", 0)
+    }.getOrDefault(0)
+
+private fun buildReadKeeperIslandParams(
+    session: ReadingSessionState,
+    actionKey: String,
+    iconKey: String,
+): String {
+    val title = session.bookTitle.take(18)
+    val content = "Started ${session.startTime.formatSessionTime()} · ${session.startProgressLabel}"
+    return JSONObject().apply {
+        put(
+            "param_v2",
+            JSONObject().apply {
+                put("protocol", 1)
+                put("business", "readkeeper_reading")
+                put("enableFloat", false)
+                put("updatable", true)
+                put("filterWhenNoPermission", false)
+                put("ticker", "ReadKeeper reading")
+                put("tickerPic", iconKey)
+                put("aodTitle", "Reading")
+                put("aodPic", iconKey)
+                put(
+                    "param_island",
+                    JSONObject().apply {
+                        put("islandProperty", 2)
+                        put("islandOrder", true)
+                        put("islandTimeout", XIAOMI_ISLAND_TIMEOUT_SECONDS)
+                        put("highlightColor", "#2E7D32")
+                        put(
+                            "bigIslandArea",
+                            JSONObject().apply {
+                                put(
+                                    "imageTextInfoLeft",
+                                    JSONObject().apply {
+                                        put("type", 1)
+                                        put(
+                                            "picInfo",
+                                            JSONObject().apply {
+                                                put("type", 1)
+                                                put("pic", iconKey)
+                                            }
+                                        )
+                                        put(
+                                            "miui.focus.paramtextInfo",
+                                            JSONObject().apply {
+                                                put("frontTitle", "阅读中")
+                                                put("title", title)
+                                                put("content", content)
+                                                put("useHighLight", false)
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        )
+                        put(
+                            "smallIslandArea",
+                            JSONObject().apply {
+                                put(
+                                    "picInfo",
+                                    JSONObject().apply {
+                                        put("type", 1)
+                                        put("pic", iconKey)
+                                    }
+                                )
+                            }
+                        )
+                    }
+                )
+                put(
+                    "baseInfo",
+                    JSONObject().apply {
+                        put("title", "Reading $title")
+                        put("content", content)
+                        put("type", 2)
+                    }
+                )
+                put(
+                    "hintInfo",
+                    JSONObject().apply {
+                        put("type", 1)
+                        put("title", "Stop")
+                        put(
+                            "actionInfo",
+                            JSONObject().apply {
+                                put("action", actionKey)
+                            }
+                        )
+                    }
+                )
+            }
+        )
+    }.toString()
 }
 
 @Composable
@@ -1649,6 +2111,7 @@ private fun BookDetail(
     categories: List<String>,
     readingSession: ReadingSessionState?,
     onEvent: (BookEvent) -> Unit,
+    onRequestStopReadingSession: () -> Unit,
 ) {
     if (book == null) {
         BookDetailLoading(onEvent)
@@ -1656,7 +2119,7 @@ private fun BookDetail(
     }
     var showEdit by remember(book.id) { mutableStateOf(false) }
     var showProgress by remember(book.id) { mutableStateOf(false) }
-    var showStopSession by remember(book.id) { mutableStateOf(false) }
+    var pendingProgressLog by remember(book.id) { mutableStateOf<ReadingProgressLogDraft?>(null) }
     var showDelete by remember(book.id) { mutableStateOf(false) }
     val activeReadingSession = readingSession?.takeIf { it.bookId == book.id }
     val topBarState = rememberTopAppBarState()
@@ -1733,6 +2196,15 @@ private fun BookDetail(
                 if (book.state != BookState.Wish) {
                     item { ProgressLine(book) }
                 }
+                if (book.state == BookState.Reading && activeReadingSession != null) {
+                    item {
+                        ActiveReadingSessionCard(
+                            session = activeReadingSession,
+                            book = book,
+                            onStop = onRequestStopReadingSession,
+                        )
+                    }
+                }
                 if (book.state == BookState.Wish) {
                     book.description?.takeIf { it.isNotBlank() }?.let { description ->
                         item {
@@ -1754,14 +2226,12 @@ private fun BookDetail(
                 }
                 item { Spacer(Modifier.height(72.dp)) }
             }
-            if (book.state == BookState.Reading) {
+            if (book.state == BookState.Reading && activeReadingSession == null) {
                 ReadingSessionFab(
-                    isActive = activeReadingSession != null,
                     onStart = {
                         requestPostNotificationsPermissionIfNeeded(it)
                         onEvent(BookEvent.StartReadingSession(book))
                     },
-                    onStop = { showStopSession = true },
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .padding(16.dp),
@@ -1796,29 +2266,26 @@ private fun BookDetail(
             book = book,
             onDismiss = { showProgress = false },
             onSave = { page, progress ->
-                onEvent(
-                    BookEvent.SaveBook(
-                        bookId = book.id,
-                        title = book.title,
-                        platform = book.platform,
-                        category = book.category,
-                        pages = book.pages,
-                        pageFormat = book.pageFormat,
-                        currentPage = page,
-                        progressPercentage = progress,
-                    )
-                )
+                pendingProgressLog = book.createProgressLogDraft(page = page, progress = progress)
                 showProgress = false
             })
     }
-    if (showStopSession && activeReadingSession != null) {
-        StopReadingSessionDialog(
-            session = activeReadingSession,
+    pendingProgressLog?.let { draft ->
+        ReadingProgressTimeDialog(
             book = book,
-            onDismiss = { showStopSession = false },
-            onSave = { page, progress ->
-                onEvent(BookEvent.StopReadingSession(page, progress))
-                showStopSession = false
+            draft = draft,
+            onDismiss = { pendingProgressLog = null },
+            onSave = { startTime, stopTime, page, progress ->
+                onEvent(
+                    BookEvent.UpdateReadingProgress(
+                        bookId = book.id,
+                        startTime = startTime,
+                        stopTime = stopTime,
+                        stopPage = page,
+                        stopProgressPercentage = progress,
+                    )
+                )
+                pendingProgressLog = null
             },
         )
     }
@@ -1876,27 +2343,19 @@ private fun BookDetailLoading(onEvent: (BookEvent) -> Unit) {
 
 @Composable
 private fun ReadingSessionFab(
-    isActive: Boolean,
     onStart: (Context) -> Unit,
-    onStop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     ExtendedFloatingActionButton(
-        onClick = {
-            if (isActive) {
-                onStop()
-            } else {
-                onStart(context)
-            }
-        },
+        onClick = { onStart(context) },
         icon = {
             Icon(
-                if (isActive) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                Icons.Filled.PlayArrow,
                 contentDescription = null,
             )
         },
-        text = { Text(if (isActive) "Stop" else "Start") },
+        text = { Text("Start") },
         modifier = modifier.testTag("book_reading_session_fab"),
     )
 }
@@ -1906,22 +2365,74 @@ private fun StopReadingSessionDialog(
     session: ReadingSessionState,
     book: Book,
     onDismiss: () -> Unit,
-    onSave: (Int?, Double?) -> Unit,
+    onSave: (Instant, Instant, Int?, Double?) -> Unit,
 ) {
     val stopTime = remember(session.bookId) { Instant.now() }
-    var pageText by remember(session.bookId) { mutableStateOf(book.currentPage?.toString().orEmpty()) }
-    var progressText by remember(session.bookId) {
-        mutableStateOf(book.progressPercentage?.formatPercentInput(book.pageFormat).orEmpty())
-    }
+    ReadingTimeLogDialog(
+        key = session.bookId,
+        pageFormat = session.pageFormat,
+        startTime = session.startTime,
+        stopTime = stopTime,
+        startProgressLabel = session.startProgressLabel,
+        stopPage = book.currentPage,
+        stopProgressPercentage = book.progressPercentage,
+        onDismiss = onDismiss,
+        onSave = onSave,
+    )
+}
 
+@Composable
+private fun ReadingProgressTimeDialog(
+    book: Book,
+    draft: ReadingProgressLogDraft,
+    onDismiss: () -> Unit,
+    onSave: (Instant, Instant, Int?, Double?) -> Unit,
+) {
+    ReadingTimeLogDialog(
+        key = "${book.id}-${draft.stopPage}-${draft.stopProgressPercentage}-${draft.stopTime}",
+        pageFormat = book.pageFormat,
+        startTime = draft.startTime,
+        stopTime = draft.stopTime,
+        startProgressLabel = draft.startProgressLabel,
+        stopPage = draft.stopPage,
+        stopProgressPercentage = draft.stopProgressPercentage,
+        onDismiss = onDismiss,
+        onSave = onSave,
+    )
+}
+
+@Composable
+private fun ReadingTimeLogDialog(
+    key: Any,
+    pageFormat: BookPageFormat,
+    startTime: Instant,
+    stopTime: Instant,
+    startProgressLabel: String,
+    stopPage: Int?,
+    stopProgressPercentage: Double?,
+    onDismiss: () -> Unit,
+    onSave: (Instant, Instant, Int?, Double?) -> Unit,
+) {
+    var startTimeText by remember(key, startTime) {
+        mutableStateOf(startTime.formatSessionDateTimeInput())
+    }
+    var stopTimeText by remember(key, stopTime) {
+        mutableStateOf(stopTime.formatSessionDateTimeInput())
+    }
+    var pageText by remember(key, stopPage) { mutableStateOf(stopPage?.toString().orEmpty()) }
+    var progressText by remember(key, stopProgressPercentage) {
+        mutableStateOf(stopProgressPercentage?.formatPercentInput(pageFormat).orEmpty())
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
                 onClick = {
                     onSave(
-                        if (session.pageFormat.usesPages) pageText.toIntOrNull() else null,
-                        if (session.pageFormat.usesPages) null else progressText.toDoubleOrNull()?.coerceIn(0.0, 100.0),
+                        startTimeText.parseSessionDateTimeOrNull() ?: startTime,
+                        stopTimeText.parseSessionDateTimeOrNull() ?: stopTime,
+                        if (pageFormat.usesPages) pageText.toIntOrNull() else null,
+                        if (pageFormat.usesPages) null else progressText.toDoubleOrNull()?.coerceIn(0.0, 100.0),
                     )
                 },
                 modifier = Modifier.testTag("book_stop_reading_session_save"),
@@ -1935,10 +2446,24 @@ private fun StopReadingSessionDialog(
         title = { Text("Reading session") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                BookDetailMetadata("Start", session.startTime.formatSessionTime())
-                BookDetailMetadata("Stop", stopTime.formatSessionTime())
-                BookDetailMetadata("From", session.startProgressLabel)
-                if (session.pageFormat.usesPages) {
+                OutlinedTextField(
+                    value = startTimeText,
+                    onValueChange = { startTimeText = it },
+                    label = { Text("Start time") },
+                    supportingText = { Text("yyyy-MM-dd HH:mm") },
+                    singleLine = true,
+                    modifier = Modifier.testTag("book_session_start_time"),
+                )
+                OutlinedTextField(
+                    value = stopTimeText,
+                    onValueChange = { stopTimeText = it },
+                    label = { Text("Stop time") },
+                    supportingText = { Text("yyyy-MM-dd HH:mm") },
+                    singleLine = true,
+                    modifier = Modifier.testTag("book_session_stop_time"),
+                )
+                BookDetailMetadata("From", startProgressLabel)
+                if (pageFormat.usesPages) {
                     OutlinedTextField(
                         value = pageText,
                         onValueChange = { pageText = it.filter(Char::isDigit) },
@@ -2333,13 +2858,16 @@ private fun ProgressDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = {
-                if (book.pageFormat.usesPages) {
-                    onSave(pageText.toIntOrNull(), null)
-                } else {
-                    onSave(null, progressText.toDoubleOrNull()?.coerceIn(0.0, 100.0))
-                }
-            }) { Text("Save") }
+            TextButton(
+                onClick = {
+                    if (book.pageFormat.usesPages) {
+                        onSave(pageText.toIntOrNull(), null)
+                    } else {
+                        onSave(null, progressText.toDoubleOrNull()?.coerceIn(0.0, 100.0))
+                    }
+                },
+                modifier = Modifier.testTag("book_progress_save"),
+            ) { Text("Save") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
@@ -2354,6 +2882,7 @@ private fun ProgressDialog(
                         label = { Text("Current page") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
+                        modifier = Modifier.testTag("book_progress_page"),
                     )
                 } else {
                     OutlinedTextField(
@@ -2362,6 +2891,7 @@ private fun ProgressDialog(
                         label = { Text("Progress %") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
+                        modifier = Modifier.testTag("book_progress_percent"),
                     )
                 }
             }
@@ -2519,6 +3049,47 @@ private fun Book.pageProgressLabel(): String? =
         progressPercentage?.let { it.formatPercentLabel(pageFormat) }
     }
 
+private fun Book.createProgressLogDraft(
+    page: Int?,
+    progress: Double?,
+): ReadingProgressLogDraft {
+    val stopTime = Instant.now()
+    val estimatedPages = estimatedProgressDeltaPages(page = page, progress = progress)
+    val minutes = maxOf(1L, ceil(estimatedPages / 2.0).toLong())
+    return ReadingProgressLogDraft(
+        startTime = stopTime.minusSeconds(minutes * 60),
+        stopTime = stopTime,
+        startProgressLabel = readingProgressPointLabel(currentPage, progressPercentage),
+        stopPage = if (pageFormat.usesPages) page else null,
+        stopProgressPercentage = if (pageFormat.usesPages) null else progress,
+    )
+}
+
+private fun Book.estimatedProgressDeltaPages(
+    page: Int?,
+    progress: Double?,
+): Double =
+    if (pageFormat.usesPages) {
+        ((page ?: currentPage ?: 0) - (currentPage ?: 0)).coerceAtLeast(0).toDouble()
+    } else {
+        val oldProgress = progressPercentage ?: 0.0
+        val newProgress = progress ?: oldProgress
+        val percentDelta = (newProgress - oldProgress).coerceAtLeast(0.0)
+        pages?.takeIf { it > 0 }?.let { totalPages ->
+            totalPages * percentDelta / 100.0
+        } ?: percentDelta
+    }
+
+private fun Book.readingProgressPointLabel(
+    page: Int?,
+    progress: Double?,
+): String =
+    if (pageFormat.usesPages) {
+        page?.let { "Page $it" } ?: "Page --"
+    } else {
+        progress?.formatPercentLabel(pageFormat) ?: "--%"
+    }
+
 private fun Double.formatPercentInput(format: BookPageFormat): String =
     if (format.precision == 0) {
         roundToInt().toString()
@@ -2547,11 +3118,53 @@ private fun String.asPercentInput(): String {
 private fun Instant.formatSessionTime(): String =
     atZone(ZoneId.systemDefault()).format(READING_SESSION_TIME_FORMATTER)
 
+private fun Instant.formatSessionDateTimeInput(): String =
+    atZone(ZoneId.systemDefault()).format(READING_SESSION_DATE_TIME_FORMATTER)
+
+private fun String.parseSessionDateTimeOrNull(): Instant? =
+    try {
+        LocalDateTime.parse(trim(), READING_SESSION_DATE_TIME_FORMATTER)
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+    } catch (_: DateTimeParseException) {
+        null
+    }
+
+private fun formatElapsedReadingDuration(startTime: Instant, now: Instant): String {
+    val duration = Duration.between(startTime, now).coerceAtLeast(Duration.ZERO)
+    val hours = duration.toHours()
+    val minutes = duration.toMinutesPart()
+    val seconds = duration.toSecondsPart()
+    return if (hours > 0) {
+        "%d:%02d:%02d".format(Locale.US, hours, minutes, seconds)
+    } else {
+        "%02d:%02d".format(Locale.US, minutes, seconds)
+    }
+}
+
+private fun BookUiState.findReadingSessionBook(session: ReadingSessionState): Book? =
+    selectedBook?.takeIf { it.id == session.bookId }
+        ?: readingBooks.firstOrNull { it.id == session.bookId }
+        ?: wishlistBooks.firstOrNull { it.id == session.bookId }
+        ?: archivedBooks.firstOrNull { it.id == session.bookId }
+
 private const val READKEEPER_READING_SESSION_CHANNEL = "readkeeper_reading_session"
 private const val READKEEPER_READING_SESSION_NOTIFICATION_ID = 4101
+private const val READKEEPER_READING_SESSION_OPEN_REQUEST = 4103
+private const val READKEEPER_READING_SESSION_STOP_REQUEST = 4104
 private const val READKEEPER_NOTIFICATION_PERMISSION_REQUEST = 4102
+private const val ZLIB_PACKAGE_NAME = "com.positron_it.zlib"
+private const val XIAOMI_ISLAND_PROTOCOL_VERSION = 3
+private const val XIAOMI_ISLAND_TIMEOUT_SECONDS = 60 * 60
+private val ReadKeeperYellow = Color(0xFFF4B400)
+private val ReadKeeperRed = Color(0xFFDB4437)
+private val ReadKeeperBlue = Color(0xFF4285F4)
+private val ReadKeeperGreen = Color(0xFF0F9D58)
+private val ReadKeeperOnYellow = Color(0xFF1F1B16)
 private val READING_SESSION_TIME_FORMATTER: DateTimeFormatter =
     DateTimeFormatter.ofPattern("HH:mm")
+private val READING_SESSION_DATE_TIME_FORMATTER: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
 @Composable
 private fun MetadataRow(book: Book) {

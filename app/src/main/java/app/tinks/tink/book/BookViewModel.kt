@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.serialization.Serializable
 import androidx.navigation3.runtime.NavKey
 import java.time.Instant
+import java.time.LocalDate
 import java.util.Locale
 import javax.inject.Inject
 
@@ -63,6 +64,8 @@ sealed interface BookEvent {
     data class SelectSummaryYear(val year: Int) : BookEvent
     data class AddDraftToWishlist(val draft: BookDraft) : BookEvent
     data class AddDraftToReading(val draft: BookDraft) : BookEvent
+    data class UncheckDraftWishlist(val draft: BookDraft) : BookEvent
+    data class UncheckDraftReading(val draft: BookDraft) : BookEvent
     data class MoveToReading(val book: Book) : BookEvent
     data class SelectCategory(val category: String?) : BookEvent
     data class SelectArchiveStatus(val status: ArchiveStatus?) : BookEvent
@@ -70,6 +73,8 @@ sealed interface BookEvent {
     data class DeleteBook(val bookId: Long) : BookEvent
     data class StartReadingSession(val book: Book) : BookEvent
     data class StopReadingSession(
+        val startTime: Instant,
+        val stopTime: Instant,
         val stopPage: Int?,
         val stopProgressPercentage: Double?,
     ) : BookEvent
@@ -82,6 +87,13 @@ sealed interface BookEvent {
         val pageFormat: BookPageFormat,
         val currentPage: Int?,
         val progressPercentage: Double?,
+    ) : BookEvent
+    data class UpdateReadingProgress(
+        val bookId: Long,
+        val startTime: Instant,
+        val stopTime: Instant,
+        val stopPage: Int?,
+        val stopProgressPercentage: Double?,
     ) : BookEvent
     data class SaveNote(
         val noteId: Long?,
@@ -114,12 +126,17 @@ data class BookUiState(
     val searchResults: List<BookDraft> = emptyList(),
     val hasSubmittedSearch: Boolean = false,
     val searchErrorMessage: String? = null,
+    val wishlistSearchResultKeys: Set<String> = emptySet(),
+    val readingSearchResultKeys: Set<String> = emptySet(),
+    val toastMessage: String? = null,
+    val toastId: Long = 0,
     val categories: List<String> = emptyList(),
     val selectedCategory: String? = null,
     val selectedArchiveStatus: ArchiveStatus? = null,
     val selectedSummaryYear: Int? = null,
     val navigationStack: List<BooksScreenState> = listOf(BooksScreenState.Home),
     val readingSession: ReadingSessionState? = null,
+    val readingRecordDates: Set<LocalDate> = emptySet(),
 )
 
 @HiltViewModel
@@ -174,8 +191,17 @@ class BookViewModel @Inject constructor(
                 openNotes(event.bookId)
             }
             BookEvent.NavigateBack -> {
-                navigateBack()
-                refreshCurrent()
+                when (_state.value.screen) {
+                    BooksScreenState.Search,
+                    is BooksScreenState.SearchResults -> {
+                        closeSearch()
+                        refreshAll()
+                    }
+                    else -> {
+                        navigateBack()
+                        refreshCurrent()
+                    }
+                }
             }
             BookEvent.Refresh -> refreshCurrent()
             is BookEvent.SearchKeywordChanged -> _state.update { it.copy(searchKeyword = event.keyword) }
@@ -183,6 +209,8 @@ class BookViewModel @Inject constructor(
             is BookEvent.SelectSummaryYear -> _state.update { it.copy(selectedSummaryYear = event.year) }
             is BookEvent.AddDraftToWishlist -> addDraftToWishlist(event.draft)
             is BookEvent.AddDraftToReading -> addDraftToReading(event.draft)
+            is BookEvent.UncheckDraftWishlist -> uncheckDraftWishlist(event.draft)
+            is BookEvent.UncheckDraftReading -> uncheckDraftReading(event.draft)
             is BookEvent.MoveToReading -> moveToReading(event.book)
             is BookEvent.SelectCategory -> selectCategory(event.category)
             is BookEvent.SelectArchiveStatus -> _state.update { it.copy(selectedArchiveStatus = event.status) }
@@ -191,6 +219,7 @@ class BookViewModel @Inject constructor(
             is BookEvent.StartReadingSession -> startReadingSession(event.book)
             is BookEvent.StopReadingSession -> stopReadingSession(event)
             is BookEvent.SaveBook -> saveBook(event)
+            is BookEvent.UpdateReadingProgress -> updateReadingProgress(event)
             is BookEvent.SaveNote -> saveNote(event)
             is BookEvent.DeleteNote -> deleteNote(event.noteId)
         }
@@ -213,6 +242,30 @@ class BookViewModel @Inject constructor(
         loadList(BookState.Reading, selectedCategoryFor(BookState.Reading))
         loadList(BookState.Wish, selectedCategoryFor(BookState.Wish))
         loadList(BookState.Archived, selectedCategoryFor(BookState.Archived))
+        loadReadingRecordDates()
+    }
+
+    private fun loadReadingRecordDates() {
+        val startDate = LocalDate.now().withDayOfYear(1)
+        val endDate = startDate.withDayOfYear(startDate.lengthOfYear())
+        timeRepository.getTimeDashboard(startDate, endDate)
+            .onEach { result ->
+                when (result) {
+                    ApiResult.Loading -> Unit
+                    is ApiResult.Success -> _state.update {
+                        it.copy(
+                            readingRecordDates = result.data.entries
+                                .asSequence()
+                                .filter { entry -> entry.type == READING_TIME_TYPE }
+                                .map { entry -> entry.start.toLocalDate() }
+                                .filter { date -> date.year == startDate.year }
+                                .toSet()
+                        )
+                    }
+                    is ApiResult.Error -> Unit
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun selectedCategoryFor(state: BookState): String? {
@@ -355,11 +408,41 @@ class BookViewModel @Inject constructor(
     }
 
     private fun addDraftToWishlist(draft: BookDraft) {
-        mutate({ repository.addToWishlist(draft) }) { refreshAll() }
+        mutate({ repository.addToWishlist(draft) }) {
+            val key = draft.searchResultKey()
+            _state.update {
+                it.copy(
+                    wishlistSearchResultKeys = it.wishlistSearchResultKeys + key,
+                    toastMessage = "Added to wishlist",
+                    toastId = it.toastId + 1,
+                )
+            }
+            refreshAll()
+        }
     }
 
     private fun addDraftToReading(draft: BookDraft) {
-        mutate({ repository.addToReading(draft) }) { refreshAll() }
+        mutate({ repository.addToReading(draft) }) {
+            val key = draft.searchResultKey()
+            _state.update {
+                it.copy(
+                    readingSearchResultKeys = it.readingSearchResultKeys + key,
+                    toastMessage = "Added to reading",
+                    toastId = it.toastId + 1,
+                )
+            }
+            refreshAll()
+        }
+    }
+
+    private fun uncheckDraftWishlist(draft: BookDraft) {
+        val key = draft.searchResultKey()
+        _state.update { it.copy(wishlistSearchResultKeys = it.wishlistSearchResultKeys - key) }
+    }
+
+    private fun uncheckDraftReading(draft: BookDraft) {
+        val key = draft.searchResultKey()
+        _state.update { it.copy(readingSearchResultKeys = it.readingSearchResultKeys - key) }
     }
 
     private fun moveToReading(book: Book) {
@@ -428,12 +511,16 @@ class BookViewModel @Inject constructor(
 
     private fun stopReadingSession(event: BookEvent.StopReadingSession) {
         val session = _state.value.readingSession ?: return
-        val now = Instant.now()
-        val stopTime = if (now.isAfter(session.startTime)) now else session.startTime.plusSeconds(1)
+        val startTime = event.startTime
+        val stopTime = if (event.stopTime.isAfter(startTime)) {
+            event.stopTime
+        } else {
+            startTime.plusSeconds(1)
+        }
         val stopProgressLabel = session.stopProgressLabel(event.stopPage, event.stopProgressPercentage)
         val payload = TimeUpsertRequest(
             type = READING_TIME_TYPE,
-            start = session.startTime.toString(),
+            start = startTime.toString(),
             end = stopTime.toString(),
             title = "${session.bookTitle} ${session.startProgressLabel} - $stopProgressLabel",
             description = "ReadKeeper reading session",
@@ -474,6 +561,39 @@ class BookViewModel @Inject constructor(
         }) {
             openDetail(event.bookId)
             loadCategories()
+            refreshAll()
+        }
+    }
+
+    private fun updateReadingProgress(event: BookEvent.UpdateReadingProgress) {
+        val currentBook = _state.value.selectedBook?.takeIf { it.id == event.bookId }
+            ?: _state.value.findBook(event.bookId)
+            ?: return
+        val startTime = event.startTime
+        val stopTime = if (event.stopTime.isAfter(startTime)) {
+            event.stopTime
+        } else {
+            startTime.plusSeconds(1)
+        }
+        val stopProgressLabel = currentBook.progressLabel(event.stopPage, event.stopProgressPercentage)
+        val payload = TimeUpsertRequest(
+            type = READING_TIME_TYPE,
+            start = startTime.toString(),
+            end = stopTime.toString(),
+            title = "${currentBook.title} ${currentBook.readingSessionProgressLabel()} - $stopProgressLabel",
+            description = "ReadKeeper reading progress update",
+        )
+        mutate({
+            timeRepository.createTimeEntry(payload)
+        }) {
+            repository.updateBook(
+                event.bookId,
+                BookUpdateRequest(
+                    currentPage = if (currentBook.pageFormat.usesPages) event.stopPage else null,
+                    progressPercentage = if (currentBook.pageFormat.usesPages) null else event.stopProgressPercentage,
+                )
+            ).launchIn(viewModelScope)
+            openDetail(event.bookId)
             refreshAll()
         }
     }
@@ -560,6 +680,23 @@ class BookViewModel @Inject constructor(
             it.copy(screen = stack.last(), navigationStack = stack)
         }
     }
+
+    private fun closeSearch() {
+        searchJob?.cancel()
+        _state.update {
+            it.copy(
+                screen = BooksScreenState.Home,
+                navigationStack = listOf(BooksScreenState.Home),
+                searchKeyword = "",
+                searchResults = emptyList(),
+                hasSubmittedSearch = false,
+                searchErrorMessage = null,
+                wishlistSearchResultKeys = emptySet(),
+                readingSearchResultKeys = emptySet(),
+                isLoading = false,
+            )
+        }
+    }
 }
 
 private fun BookUiState.findBook(bookId: Long): Book? =
@@ -567,11 +704,21 @@ private fun BookUiState.findBook(bookId: Long): Book? =
         ?: wishlistBooks.firstOrNull { it.id == bookId }
         ?: archivedBooks.firstOrNull { it.id == bookId }
 
-private const val READING_TIME_TYPE = 1
+private const val READING_TIME_TYPE = 2
 
 private fun Book.readingSessionProgressLabel(): String =
     if (pageFormat.usesPages) {
         currentPage?.let { "Page $it" } ?: "Page --"
+    } else {
+        progressPercentage?.formatSessionPercent(pageFormat) ?: "--%"
+    }
+
+private fun Book.progressLabel(
+    page: Int?,
+    progressPercentage: Double?,
+): String =
+    if (pageFormat.usesPages) {
+        page?.let { "Page $it" } ?: "Page --"
     } else {
         progressPercentage?.formatSessionPercent(pageFormat) ?: "--%"
     }
@@ -601,3 +748,12 @@ private fun List<BooksScreenState>.pushOrReplaceSearchResults(
         lastOrNull() == screen -> this
         else -> this + screen
     }
+
+internal fun BookDraft.searchResultKey(): String =
+    listOf(
+        isbn.orEmpty(),
+        title,
+        author.orEmpty(),
+        publisher.orEmpty(),
+        publishYear?.toString().orEmpty(),
+    ).joinToString("|") { it.trim().lowercase(Locale.US) }
