@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesforceViewModel.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.salesforce</a> &gt; <span class="el_source">SalesforceViewModel.kt</span></div><h1>SalesforceViewModel.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.salesforce
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.ui.components.AppSnackbarBus
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.Instant
+import javax.inject.Inject
+
+sealed interface SalesforceEvent {
+    object Refresh : SalesforceEvent
+    object StartPractice : SalesforceEvent
+    object StartExam : SalesforceEvent
+    object SubmitPracticeAnswer : SalesforceEvent
+    object NextPracticeQuestion : SalesforceEvent
+    object MarkPracticeQuestionDone : SalesforceEvent
+    object FinishPractice : SalesforceEvent
+    object NextExamQuestion : SalesforceEvent
+    object BackToMain : SalesforceEvent
+    object BackToExamResult : SalesforceEvent
+<span class="fc" id="L31">    data class ToggleAnswer(val label: String) : SalesforceEvent</span>
+<span class="nc" id="L32">    data class ReviewExamQuestion(val questionId: Int) : SalesforceEvent</span>
+}
+
+enum class SalesforceViewMode {
+<span class="fc" id="L36">    Main,</span>
+<span class="fc" id="L37">    Practice,</span>
+<span class="fc" id="L38">    Exam,</span>
+<span class="fc" id="L39">    ExamResult,</span>
+<span class="fc" id="L40">    Review,</span>
+}
+
+<span class="fc" id="L43">data class SalesforceUiState(</span>
+<span class="fc" id="L44">    val mode: SalesforceViewMode = SalesforceViewMode.Main,</span>
+<span class="pc" id="L45">    val isLoading: Boolean = false,</span>
+<span class="fc" id="L46">    val questions: List&lt;SalesforceQuestion&gt; = emptyList(),</span>
+<span class="fc" id="L47">    val progress: Map&lt;Int, SalesforceQuestionProgress&gt; = emptyMap(),</span>
+<span class="pc" id="L48">    val remoteSummary: SalesforceProgressSummary? = null,</span>
+<span class="fc" id="L49">    val currentQuestion: SalesforceQuestion? = null,</span>
+<span class="pc" id="L50">    val currentPosition: Int = 0,</span>
+<span class="pc" id="L51">    val totalInMode: Int = 0,</span>
+<span class="fc" id="L52">    val selectedLabels: Set&lt;String&gt; = emptySet(),</span>
+<span class="fc" id="L53">    val answerRevealed: Boolean = false,</span>
+<span class="fc" id="L54">    val practiceEvents: List&lt;SalesforceAnswerRecord&gt; = emptyList(),</span>
+<span class="fc" id="L55">    val practiceDoneQuestionIds: Set&lt;Int&gt; = emptySet(),</span>
+<span class="fc" id="L56">    val examQuestions: List&lt;SalesforceQuestion&gt; = emptyList(),</span>
+<span class="fc" id="L57">    val examEvents: List&lt;SalesforceAnswerRecord&gt; = emptyList(),</span>
+<span class="fc" id="L58">    val examStartedAt: String? = null,</span>
+<span class="fc" id="L59">    val examResult: SalesforceExamResult? = null,</span>
+<span class="fc" id="L60">    val reviewQuestion: SalesforceQuestion? = null,</span>
+<span class="fc" id="L61">) {</span>
+<span class="nc" id="L62">    val totalQuestions: Int get() = questions.size</span>
+<span class="nc" id="L63">    val doneQuestions: Int get() = progress.values.count { it.done }</span>
+<span class="nc" id="L64">    val remainingQuestions: Int get() = (totalQuestions - doneQuestions).coerceAtLeast(0)</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">    val answeredAttempts: Int get() = progress.values.sumOf { it.correctCount + it.incorrectCount }</span>
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">    val canSubmit: Boolean get() = selectedLabels.isNotEmpty()</span>
+    val isCurrentAnswerCorrect: Boolean
+<span class="nc bnc" id="L68" title="All 4 branches missed.">        get() = currentQuestion?.let { selectedLabels.sorted() == it.answerLabels.sorted() } == true</span>
+}
+
+<span class="fc" id="L71">@HiltViewModel</span>
+<span class="fc" id="L72">class SalesforceViewModel @Inject constructor(</span>
+<span class="fc" id="L73">    private val repository: SalesforceRepository,</span>
+) : ViewModel() {
+<span class="fc" id="L75">    private val _state = MutableStateFlow(SalesforceUiState())</span>
+<span class="fc" id="L76">    val uiState = _state</span>
+<span class="fc" id="L77">        .stateIn(viewModelScope, SharingStarted.Eagerly, SalesforceUiState())</span>
+
+    private var syncJob: Job? = null
+
+<span class="fc" id="L81">    init {</span>
+<span class="fc" id="L82">        combine(</span>
+<span class="fc" id="L83">            repository.observeQuestions(),</span>
+<span class="fc" id="L84">            repository.observeLocalProgress(),</span>
+        ) { questions, progress -&gt;
+<span class="fc" id="L86">            questions to progress</span>
+<span class="fc" id="L87">        }.onEach { (questions, progress) -&gt;</span>
+<span class="fc" id="L88">            _state.update { state -&gt;</span>
+<span class="fc" id="L89">                state.copy(</span>
+<span class="fc" id="L90">                    questions = questions,</span>
+<span class="fc" id="L91">                    progress = progress,</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">                    currentQuestion = state.currentQuestion?.let { current -&gt;</span>
+<span class="fc bfc" id="L93" title="All 2 branches covered.">                        questions.firstOrNull { it.id == current.id }</span>
+                    },
+<span class="fc" id="L95">                    examQuestions = state.examQuestions.mapNotNull { examQuestion -&gt;</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">                        questions.firstOrNull { it.id == examQuestion.id }</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">                    }.ifEmpty { state.examQuestions },</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">                    reviewQuestion = state.reviewQuestion?.let { review -&gt;</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">                        questions.firstOrNull { it.id == review.id }</span>
+                    },
+<span class="fc" id="L101">                )</span>
+            }
+<span class="fc" id="L103">        }.launchIn(viewModelScope)</span>
+
+<span class="fc" id="L105">        syncProgress()</span>
+<span class="fc" id="L106">    }</span>
+
+    fun onEvent(event: SalesforceEvent) {
+<span class="fc" id="L109">        when (event) {</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">            SalesforceEvent.Refresh -&gt; syncProgress()</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">            SalesforceEvent.StartPractice -&gt; startPractice()</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">            SalesforceEvent.StartExam -&gt; startExam()</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">            is SalesforceEvent.ToggleAnswer -&gt; toggleAnswer(event.label)</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">            SalesforceEvent.SubmitPracticeAnswer -&gt; submitPracticeAnswer()</span>
+<span class="pc bpc" id="L115" title="1 of 2 branches missed.">            SalesforceEvent.NextPracticeQuestion -&gt; moveToNextPracticeQuestion()</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">            SalesforceEvent.MarkPracticeQuestionDone -&gt; markPracticeQuestionDone()</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">            SalesforceEvent.FinishPractice -&gt; finishPractice()</span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">            SalesforceEvent.NextExamQuestion -&gt; nextExamQuestion()</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">            SalesforceEvent.BackToMain -&gt; finishPractice()</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">            is SalesforceEvent.ReviewExamQuestion -&gt; reviewExamQuestion(event.questionId)</span>
+<span class="nc" id="L121">            SalesforceEvent.BackToExamResult -&gt; _state.update {</span>
+<span class="nc" id="L122">                it.copy(mode = SalesforceViewMode.ExamResult, reviewQuestion = null)</span>
+            }
+        }
+<span class="fc" id="L125">    }</span>
+
+    private fun syncProgress() {
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">        syncJob?.cancel()</span>
+<span class="fc" id="L129">        syncJob = repository.syncRemoteProgress()</span>
+<span class="fc" id="L130">            .onEach(::handleSummaryResult)</span>
+<span class="fc" id="L131">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L132">    }</span>
+
+    private fun startPractice() {
+<span class="fc" id="L135">        val state = _state.value</span>
+<span class="pc bpc" id="L136" title="7 of 10 branches missed.">        val firstQuestion = state.questions.firstOrNull { state.progress[it.id]?.done != true }</span>
+<span class="nc" id="L137">            ?: state.questions.firstOrNull()</span>
+<span class="nc" id="L138">            ?: return</span>
+
+<span class="fc" id="L140">        _state.update {</span>
+<span class="fc" id="L141">            it.copy(</span>
+<span class="fc" id="L142">                mode = SalesforceViewMode.Practice,</span>
+<span class="fc" id="L143">                currentQuestion = firstQuestion,</span>
+<span class="fc" id="L144">                currentPosition = firstQuestion.practicePosition(it.questions),</span>
+<span class="fc" id="L145">                totalInMode = it.questions.size,</span>
+<span class="fc" id="L146">                selectedLabels = emptySet(),</span>
+<span class="fc" id="L147">                answerRevealed = false,</span>
+<span class="fc" id="L148">                practiceEvents = emptyList(),</span>
+<span class="fc" id="L149">                practiceDoneQuestionIds = emptySet(),</span>
+<span class="fc" id="L150">            )</span>
+        }
+<span class="fc" id="L152">    }</span>
+
+    private fun startExam() {
+<span class="fc" id="L155">        val questions = _state.value.questions</span>
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">        if (questions.size &lt; SALESFORCE_EXAM_QUESTION_COUNT) return</span>
+<span class="fc" id="L157">        val examQuestions = questions.shuffled().take(SALESFORCE_EXAM_QUESTION_COUNT)</span>
+<span class="fc" id="L158">        _state.update {</span>
+<span class="fc" id="L159">            it.copy(</span>
+<span class="fc" id="L160">                mode = SalesforceViewMode.Exam,</span>
+<span class="fc" id="L161">                examQuestions = examQuestions,</span>
+<span class="fc" id="L162">                examEvents = emptyList(),</span>
+<span class="fc" id="L163">                examStartedAt = Instant.now().toString(),</span>
+<span class="fc" id="L164">                currentQuestion = examQuestions.first(),</span>
+<span class="fc" id="L165">                currentPosition = 1,</span>
+<span class="fc" id="L166">                totalInMode = SALESFORCE_EXAM_QUESTION_COUNT,</span>
+<span class="fc" id="L167">                selectedLabels = emptySet(),</span>
+<span class="fc" id="L168">                answerRevealed = false,</span>
+<span class="fc" id="L169">                examResult = null,</span>
+<span class="fc" id="L170">            )</span>
+        }
+<span class="fc" id="L172">    }</span>
+
+    private fun toggleAnswer(label: String) {
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">        if (_state.value.answerRevealed) return</span>
+<span class="fc" id="L176">        _state.update { state -&gt;</span>
+<span class="pc bpc" id="L177" title="1 of 2 branches missed.">            val nextSelection = if (label in state.selectedLabels) {</span>
+<span class="nc" id="L178">                state.selectedLabels - label</span>
+            } else {
+<span class="fc" id="L180">                state.selectedLabels + label</span>
+            }
+<span class="fc" id="L182">            state.copy(selectedLabels = nextSelection)</span>
+        }
+<span class="fc" id="L184">    }</span>
+
+    private fun submitPracticeAnswer() {
+<span class="fc" id="L187">        val state = _state.value</span>
+<span class="pc bpc" id="L188" title="1 of 2 branches missed.">        val question = state.currentQuestion ?: return</span>
+<span class="pc bpc" id="L189" title="2 of 4 branches missed.">        if (!state.canSubmit || state.answerRevealed) return</span>
+
+<span class="fc" id="L191">        val event = answerEvent(question, SalesforceMode.Practice, state.selectedLabels)</span>
+<span class="fc" id="L192">        viewModelScope.launch {</span>
+<span class="fc" id="L193">            repository.recordLocalAnswer(event)</span>
+<span class="fc" id="L194">            _state.update {</span>
+<span class="fc" id="L195">                it.copy(</span>
+<span class="fc" id="L196">                    answerRevealed = true,</span>
+<span class="fc" id="L197">                    practiceEvents = it.practiceEvents + event,</span>
+<span class="fc" id="L198">                )</span>
+            }
+<span class="fc" id="L200">        }</span>
+<span class="fc" id="L201">    }</span>
+
+    private fun moveToNextPracticeQuestion() {
+<span class="nc" id="L204">        val state = _state.value</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        val current = state.currentQuestion ?: return</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        val nextQuestion = state.nextPracticeQuestionAfter(current.id)</span>
+<span class="nc" id="L207">            ?: return</span>
+
+<span class="nc" id="L209">        _state.update {</span>
+<span class="nc" id="L210">            it.copy(</span>
+<span class="nc" id="L211">                currentQuestion = nextQuestion,</span>
+<span class="nc" id="L212">                currentPosition = nextQuestion.practicePosition(it.questions),</span>
+<span class="nc" id="L213">                selectedLabels = emptySet(),</span>
+<span class="nc" id="L214">                answerRevealed = false,</span>
+<span class="nc" id="L215">            )</span>
+        }
+<span class="nc" id="L217">    }</span>
+
+    private fun markPracticeQuestionDone() {
+<span class="pc bpc" id="L220" title="1 of 2 branches missed.">        val questionId = _state.value.currentQuestion?.id ?: return</span>
+<span class="fc" id="L221">        viewModelScope.launch {</span>
+<span class="fc" id="L222">            repository.markLocalDone(questionId)</span>
+<span class="fc" id="L223">            _state.update { state -&gt;</span>
+<span class="fc" id="L224">                state.copy(practiceDoneQuestionIds = state.practiceDoneQuestionIds + questionId)</span>
+            }
+<span class="fc" id="L226">            val nextQuestion = _state.value.nextPracticeQuestionAfter(questionId, extraDoneQuestionIds = setOf(questionId))</span>
+<span class="pc bpc" id="L227" title="1 of 2 branches missed.">            if (nextQuestion == null) {</span>
+<span class="nc" id="L228">                finishPractice()</span>
+            } else {
+<span class="fc" id="L230">                _state.update {</span>
+<span class="fc" id="L231">                    it.copy(</span>
+<span class="fc" id="L232">                        currentQuestion = nextQuestion,</span>
+<span class="fc" id="L233">                        currentPosition = nextQuestion.practicePosition(it.questions),</span>
+<span class="fc" id="L234">                        selectedLabels = emptySet(),</span>
+<span class="fc" id="L235">                        answerRevealed = false,</span>
+<span class="fc" id="L236">                    )</span>
+                }
+            }
+<span class="fc" id="L239">        }</span>
+<span class="fc" id="L240">    }</span>
+
+    private fun finishPractice() {
+<span class="fc" id="L243">        val events = _state.value.practiceEvents</span>
+<span class="fc" id="L244">        val doneQuestionIds = _state.value.practiceDoneQuestionIds.toList()</span>
+<span class="fc" id="L245">        _state.update {</span>
+<span class="fc" id="L246">            it.copy(</span>
+<span class="fc" id="L247">                mode = SalesforceViewMode.Main,</span>
+<span class="fc" id="L248">                currentQuestion = null,</span>
+<span class="fc" id="L249">                selectedLabels = emptySet(),</span>
+<span class="fc" id="L250">                answerRevealed = false,</span>
+<span class="fc" id="L251">                practiceEvents = emptyList(),</span>
+<span class="fc" id="L252">                practiceDoneQuestionIds = emptySet(),</span>
+<span class="fc" id="L253">            )</span>
+        }
+<span class="pc bpc" id="L255" title="1 of 4 branches missed.">        if (events.isEmpty() &amp;&amp; doneQuestionIds.isEmpty()) return</span>
+<span class="fc" id="L256">        repository.postPracticeSession(events, doneQuestionIds)</span>
+<span class="fc" id="L257">            .onEach(::handleSummaryResult)</span>
+<span class="fc" id="L258">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L259">    }</span>
+
+    private fun nextExamQuestion() {
+<span class="fc" id="L262">        val state = _state.value</span>
+<span class="pc bpc" id="L263" title="1 of 2 branches missed.">        val question = state.currentQuestion ?: return</span>
+<span class="pc bpc" id="L264" title="1 of 2 branches missed.">        if (!state.canSubmit) return</span>
+
+<span class="fc" id="L266">        val event = answerEvent(question, SalesforceMode.Exam, state.selectedLabels)</span>
+<span class="fc" id="L267">        viewModelScope.launch {</span>
+<span class="fc" id="L268">            repository.recordLocalAnswer(event)</span>
+<span class="fc" id="L269">        }</span>
+
+<span class="fc" id="L271">        val events = state.examEvents + event</span>
+<span class="fc" id="L272">        val nextIndex = events.size</span>
+<span class="fc bfc" id="L273" title="All 2 branches covered.">        if (nextIndex &gt;= state.examQuestions.size) {</span>
+<span class="fc" id="L274">            finishExam(events)</span>
+        } else {
+<span class="fc" id="L276">            _state.update {</span>
+<span class="fc" id="L277">                it.copy(</span>
+<span class="fc" id="L278">                    examEvents = events,</span>
+<span class="fc" id="L279">                    currentQuestion = it.examQuestions[nextIndex],</span>
+<span class="fc" id="L280">                    currentPosition = nextIndex + 1,</span>
+<span class="fc" id="L281">                    selectedLabels = emptySet(),</span>
+<span class="fc" id="L282">                )</span>
+            }
+        }
+<span class="fc" id="L285">    }</span>
+
+    private fun finishExam(events: List&lt;SalesforceAnswerRecord&gt;) {
+<span class="fc" id="L288">        val state = _state.value</span>
+<span class="fc" id="L289">        val finishedAt = Instant.now().toString()</span>
+<span class="fc" id="L290">        val result = SalesforceExamResult(</span>
+<span class="fc" id="L291">            startedAt = state.examStartedAt,</span>
+<span class="fc" id="L292">            finishedAt = finishedAt,</span>
+<span class="fc" id="L293">            questions = state.examQuestions,</span>
+<span class="fc" id="L294">            events = events,</span>
+        )
+<span class="fc" id="L296">        _state.update {</span>
+<span class="fc" id="L297">            it.copy(</span>
+<span class="fc" id="L298">                mode = SalesforceViewMode.ExamResult,</span>
+<span class="fc" id="L299">                examEvents = events,</span>
+<span class="fc" id="L300">                examResult = result,</span>
+<span class="fc" id="L301">                currentQuestion = null,</span>
+<span class="fc" id="L302">                selectedLabels = emptySet(),</span>
+<span class="fc" id="L303">            )</span>
+        }
+<span class="fc" id="L305">        repository.postExamAttempt(</span>
+<span class="fc" id="L306">            startedAt = result.startedAt,</span>
+<span class="fc" id="L307">            finishedAt = result.finishedAt,</span>
+<span class="fc" id="L308">            events = events,</span>
+<span class="fc" id="L309">        ).onEach(::handleSummaryResult)</span>
+<span class="fc" id="L310">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L311">    }</span>
+
+    private fun reviewExamQuestion(questionId: Int) {
+<span class="nc bnc" id="L314" title="All 8 branches missed.">        val question = _state.value.examResult?.questions?.firstOrNull { it.id == questionId } ?: return</span>
+<span class="nc bnc" id="L315" title="All 6 branches missed.">        val event = _state.value.examResult?.events?.firstOrNull { it.questionId == questionId }</span>
+<span class="nc" id="L316">        _state.update {</span>
+<span class="nc" id="L317">            it.copy(</span>
+<span class="nc" id="L318">                mode = SalesforceViewMode.Review,</span>
+<span class="nc" id="L319">                reviewQuestion = question,</span>
+<span class="nc bnc" id="L320" title="All 6 branches missed.">                selectedLabels = event?.selectedLabels?.toSet() ?: emptySet(),</span>
+<span class="nc" id="L321">                answerRevealed = true,</span>
+<span class="nc" id="L322">            )</span>
+        }
+<span class="nc" id="L324">    }</span>
+
+    private fun answerEvent(
+        question: SalesforceQuestion,
+        mode: SalesforceMode,
+        selectedLabels: Set&lt;String&gt;,
+    ): SalesforceAnswerRecord {
+<span class="fc" id="L331">        val selected = selectedLabels.sorted()</span>
+<span class="fc" id="L332">        val correct = selected == question.answerLabels.sorted()</span>
+<span class="fc" id="L333">        return SalesforceAnswerRecord(</span>
+<span class="fc" id="L334">            questionId = question.id,</span>
+<span class="fc" id="L335">            mode = mode,</span>
+<span class="fc" id="L336">            selectedLabels = selected,</span>
+<span class="fc" id="L337">            correctLabels = question.answerLabels.sorted(),</span>
+<span class="fc" id="L338">            correct = correct,</span>
+<span class="fc" id="L339">            answeredAt = Instant.now().toString(),</span>
+        )
+    }
+
+    private fun handleSummaryResult(result: ApiResult&lt;SalesforceProgressSummary&gt;) {
+<span class="fc" id="L344">        when (result) {</span>
+<span class="fc bfc" id="L345" title="All 2 branches covered.">            ApiResult.Loading -&gt; _state.update { it.copy(isLoading = true) }</span>
+<span class="pc bpc" id="L346" title="1 of 2 branches missed.">            is ApiResult.Success -&gt; _state.update {</span>
+<span class="fc" id="L347">                it.copy(isLoading = false, remoteSummary = result.data)</span>
+            }
+<span class="nc" id="L349">            is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L350">                it.copy(isLoading = false)</span>
+<span class="nc" id="L351">            }.also {</span>
+<span class="nc" id="L352">                AppSnackbarBus.showApiFailure(onRetry = ::syncProgress)</span>
+<span class="nc" id="L353">            }</span>
+        }
+<span class="fc" id="L355">    }</span>
+}
+
+private fun SalesforceQuestion.practicePosition(questions: List&lt;SalesforceQuestion&gt;): Int =
+<span class="pc bpc" id="L359" title="3 of 8 branches missed.">    questions.indexOfFirst { it.id == id }.takeIf { it &gt;= 0 }?.plus(1) ?: id</span>
+
+<span class="nc" id="L361">private fun SalesforceUiState.nextPracticeQuestionAfter(</span>
+    currentQuestionId: Int,
+<span class="nc" id="L363">    extraDoneQuestionIds: Set&lt;Int&gt; = emptySet(),</span>
+): SalesforceQuestion? {
+    fun isPracticeCandidate(question: SalesforceQuestion): Boolean =
+<span class="pc bpc" id="L366" title="1 of 2 branches missed.">        question.id != currentQuestionId &amp;&amp;</span>
+<span class="pc bpc" id="L367" title="4 of 6 branches missed.">            progress[question.id]?.done != true &amp;&amp;</span>
+<span class="pc bpc" id="L368" title="1 of 2 branches missed.">            question.id !in extraDoneQuestionIds</span>
+
+<span class="pc bpc" id="L370" title="1 of 2 branches missed.">    return questions</span>
+<span class="fc bfc" id="L371" title="All 2 branches covered.">        .filter { it.id &gt; currentQuestionId }</span>
+<span class="fc" id="L372">        .firstOrNull(::isPracticeCandidate)</span>
+<span class="nc" id="L373">        ?: questions.firstOrNull(::isPracticeCandidate)</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

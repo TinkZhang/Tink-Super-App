@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>YearContributionGraph.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.ui.components</a> &gt; <span class="el_source">YearContributionGraph.kt</span></div><h1>YearContributionGraph.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.ui.components
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import java.time.LocalDate
+import java.time.Year
+import java.time.temporal.ChronoUnit
+
+@Composable
+<span class="nc bnc" id="L21" title="All 4 branches missed.">fun YearContributionGraph(</span>
+    year: Int,
+    markedDates: Set&lt;LocalDate&gt;,
+<span class="nc bnc" id="L24" title="All 2 branches missed.">    modifier: Modifier = Modifier,</span>
+<span class="nc bnc" id="L25" title="All 2 branches missed.">    markedColor: Color = MaterialTheme.colorScheme.primary,</span>
+<span class="nc" id="L26">    emptyColor: Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),</span>
+<span class="nc bnc" id="L27" title="All 6 branches missed.">) {</span>
+<span class="nc bnc" id="L28" title="All 2 branches missed.">    val days = remember(year) {</span>
+<span class="nc" id="L29">        val firstDay = LocalDate.of(year, 1, 1)</span>
+<span class="nc" id="L30">        val lastDay = LocalDate.of(year, 12, 31)</span>
+<span class="nc" id="L31">        val gridStart = firstDay.minusDays((firstDay.dayOfWeek.value % 7).toLong())</span>
+<span class="nc" id="L32">        val weekCount = (ChronoUnit.WEEKS.between(gridStart, lastDay) + 1).toInt()</span>
+<span class="nc" id="L33">        (0 until weekCount).flatMap { week -&gt;</span>
+<span class="nc" id="L34">            (0..6).map { day -&gt;</span>
+<span class="nc" id="L35">                gridStart.plusDays((week * 7 + day).toLong())</span>
+<span class="nc" id="L36">            }</span>
+<span class="nc" id="L37">        }</span>
+    }
+<span class="nc" id="L39">    val weekCount = remember(days) { (days.size / 7).coerceAtLeast(1) }</span>
+<span class="nc bnc" id="L40" title="All 2 branches missed.">    val yearValue = remember(year) { Year.of(year) }</span>
+
+<span class="nc" id="L42">    Canvas(</span>
+<span class="nc" id="L43">        modifier = modifier</span>
+<span class="nc" id="L44">            .fillMaxWidth()</span>
+<span class="nc" id="L45">            .height(92.dp)</span>
+<span class="nc" id="L46">            .testTag(&quot;year_contribution_graph&quot;),</span>
+<span class="nc bnc" id="L47" title="All 12 branches missed.">    ) {</span>
+<span class="nc" id="L48">        val gap = 2.dp.toPx()</span>
+<span class="nc" id="L49">        val cellWidth = (size.width - gap * (weekCount - 1)) / weekCount</span>
+<span class="nc" id="L50">        val cellHeight = (size.height - gap * 6) / 7</span>
+<span class="nc" id="L51">        val cell = minOf(cellWidth, cellHeight)</span>
+<span class="nc" id="L52">        val corner = CornerRadius(2.dp.toPx(), 2.dp.toPx())</span>
+
+<span class="nc" id="L54">        days.forEachIndexed { index, date -&gt;</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">            if (Year.from(date) != yearValue) return@forEachIndexed</span>
+
+<span class="nc" id="L57">            val week = index / 7</span>
+<span class="nc" id="L58">            val day = index % 7</span>
+<span class="nc" id="L59">            val x = week * (cell + gap)</span>
+<span class="nc" id="L60">            val y = day * (cell + gap)</span>
+<span class="nc" id="L61">            drawRoundRect(</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">                color = if (date in markedDates) markedColor else emptyColor,</span>
+<span class="nc" id="L63">                topLeft = Offset(x, y),</span>
+<span class="nc" id="L64">                size = Size(cell, cell),</span>
+<span class="nc" id="L65">                cornerRadius = corner,</span>
+            )
+<span class="nc" id="L67">        }</span>
+<span class="nc" id="L68">    }</span>
+<span class="nc" id="L69">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

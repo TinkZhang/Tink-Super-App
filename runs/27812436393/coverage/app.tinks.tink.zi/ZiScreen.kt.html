@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ZiScreen.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.zi</a> &gt; <span class="el_source">ZiScreen.kt</span></div><h1>ZiScreen.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.zi
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tinks.tink.ui.components.ContentCard
+
+
+@Composable
+fun ZiScreen(
+    viewModel: ZiViewModel,
+    onNavigationEvent: () -&gt; Unit,
+    onStoryListNavigation: () -&gt; Unit,
+<span class="nc" id="L46">) {</span>
+<span class="nc" id="L47">    val uiState by viewModel.uiState.collectAsStateWithLifecycle()</span>
+<span class="nc" id="L48">    ZiScreen(</span>
+<span class="nc" id="L49">        isLoading = uiState.isLoading,</span>
+<span class="nc" id="L50">        showDialog = uiState.showDialog,</span>
+<span class="nc" id="L51">        learntZiNum = uiState.learntZiNum,</span>
+<span class="nc" id="L52">        reviewList = uiState.reviewList,</span>
+<span class="nc" id="L53">        onEvent = viewModel::onEvent,</span>
+<span class="nc" id="L54">        onNavigationEvent = onNavigationEvent,</span>
+<span class="nc" id="L55">        onStoryListNavigation = onStoryListNavigation,</span>
+    )
+<span class="nc" id="L57">}</span>
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ZiScreen(
+<span class="nc bnc" id="L62" title="All 2 branches missed.">    isLoading: Boolean = false,</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">    showDialog: Boolean = false,</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">    reviewList: List&lt;Zi&gt; = emptyList(),</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">    learntZiNum: Int = 0,</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">    onEvent: (ZiEvent) -&gt; Unit = {},</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">    onNavigationEvent: () -&gt; Unit = {},</span>
+<span class="nc" id="L68">    onStoryListNavigation: () -&gt; Unit = {},</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">) {</span>
+
+<span class="nc bnc" id="L71" title="All 2 branches missed.">    LaunchedEffect(Unit) {</span>
+<span class="nc" id="L72">        onEvent(ZiEvent.Refresh)</span>
+<span class="nc" id="L73">    }</span>
+<span class="nc" id="L74">    Box(modifier = Modifier.fillMaxSize()) {</span>
+
+<span class="nc" id="L76">        val refreshState = rememberPullToRefreshState()</span>
+<span class="nc" id="L77">        PullToRefreshBox(</span>
+<span class="nc" id="L78">            isRefreshing = isLoading,</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">            onRefresh = { onEvent(ZiEvent.Refresh) },</span>
+<span class="nc" id="L80">            modifier = Modifier.fillMaxSize(),</span>
+<span class="nc" id="L81">            state = refreshState,</span>
+<span class="nc" id="L82">            indicator = {</span>
+<span class="nc" id="L83">                Box(</span>
+<span class="nc" id="L84">                    modifier = Modifier</span>
+<span class="nc" id="L85">                        .align(Alignment.TopCenter)</span>
+<span class="nc" id="L86">                        .graphicsLayer {</span>
+<span class="nc" id="L87">                            val scale =</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">                                if (isLoading) 1f else refreshState.distanceFraction.coerceIn(</span>
+<span class="nc" id="L89">                                    0f,</span>
+<span class="nc" id="L90">                                    1f</span>
+                                )
+<span class="nc" id="L92">                            scaleX = scale</span>
+<span class="nc" id="L93">                            scaleY = scale</span>
+<span class="nc" id="L94">                            alpha = scale</span>
+<span class="nc" id="L95">                        }</span>
+                ) {
+<span class="nc" id="L97">                    ContainedLoadingIndicator()</span>
+<span class="nc" id="L98">                }</span>
+<span class="nc" id="L99">            }</span>
+<span class="nc" id="L100">        ) {</span>
+<span class="nc" id="L101">            Column(</span>
+<span class="nc" id="L102">                modifier = Modifier</span>
+<span class="nc" id="L103">                    .fillMaxSize()</span>
+<span class="nc" id="L104">                    .background(MaterialTheme.colorScheme.surface)</span>
+<span class="nc" id="L105">                    .padding(16.dp)</span>
+<span class="nc" id="L106">                    .padding(bottom = 72.dp),</span>
+<span class="nc" id="L107">                verticalArrangement = Arrangement.spacedBy(16.dp),</span>
+            ) {
+<span class="nc" id="L109">                ContentCard(</span>
+<span class="nc" id="L110">                    title = &quot;掌握汉字数量&quot;,</span>
+<span class="nc" id="L111">                    showNavigation = true,</span>
+<span class="nc" id="L112">                    onCardNavigation = { onNavigationEvent() }) {</span>
+<span class="nc" id="L113">                    Text(</span>
+<span class="nc" id="L114">                        text = learntZiNum.toString(),</span>
+<span class="nc" id="L115">                        style = MaterialTheme.typography.displayLarge.copy(</span>
+<span class="nc" id="L116">                            fontWeight = FontWeight.Bold,</span>
+<span class="nc" id="L117">                            fontSize = 60.sp</span>
+                        ),
+<span class="nc" id="L119">                        textAlign = TextAlign.Center,</span>
+<span class="nc" id="L120">                        modifier = Modifier.fillMaxWidth(),</span>
+                    )
+<span class="nc" id="L122">                }</span>
+<span class="nc bnc" id="L123" title="All 4 branches missed.">                if (reviewList.isNotEmpty()) {</span>
+<span class="nc" id="L124">                    ContentCard(title = &quot;复习汉字&quot;) {</span>
+<span class="nc" id="L125">                        LazyVerticalGrid(columns = GridCells.Fixed(3)) {</span>
+<span class="nc" id="L126">                            items(reviewList) { zi -&gt;</span>
+<span class="nc" id="L127">                                SawtoothCard(</span>
+<span class="nc" id="L128">                                    modifier = Modifier</span>
+<span class="nc" id="L129">                                        .fillMaxWidth()</span>
+<span class="nc" id="L130">                                        .padding(8.dp)</span>
+<span class="nc" id="L131">                                ) {</span>
+<span class="nc" id="L132">                                    Text(</span>
+<span class="nc" id="L133">                                        text = zi.zi,</span>
+<span class="nc" id="L134">                                        style = MaterialTheme.typography.displayLarge.copy(</span>
+<span class="nc" id="L135">                                            fontWeight = FontWeight.Bold,</span>
+<span class="nc" id="L136">                                            fontSize = 40.sp</span>
+                                        ),
+<span class="nc" id="L138">                                        textAlign = TextAlign.Center,</span>
+<span class="nc" id="L139">                                        modifier = Modifier</span>
+<span class="nc" id="L140">                                            .fillMaxWidth()</span>
+<span class="nc" id="L141">                                            .padding(12.dp),</span>
+                                    )
+<span class="nc" id="L143">                                }</span>
+<span class="nc" id="L144">                            }</span>
+<span class="nc" id="L145">                        }</span>
+<span class="nc" id="L146">                    }</span>
+<span class="nc" id="L147">                }</span>
+<span class="nc" id="L148">            }</span>
+<span class="nc" id="L149">        }</span>
+
+<span class="nc" id="L151">        FloatingActionButton(</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">            onClick = { onEvent(ZiEvent.AddZiDialogOpen) },</span>
+<span class="nc" id="L153">            containerColor = MaterialTheme.colorScheme.primaryContainer,</span>
+<span class="nc" id="L154">            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,</span>
+<span class="nc" id="L155">            modifier = Modifier</span>
+<span class="nc" id="L156">                .align(Alignment.BottomEnd)</span>
+<span class="nc" id="L157">                .padding(16.dp)</span>
+<span class="nc" id="L158">        ) {</span>
+<span class="nc" id="L159">            Icon(Icons.Filled.Add, &quot;添加记录&quot;)</span>
+<span class="nc" id="L160">        }</span>
+
+<span class="nc" id="L162">        FloatingActionButton(</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">            onClick = { onEvent(ZiEvent.GenerateStory) },</span>
+<span class="nc" id="L164">            shape = FloatingActionButtonDefaults.largeShape,</span>
+<span class="nc" id="L165">            containerColor = MaterialTheme.colorScheme.primaryContainer,</span>
+<span class="nc" id="L166">            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,</span>
+<span class="nc" id="L167">            modifier = Modifier</span>
+<span class="nc" id="L168">                .align(Alignment.BottomCenter)</span>
+<span class="nc" id="L169">                .padding(16.dp)</span>
+<span class="nc" id="L170">        ) {</span>
+<span class="nc" id="L171">            Icon(Icons.Filled.RestartAlt, &quot;生成故事&quot;)</span>
+<span class="nc" id="L172">        }</span>
+
+
+<span class="nc" id="L175">        FloatingActionButton(</span>
+<span class="nc" id="L176">            onClick = onStoryListNavigation,</span>
+<span class="nc" id="L177">            containerColor = MaterialTheme.colorScheme.primaryContainer,</span>
+<span class="nc" id="L178">            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,</span>
+<span class="nc" id="L179">            modifier = Modifier</span>
+<span class="nc" id="L180">                .align(Alignment.BottomStart)</span>
+<span class="nc" id="L181">                .padding(16.dp)</span>
+<span class="nc" id="L182">        ) {</span>
+<span class="nc" id="L183">            Icon(Icons.AutoMirrored.Filled.List, &quot;故事列表&quot;)</span>
+<span class="nc" id="L184">        }</span>
+
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if (showDialog) {</span>
+<span class="nc" id="L187">            AddZiDialog(</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">                onDismiss = { onEvent(ZiEvent.DismissDialog) },</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">                onConfirm = { proficiency, zis -&gt;</span>
+<span class="nc" id="L190">                    onEvent(</span>
+<span class="nc" id="L191">                        ZiEvent.UpdateZi(</span>
+<span class="nc" id="L192">                            zis = zis,</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">                            proficiency = proficiency ?: 0,</span>
+                        )
+                    )
+<span class="nc" id="L196">                }</span>
+            )
+<span class="nc" id="L198">        }</span>
+<span class="nc" id="L199">    }</span>
+<span class="nc" id="L200">}</span>
+
+
+@Preview
+@Composable
+<span class="nc" id="L205">private fun ZiScreenPreview() {</span>
+<span class="nc" id="L206">    ZiScreen(onStoryListNavigation = {})</span>
+<span class="nc" id="L207">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

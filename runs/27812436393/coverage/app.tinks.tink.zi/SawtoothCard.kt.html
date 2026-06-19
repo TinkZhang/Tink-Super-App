@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SawtoothCard.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.zi</a> &gt; <span class="el_source">SawtoothCard.kt</span></div><h1>SawtoothCard.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.zi
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+
+@Composable
+fun SawtoothCard(
+<span class="nc bnc" id="L19" title="All 2 branches missed.">    modifier: Modifier = Modifier,</span>
+<span class="nc bnc" id="L20" title="All 2 branches missed.">    toothWidthDp: Float = 20f,</span>
+<span class="nc bnc" id="L21" title="All 2 branches missed.">    toothHeightDp: Float = 10f,</span>
+<span class="nc" id="L22">    contentPadding: PaddingValues = PaddingValues(16.dp),</span>
+    content: @Composable () -&gt; Unit
+<span class="nc bnc" id="L24" title="All 2 branches missed.">) {</span>
+<span class="nc" id="L25">    val shape = SawtoothShape(</span>
+<span class="nc" id="L26">        toothWidth = toothWidthDp,</span>
+<span class="nc" id="L27">        toothHeight = toothHeightDp</span>
+    )
+
+<span class="nc" id="L30">    Surface(</span>
+<span class="nc" id="L31">        modifier = modifier,</span>
+<span class="nc" id="L32">        shape = shape,</span>
+<span class="nc" id="L33">        tonalElevation = 2.dp,</span>
+<span class="nc" id="L34">        color = MaterialTheme.colorScheme.surface</span>
+<span class="nc" id="L35">    ) {</span>
+<span class="nc" id="L36">        androidx.compose.foundation.layout.Box(</span>
+<span class="nc" id="L37">            modifier = Modifier.padding(contentPadding)</span>
+        ) {
+<span class="nc" id="L39">            content()</span>
+<span class="nc" id="L40">        }</span>
+<span class="nc" id="L41">    }</span>
+<span class="nc" id="L42">}</span>
+
+<span class="nc" id="L44">class SawtoothShape(</span>
+<span class="nc" id="L45">    private val toothWidth: Float,</span>
+<span class="nc" id="L46">    private val toothHeight: Float</span>
+) : Shape {
+
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density
+    ): Outline {
+<span class="nc" id="L54">        val path = Path().apply {</span>
+<span class="nc" id="L55">            moveTo(0f, 0f)</span>
+<span class="nc" id="L56">            lineTo(size.width, 0f)</span>
+<span class="nc" id="L57">            lineTo(size.width, size.height - toothHeight)</span>
+
+<span class="nc" id="L59">            var x = size.width</span>
+<span class="nc" id="L60">            var up = true</span>
+
+<span class="nc bnc" id="L62" title="All 2 branches missed.">            while (x &gt; 0f) {</span>
+<span class="nc" id="L63">                x -= toothWidth</span>
+<span class="nc" id="L64">                lineTo(</span>
+<span class="nc" id="L65">                    x.coerceAtLeast(0f),</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">                    if (up) size.height else size.height - toothHeight</span>
+                )
+<span class="nc bnc" id="L68" title="All 2 branches missed.">                up = !up</span>
+            }
+
+<span class="nc" id="L71">            lineTo(0f, 0f)</span>
+<span class="nc" id="L72">            close()</span>
+<span class="nc" id="L73">        }</span>
+
+<span class="nc" id="L75">        return Outline.Generic(path)</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

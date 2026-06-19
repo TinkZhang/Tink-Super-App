@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Lottery.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.lottery</a> &gt; <span class="el_source">Lottery.kt</span></div><h1>Lottery.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.lottery
+
+import java.time.Instant
+
+const val LOTTERY_TYPE_DA_LE_TOU = &quot;超级大乐透&quot;
+
+<span class="fc" id="L7">data class LotteryNumbers(</span>
+<span class="fc" id="L8">    val front: List&lt;Int&gt;,</span>
+<span class="fc" id="L9">    val back: List&lt;Int&gt;,</span>
+)
+
+<span class="fc" id="L12">data class LotteryResult(</span>
+<span class="fc" id="L13">    val id: Int,</span>
+<span class="pc" id="L14">    val type: String,</span>
+<span class="pc" id="L15">    val issueId: String,</span>
+<span class="pc" id="L16">    val numbers: LotteryNumbers,</span>
+<span class="pc" id="L17">    val openedAt: Instant?,</span>
+<span class="fc" id="L18">    val source: String,</span>
+)
+
+<span class="fc" id="L21">data class LotteryTicket(</span>
+<span class="fc" id="L22">    val id: Int,</span>
+<span class="pc" id="L23">    val type: String,</span>
+<span class="fc" id="L24">    val issueId: String,</span>
+<span class="fc" id="L25">    val numbers: LotteryNumbers,</span>
+<span class="fc" id="L26">    val revealTime: Instant,</span>
+<span class="pc" id="L27">    val capturedImageUri: String?,</span>
+<span class="fc" id="L28">    val checked: Boolean,</span>
+<span class="fc" id="L29">    val checkedAt: Instant?,</span>
+<span class="pc" id="L30">    val resultId: Int?,</span>
+<span class="fc" id="L31">    val prizeTier: String?,</span>
+<span class="fc" id="L32">    val frontMatchCount: Int?,</span>
+<span class="fc" id="L33">    val backMatchCount: Int?,</span>
+<span class="fc" id="L34">    val result: LotteryResult?,</span>
+)
+
+<span class="fc" id="L37">data class LotteryCheckOutcome(</span>
+<span class="fc" id="L38">    val lottery: LotteryTicket,</span>
+<span class="pc" id="L39">    val result: LotteryResult,</span>
+<span class="pc" id="L40">    val frontMatchCount: Int,</span>
+<span class="pc" id="L41">    val backMatchCount: Int,</span>
+<span class="fc" id="L42">    val prizeTier: String,</span>
+)
+
+<span class="fc" id="L45">data class LotteryDraft(</span>
+<span class="fc" id="L46">    val type: String = LOTTERY_TYPE_DA_LE_TOU,</span>
+<span class="pc" id="L47">    val issueId: String = &quot;&quot;,</span>
+<span class="pc" id="L48">    val frontNumbersText: String = &quot;&quot;,</span>
+<span class="pc" id="L49">    val backNumbersText: String = &quot;&quot;,</span>
+<span class="pc" id="L50">    val revealTimeText: String = &quot;&quot;,</span>
+<span class="fc" id="L51">    val capturedImageUri: String? = null,</span>
+<span class="fc" id="L52">    val parseError: String? = null,</span>
+<span class="fc" id="L53">) {</span>
+    val jsonPreview: String
+        get() = &quot;&quot;&quot;
+            {
+<span class="nc" id="L57">              &quot;type&quot;: &quot;$type&quot;,</span>
+<span class="nc" id="L58">              &quot;issue_id&quot;: &quot;$issueId&quot;,</span>
+<span class="nc" id="L59">              &quot;front_numbers&quot;: [${frontNumbersText.toJsonNumbers()}],</span>
+<span class="nc" id="L60">              &quot;back_numbers&quot;: [${backNumbersText.toJsonNumbers()}],</span>
+<span class="nc" id="L61">              &quot;reveal_time&quot;: &quot;$revealTimeText&quot;</span>
+            }
+<span class="nc" id="L63">        &quot;&quot;&quot;.trimIndent()</span>
+}
+
+private fun String.toJsonNumbers(): String =
+<span class="nc" id="L67">    split(Regex(&quot;[,，\\s]+&quot;))</span>
+<span class="nc" id="L68">        .map { it.trim() }</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        .filter { it.isNotEmpty() }</span>
+<span class="nc bnc" id="L70" title="All 4 branches missed.">        .joinToString(&quot;, &quot;) { it.toIntOrNull()?.toString() ?: &quot;\&quot;$it\&quot;&quot; }</span>
+
+object LotteryPrizeClassifier {
+    fun classify(frontMatches: Int, backMatches: Int): String =
+<span class="fc" id="L74">        when {</span>
+<span class="fc bfc" id="L75" title="All 4 branches covered.">            frontMatches == 5 &amp;&amp; backMatches == 2 -&gt; &quot;一等奖&quot;</span>
+<span class="fc bfc" id="L76" title="All 4 branches covered.">            frontMatches == 5 &amp;&amp; backMatches == 1 -&gt; &quot;二等奖&quot;</span>
+<span class="pc bpc" id="L77" title="1 of 4 branches missed.">            frontMatches == 5 &amp;&amp; backMatches == 0 -&gt; &quot;三等奖&quot;</span>
+<span class="fc bfc" id="L78" title="All 4 branches covered.">            frontMatches == 4 &amp;&amp; backMatches == 2 -&gt; &quot;四等奖&quot;</span>
+<span class="fc bfc" id="L79" title="All 4 branches covered.">            frontMatches == 4 &amp;&amp; backMatches == 1 -&gt; &quot;五等奖&quot;</span>
+<span class="fc bfc" id="L80" title="All 4 branches covered.">            frontMatches == 3 &amp;&amp; backMatches == 2 -&gt; &quot;六等奖&quot;</span>
+<span class="pc bpc" id="L81" title="1 of 4 branches missed.">            frontMatches == 4 &amp;&amp; backMatches == 0 -&gt; &quot;七等奖&quot;</span>
+<span class="fc bfc" id="L82" title="All 4 branches covered.">            frontMatches == 3 &amp;&amp; backMatches == 1 -&gt; &quot;八等奖&quot;</span>
+<span class="fc bfc" id="L83" title="All 4 branches covered.">            frontMatches == 2 &amp;&amp; backMatches == 2 -&gt; &quot;八等奖&quot;</span>
+<span class="pc bpc" id="L84" title="1 of 4 branches missed.">            frontMatches == 3 &amp;&amp; backMatches == 0 -&gt; &quot;九等奖&quot;</span>
+<span class="pc bpc" id="L85" title="1 of 4 branches missed.">            frontMatches == 2 &amp;&amp; backMatches == 1 -&gt; &quot;九等奖&quot;</span>
+<span class="fc bfc" id="L86" title="All 4 branches covered.">            frontMatches == 1 &amp;&amp; backMatches == 2 -&gt; &quot;九等奖&quot;</span>
+<span class="pc bpc" id="L87" title="1 of 4 branches missed.">            frontMatches == 0 &amp;&amp; backMatches == 2 -&gt; &quot;九等奖&quot;</span>
+<span class="fc" id="L88">            else -&gt; &quot;未中奖&quot;</span>
+<span class="fc" id="L89">        }</span>
+
+    fun classify(ticket: LotteryNumbers, result: LotteryNumbers): LotteryMatchSummary {
+<span class="fc" id="L92">        val frontMatches = ticket.front.toSet().intersect(result.front.toSet()).size</span>
+<span class="fc" id="L93">        val backMatches = ticket.back.toSet().intersect(result.back.toSet()).size</span>
+<span class="fc" id="L94">        return LotteryMatchSummary(</span>
+<span class="fc" id="L95">            frontMatches = frontMatches,</span>
+<span class="fc" id="L96">            backMatches = backMatches,</span>
+<span class="fc" id="L97">            prizeTier = classify(frontMatches, backMatches),</span>
+        )
+    }
+}
+
+<span class="fc" id="L102">data class LotteryMatchSummary(</span>
+<span class="fc" id="L103">    val frontMatches: Int,</span>
+<span class="fc" id="L104">    val backMatches: Int,</span>
+<span class="fc" id="L105">    val prizeTier: String,</span>
+) {
+<span class="fc bfc" id="L107" title="All 2 branches covered.">    val isWinning: Boolean get() = prizeTier != &quot;未中奖&quot;</span>
+}
+
+fun LotteryTicket.matchSummary(): LotteryMatchSummary? {
+<span class="fc bfc" id="L111" title="All 2 branches covered.">    val front = frontMatchCount ?: return null</span>
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">    val back = backMatchCount ?: return null</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">    return LotteryMatchSummary(front, back, prizeTier ?: LotteryPrizeClassifier.classify(front, back))</span>
+}
+
+fun LotteryDraft.toCreateRequest(): LotteryCreateRequest {
+<span class="fc" id="L117">    val frontNumbers = frontNumbersText.parseNumbers(expectedCount = 5, min = 1, max = 35)</span>
+<span class="fc" id="L118">    val backNumbers = backNumbersText.parseNumbers(expectedCount = 2, min = 1, max = 12)</span>
+<span class="pc" id="L119">    val revealTime = runCatching { Instant.parse(revealTimeText.trim()) }</span>
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        .getOrElse { throw IllegalArgumentException(&quot;Reveal time must be an ISO instant, such as 2026-06-04T12:30:00Z.&quot;) }</span>
+<span class="fc" id="L121">    val cleanIssueId = issueId.trim().removePrefix(&quot;第&quot;).removeSuffix(&quot;期&quot;)</span>
+<span class="pc bpc" id="L122" title="2 of 4 branches missed.">    require(cleanIssueId.isNotBlank()) { &quot;Issue id is required.&quot; }</span>
+
+<span class="fc" id="L124">    return LotteryCreateRequest(</span>
+<span class="pc bpc" id="L125" title="1 of 2 branches missed.">        type = type.ifBlank { LOTTERY_TYPE_DA_LE_TOU },</span>
+<span class="fc" id="L126">        issueId = cleanIssueId,</span>
+<span class="fc" id="L127">        frontNumbers = frontNumbers,</span>
+<span class="fc" id="L128">        backNumbers = backNumbers,</span>
+<span class="fc" id="L129">        revealTime = revealTime.toString(),</span>
+<span class="fc" id="L130">        capturedImageUri = capturedImageUri,</span>
+    )
+}
+
+private fun String.parseNumbers(expectedCount: Int, min: Int, max: Int): List&lt;Int&gt; {
+<span class="fc" id="L135">    val numbers = split(Regex(&quot;[,，\\s]+&quot;))</span>
+<span class="fc" id="L136">        .map { it.trim() }</span>
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">        .filter { it.isNotEmpty() }</span>
+<span class="fc" id="L138">        .map { token -&gt;</span>
+<span class="pc bpc" id="L139" title="1 of 2 branches missed.">            token.toIntOrNull() ?: throw IllegalArgumentException(&quot;Numbers must be numeric.&quot;)</span>
+        }
+<span class="fc bfc" id="L141" title="All 4 branches covered.">    require(numbers.size == expectedCount) { &quot;Expected $expectedCount numbers.&quot; }</span>
+<span class="pc bpc" id="L142" title="2 of 4 branches missed.">    require(numbers.distinct().size == numbers.size) { &quot;Numbers cannot repeat.&quot; }</span>
+<span class="pc bpc" id="L143" title="3 of 6 branches missed.">    require(numbers.all { it in min..max }) { &quot;Numbers must be between $min and $max.&quot; }</span>
+<span class="fc" id="L144">    return numbers.sorted()</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HaircutScreen.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.haircut</a> &gt; <span class="el_source">HaircutScreen.kt</span></div><h1>HaircutScreen.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.haircut
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.material.icons.outlined.Face
+import androidx.compose.material.icons.outlined.Store
+import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tinks.tink.haircut.data.Haircut
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+
+@Composable
+<span class="nc" id="L71">fun HaircutScreen(viewModel: HaircutViewModel) {</span>
+<span class="nc" id="L72">    val uiState by viewModel.uiState.collectAsStateWithLifecycle()</span>
+<span class="nc" id="L73">    HaircutScreen(</span>
+<span class="nc" id="L74">        days = uiState.days,</span>
+<span class="nc" id="L75">        history = uiState.history,</span>
+<span class="nc" id="L76">        isLoading = uiState.isLoading,</span>
+<span class="nc" id="L77">        showDialog = uiState.showDialog,</span>
+<span class="nc" id="L78">        onEvent = viewModel::onEvent,</span>
+    )
+<span class="nc" id="L80">}</span>
+
+@Composable
+internal fun HaircutScreen(
+    days: Int,
+    history: List&lt;Haircut&gt;,
+<span class="nc bnc" id="L86" title="All 2 branches missed.">    isLoading: Boolean = false,</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">    showDialog: Boolean = false,</span>
+<span class="nc" id="L88">    onEvent: (HaircutEvent) -&gt; Unit = {},</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">) {</span>
+
+<span class="nc bnc" id="L91" title="All 2 branches missed.">    if (showDialog) {</span>
+<span class="nc" id="L92">        AddHaircutDialog(</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">            onDismiss = { onEvent(HaircutEvent.DismissDialog) },</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">            onConfirm = { price, shopName, date -&gt;</span>
+<span class="nc" id="L95">                onEvent(HaircutEvent.SubmitHaircut(price, shopName, date))</span>
+<span class="nc" id="L96">            }</span>
+        )
+<span class="nc" id="L98">    }</span>
+
+<span class="nc" id="L100">    val (statusColor, containerColor, onContainerColor, statusText) = when {</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        days &gt; 35 -&gt; Quadruple(</span>
+<span class="nc" id="L102">            MaterialTheme.colorScheme.error,</span>
+<span class="nc" id="L103">            MaterialTheme.colorScheme.errorContainer,</span>
+<span class="nc" id="L104">            MaterialTheme.colorScheme.onErrorContainer,</span>
+<span class="nc" id="L105">            &quot;该去剪头了！&quot;</span>
+        )
+
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        days &gt; 21 -&gt; Quadruple(</span>
+            // 使用自定义的黄色或 Tertiary
+<span class="nc" id="L110">            Color(0xFFE6AE26), // 偏暖黄</span>
+<span class="nc" id="L111">            Color(0xFFFFF6E0),</span>
+<span class="nc" id="L112">            Color(0xFF5C4600),</span>
+<span class="nc" id="L113">            &quot;发型稍微有点乱了&quot;</span>
+<span class="nc" id="L114">        )</span>
+
+<span class="nc" id="L116">        else -&gt; Quadruple(</span>
+<span class="nc" id="L117">            MaterialTheme.colorScheme.primary,</span>
+<span class="nc" id="L118">            MaterialTheme.colorScheme.primaryContainer,</span>
+<span class="nc" id="L119">            MaterialTheme.colorScheme.onPrimaryContainer,</span>
+<span class="nc" id="L120">            &quot;发型保持得不错&quot;</span>
+        )
+    }
+<span class="nc" id="L123">    Box(modifier = Modifier.fillMaxSize()) {</span>
+<span class="nc" id="L124">        LazyColumn(</span>
+<span class="nc" id="L125">            modifier = Modifier</span>
+<span class="nc" id="L126">                .fillMaxSize()</span>
+<span class="nc" id="L127">                .padding(horizontal = 16.dp),</span>
+<span class="nc" id="L128">            contentPadding = PaddingValues(bottom = 80.dp),</span>
+<span class="nc" id="L129">            verticalArrangement = Arrangement.spacedBy(16.dp)</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        ) {</span>
+            // 1. Hero Card: 距离上次天数
+<span class="nc" id="L132">            item {</span>
+<span class="nc" id="L133">                ElevatedCard(</span>
+<span class="nc" id="L134">                    modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L135">                    colors = CardDefaults.elevatedCardColors(</span>
+<span class="nc" id="L136">                        containerColor = containerColor,</span>
+<span class="nc" id="L137">                        contentColor = onContainerColor</span>
+                    ),
+<span class="nc" id="L139">                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)</span>
+<span class="nc" id="L140">                ) {</span>
+<span class="nc" id="L141">                    Column(</span>
+<span class="nc" id="L142">                        modifier = Modifier</span>
+<span class="nc" id="L143">                            .fillMaxWidth()</span>
+<span class="nc" id="L144">                            .padding(24.dp),</span>
+<span class="nc" id="L145">                        horizontalAlignment = Alignment.CenterHorizontally</span>
+                    ) {
+<span class="nc" id="L147">                        Icon(</span>
+<span class="nc" id="L148">                            imageVector = Icons.Outlined.ContentCut,</span>
+<span class="nc" id="L149">                            contentDescription = null,</span>
+<span class="nc" id="L150">                            modifier = Modifier</span>
+<span class="nc" id="L151">                                .size(32.dp)</span>
+<span class="nc" id="L152">                                .alpha(0.8f)</span>
+                        )
+<span class="nc" id="L154">                        Spacer(Modifier.height(16.dp))</span>
+<span class="nc" id="L155">                        Text(</span>
+<span class="nc" id="L156">                            text = &quot;$days&quot;,</span>
+<span class="nc" id="L157">                            style = MaterialTheme.typography.displayLarge.copy(</span>
+<span class="nc" id="L158">                                fontWeight = FontWeight.Bold,</span>
+<span class="nc" id="L159">                                fontSize = 80.sp</span>
+                            )
+                        )
+<span class="nc" id="L162">                        Text(</span>
+<span class="nc" id="L163">                            text = &quot;天没理发了&quot;,</span>
+<span class="nc" id="L164">                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium)</span>
+                        )
+<span class="nc" id="L166">                        Spacer(Modifier.height(12.dp))</span>
+
+                        // 状态胶囊
+<span class="nc" id="L169">                        Surface(</span>
+<span class="nc" id="L170">                            color = statusColor.copy(alpha = 0.1f),</span>
+<span class="nc" id="L171">                            shape = RoundedCornerShape(50),</span>
+<span class="nc" id="L172">                            border = BorderStroke(</span>
+<span class="nc" id="L173">                                1.dp,</span>
+<span class="nc" id="L174">                                statusColor.copy(alpha = 0.5f)</span>
+                            )
+<span class="nc" id="L176">                        ) {</span>
+<span class="nc" id="L177">                            Row(</span>
+<span class="nc" id="L178">                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),</span>
+<span class="nc" id="L179">                                verticalAlignment = Alignment.CenterVertically</span>
+                            ) {
+<span class="nc bnc" id="L181" title="All 2 branches missed.">                                if (days &gt; 21) {</span>
+<span class="nc" id="L182">                                    Icon(</span>
+<span class="nc" id="L183">                                        Icons.Outlined.Warning,</span>
+<span class="nc" id="L184">                                        null,</span>
+<span class="nc" id="L185">                                        tint = statusColor,</span>
+<span class="nc" id="L186">                                        modifier = Modifier.size(16.dp)</span>
+                                    )
+<span class="nc" id="L188">                                    Spacer(Modifier.width(4.dp))</span>
+<span class="nc" id="L189">                                } else {</span>
+<span class="nc" id="L190">                                    Icon(</span>
+<span class="nc" id="L191">                                        Icons.Outlined.Face,</span>
+<span class="nc" id="L192">                                        null,</span>
+<span class="nc" id="L193">                                        tint = statusColor,</span>
+<span class="nc" id="L194">                                        modifier = Modifier.size(16.dp)</span>
+                                    )
+<span class="nc" id="L196">                                    Spacer(Modifier.width(4.dp))</span>
+                                }
+<span class="nc" id="L198">                                Text(</span>
+<span class="nc" id="L199">                                    text = statusText,</span>
+<span class="nc" id="L200">                                    style = MaterialTheme.typography.labelLarge,</span>
+<span class="nc" id="L201">                                    color = statusColor</span>
+                                )
+<span class="nc" id="L203">                            }</span>
+<span class="nc" id="L204">                        }</span>
+<span class="nc" id="L205">                    }</span>
+<span class="nc" id="L206">                }</span>
+<span class="nc" id="L207">            }</span>
+
+<span class="nc" id="L209">            item {</span>
+<span class="nc" id="L210">                Text(</span>
+<span class="nc" id="L211">                    &quot;理发历史&quot;,</span>
+<span class="nc" id="L212">                    style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L213">                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)</span>
+                )
+<span class="nc" id="L215">            }</span>
+
+            // 3. 历史记录 List
+<span class="nc" id="L218">            items(history) { record -&gt;</span>
+<span class="nc" id="L219">                ListItem(</span>
+<span class="nc" id="L220">                    headlineContent = {</span>
+<span class="nc" id="L221">                        Text(record.shopName, style = MaterialTheme.typography.titleMedium)</span>
+<span class="nc" id="L222">                    },</span>
+<span class="nc" id="L223">                    supportingContent = {</span>
+<span class="nc" id="L224">                        Text(</span>
+<span class="nc" id="L225">                            record.date.toString(),</span>
+<span class="nc" id="L226">                            style = MaterialTheme.typography.bodyMedium,</span>
+<span class="nc" id="L227">                            color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                        )
+<span class="nc" id="L229">                    },</span>
+<span class="nc" id="L230">                    trailingContent = {</span>
+<span class="nc" id="L231">                        Text(</span>
+<span class="nc" id="L232">                            &quot;¥${record.price.toInt()}&quot;,</span>
+<span class="nc" id="L233">                            style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L234">                            fontWeight = FontWeight.Bold,</span>
+<span class="nc" id="L235">                            color = MaterialTheme.colorScheme.primary</span>
+                        )
+<span class="nc" id="L237">                    },</span>
+<span class="nc" id="L238">                    leadingContent = {</span>
+<span class="nc" id="L239">                        Icon(</span>
+<span class="nc" id="L240">                            Icons.Outlined.Store,</span>
+<span class="nc" id="L241">                            contentDescription = null,</span>
+<span class="nc" id="L242">                            tint = MaterialTheme.colorScheme.secondary</span>
+                        )
+<span class="nc" id="L244">                    },</span>
+<span class="nc" id="L245">                    colors = ListItemDefaults.colors(</span>
+<span class="nc" id="L246">                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow</span>
+                    ),
+<span class="nc" id="L248">                    modifier = Modifier</span>
+<span class="nc" id="L249">                        .clip(RoundedCornerShape(12.dp))</span>
+<span class="nc" id="L250">                        .clickable { }</span>
+<span class="nc" id="L251">                )</span>
+<span class="nc" id="L252">            }</span>
+<span class="nc" id="L253">        }</span>
+
+        // Floating Action Button
+<span class="nc" id="L256">        FloatingActionButton(</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">            onClick = { onEvent(HaircutEvent.AddHaircutFabClick) },</span>
+<span class="nc" id="L258">            containerColor = MaterialTheme.colorScheme.primaryContainer,</span>
+<span class="nc" id="L259">            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,</span>
+<span class="nc" id="L260">            modifier = Modifier</span>
+<span class="nc" id="L261">                .align(Alignment.BottomEnd)</span>
+<span class="nc" id="L262">                .padding(16.dp)</span>
+<span class="nc" id="L263">        ) {</span>
+<span class="nc" id="L264">            Icon(Icons.Filled.Add, &quot;添加记录&quot;)</span>
+<span class="nc" id="L265">        }</span>
+
+        // Loading overlay
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        if (isLoading) {</span>
+<span class="nc" id="L269">            Box(</span>
+<span class="nc" id="L270">                modifier = Modifier</span>
+<span class="nc" id="L271">                    .fillMaxSize()</span>
+<span class="nc" id="L272">                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),</span>
+<span class="nc" id="L273">                contentAlignment = Alignment.Center</span>
+            ) {
+<span class="nc" id="L275">                CircularProgressIndicator(</span>
+<span class="nc" id="L276">                    modifier = Modifier.size(48.dp),</span>
+<span class="nc" id="L277">                    color = MaterialTheme.colorScheme.primary</span>
+                )
+<span class="nc" id="L279">            }</span>
+<span class="nc" id="L280">        }</span>
+<span class="nc" id="L281">    }</span>
+<span class="nc" id="L282">}</span>
+
+<span class="nc" id="L284">data class Quadruple&lt;A, B, C, D&gt;(val first: A, val second: B, val third: C, val fourth: D)</span>
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
+@Composable
+private fun AddHaircutDialog(
+    onDismiss: () -&gt; Unit,
+    onConfirm: (price: Int, shopName: String, date: LocalDate) -&gt; Unit
+<span class="nc" id="L291">) {</span>
+<span class="nc" id="L292">    var shopName by remember { mutableStateOf(&quot;&quot;) }</span>
+<span class="nc" id="L293">    var priceText by remember { mutableStateOf(&quot;&quot;) }</span>
+<span class="nc" id="L294">    var showDatePicker by remember { mutableStateOf(false) }</span>
+
+    // 获取今天的日期
+<span class="nc" id="L297">    val today = remember {</span>
+<span class="nc" id="L298">        Clock.System.now()</span>
+<span class="nc" id="L299">            .toLocalDateTime(TimeZone.currentSystemDefault()).date</span>
+    }
+
+<span class="nc" id="L302">    var selectedDate by remember { mutableStateOf(today) }</span>
+
+    // 将 LocalDate 转换为毫秒（用于 DatePicker）
+<span class="nc" id="L305">    val selectedDateMillis = remember(selectedDate) {</span>
+<span class="nc" id="L306">        val instant = Instant.parse(&quot;${selectedDate}T00:00:00Z&quot;)</span>
+<span class="nc" id="L307">        instant.toEpochMilliseconds()</span>
+    }
+
+<span class="nc" id="L310">    val datePickerState = rememberDatePickerState(</span>
+<span class="nc" id="L311">        initialSelectedDateMillis = selectedDateMillis</span>
+    )
+
+<span class="nc bnc" id="L314" title="All 2 branches missed.">    if (showDatePicker) {</span>
+<span class="nc" id="L315">        DatePickerDialog(</span>
+<span class="nc" id="L316">            onDismissRequest = { showDatePicker = false },</span>
+<span class="nc" id="L317">            confirmButton = {</span>
+<span class="nc" id="L318">                TextButton(</span>
+<span class="nc" id="L319">                    onClick = {</span>
+<span class="nc bnc" id="L320" title="All 2 branches missed.">                        datePickerState.selectedDateMillis?.let { millis -&gt;</span>
+<span class="nc" id="L321">                            selectedDate = Instant.fromEpochMilliseconds(millis)</span>
+<span class="nc" id="L322">                                .toLocalDateTime(TimeZone.UTC).date</span>
+<span class="nc" id="L323">                        }</span>
+<span class="nc" id="L324">                        showDatePicker = false</span>
+<span class="nc" id="L325">                    }</span>
+<span class="nc" id="L326">                ) {</span>
+<span class="nc" id="L327">                    Text(&quot;确定&quot;)</span>
+<span class="nc" id="L328">                }</span>
+<span class="nc" id="L329">            },</span>
+<span class="nc" id="L330">            dismissButton = {</span>
+<span class="nc" id="L331">                TextButton(onClick = { showDatePicker = false }) {</span>
+<span class="nc" id="L332">                    Text(&quot;取消&quot;)</span>
+<span class="nc" id="L333">                }</span>
+<span class="nc" id="L334">            }</span>
+<span class="nc" id="L335">        ) {</span>
+<span class="nc" id="L336">            DatePicker(state = datePickerState)</span>
+<span class="nc" id="L337">        }</span>
+<span class="nc" id="L338">    }</span>
+
+<span class="nc" id="L340">    AlertDialog(</span>
+<span class="nc" id="L341">        onDismissRequest = onDismiss,</span>
+<span class="nc" id="L342">        title = { Text(&quot;添加理发记录&quot;) },</span>
+<span class="nc" id="L343">        text = {</span>
+<span class="nc" id="L344">            Column(</span>
+<span class="nc" id="L345">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L346">                verticalArrangement = Arrangement.spacedBy(16.dp)</span>
+            ) {
+<span class="nc" id="L348">                OutlinedTextField(</span>
+<span class="nc" id="L349">                    value = shopName,</span>
+<span class="nc" id="L350">                    onValueChange = { shopName = it },</span>
+<span class="nc" id="L351">                    label = { Text(&quot;理发店名称&quot;) },</span>
+<span class="nc" id="L352">                    modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L353">                    singleLine = true</span>
+                )
+
+<span class="nc" id="L356">                OutlinedTextField(</span>
+<span class="nc" id="L357">                    value = priceText,</span>
+<span class="nc" id="L358">                    onValueChange = { priceText = it },</span>
+<span class="nc" id="L359">                    label = { Text(&quot;价格（元）&quot;) },</span>
+<span class="nc" id="L360">                    modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L361">                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),</span>
+<span class="nc" id="L362">                    singleLine = true</span>
+                )
+
+<span class="nc" id="L365">                OutlinedTextField(</span>
+<span class="nc" id="L366">                    value = selectedDate.toString(),</span>
+<span class="nc" id="L367">                    onValueChange = { },</span>
+<span class="nc" id="L368">                    label = { Text(&quot;日期&quot;) },</span>
+<span class="nc" id="L369">                    modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L370">                    readOnly = true,</span>
+<span class="nc" id="L371">                    trailingIcon = {</span>
+<span class="nc" id="L372">                        TextButton(onClick = { showDatePicker = true }) {</span>
+<span class="nc" id="L373">                            Text(&quot;选择&quot;)</span>
+<span class="nc" id="L374">                        }</span>
+<span class="nc" id="L375">                    }</span>
+                )
+<span class="nc" id="L377">            }</span>
+<span class="nc" id="L378">        },</span>
+<span class="nc" id="L379">        confirmButton = {</span>
+<span class="nc" id="L380">            Button(</span>
+<span class="nc" id="L381">                onClick = {</span>
+<span class="nc bnc" id="L382" title="All 2 branches missed.">                    val price = priceText.toIntOrNull() ?: 0</span>
+<span class="nc bnc" id="L383" title="All 6 branches missed.">                    if (shopName.isNotBlank() &amp;&amp; price &gt; 0) {</span>
+<span class="nc" id="L384">                        onConfirm(price, shopName, selectedDate)</span>
+                    }
+<span class="nc" id="L386">                },</span>
+<span class="nc bnc" id="L387" title="All 10 branches missed.">                enabled = shopName.isNotBlank() &amp;&amp; priceText.toIntOrNull() != null &amp;&amp; (priceText.toIntOrNull()</span>
+<span class="nc" id="L388">                    ?: 0) &gt; 0</span>
+<span class="nc" id="L389">            ) {</span>
+<span class="nc" id="L390">                Text(&quot;确定&quot;)</span>
+<span class="nc" id="L391">            }</span>
+<span class="nc" id="L392">        },</span>
+<span class="nc" id="L393">        dismissButton = {</span>
+<span class="nc" id="L394">            TextButton(onClick = onDismiss) {</span>
+<span class="nc" id="L395">                Text(&quot;取消&quot;)</span>
+<span class="nc" id="L396">            }</span>
+<span class="nc" id="L397">        }</span>
+    )
+<span class="nc" id="L399">}</span>
+
+@Preview
+@Composable
+<span class="nc" id="L403">private fun HaircutScreenPreview() {</span>
+<span class="nc" id="L404">    HaircutScreen(</span>
+<span class="nc" id="L405">        days = 10, history = listOf(</span>
+<span class="nc" id="L406">            Haircut(1, 10, LocalDate(2023, 1, 1), &quot;理发店&quot;),</span>
+<span class="nc" id="L407">            Haircut(2, 20, LocalDate(2024, 1, 1), &quot;理发店&quot;),</span>
+<span class="nc" id="L408">            Haircut(3, 25, LocalDate(2025, 1, 1), &quot;理发店&quot;)</span>
+        )
+    )
+<span class="nc" id="L411">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesforceModels.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.salesforce</a> &gt; <span class="el_source">SalesforceModels.kt</span></div><h1>SalesforceModels.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.salesforce
+
+import androidx.room.ColumnInfo
+import androidx.room.Embedded
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+import androidx.room.Relation
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+const val SALESFORCE_EXAM_QUESTION_COUNT = 65
+
+<span class="fc" id="L15">data class SalesforceQuestion(</span>
+<span class="fc" id="L16">    val id: Int,</span>
+<span class="pc" id="L17">    val prompt: String,</span>
+<span class="fc" id="L18">    val answerLabels: List&lt;String&gt;,</span>
+<span class="pc" id="L19">    val explanation: String?,</span>
+<span class="pc" id="L20">    val choices: List&lt;SalesforceChoice&gt;,</span>
+)
+
+<span class="fc" id="L23">data class SalesforceChoice(</span>
+<span class="pc" id="L24">    val label: String,</span>
+<span class="pc" id="L25">    val text: String,</span>
+)
+
+<span class="nc" id="L28">@Serializable</span>
+<span class="nc" id="L29">data class SalesforceQuestionBankAsset(</span>
+<span class="nc" id="L30">    val questions: List&lt;SalesforceQuestionAsset&gt;,</span>
+)
+
+<span class="nc" id="L33">@Serializable</span>
+<span class="nc" id="L34">data class SalesforceQuestionAsset(</span>
+<span class="nc" id="L35">    val id: Int,</span>
+<span class="nc" id="L36">    val prompt: String,</span>
+<span class="nc" id="L37">    @SerialName(&quot;answer_labels&quot;)</span>
+<span class="nc" id="L38">    val answerLabels: List&lt;String&gt;,</span>
+<span class="nc" id="L39">    val explanation: String? = null,</span>
+<span class="nc" id="L40">    val choices: List&lt;SalesforceChoiceAsset&gt;,</span>
+<span class="nc" id="L41">)</span>
+
+<span class="nc" id="L43">@Serializable</span>
+<span class="nc" id="L44">data class SalesforceChoiceAsset(</span>
+<span class="nc" id="L45">    val label: String,</span>
+<span class="nc" id="L46">    val text: String,</span>
+)
+
+<span class="fc" id="L49">data class SalesforceQuestionProgress(</span>
+<span class="pc" id="L50">    val questionId: Int,</span>
+<span class="fc" id="L51">    val done: Boolean,</span>
+<span class="pc" id="L52">    val correctCount: Int,</span>
+<span class="pc" id="L53">    val incorrectCount: Int,</span>
+<span class="pc" id="L54">    val lastAnsweredAt: String?,</span>
+)
+
+<span class="fc" id="L57">data class SalesforceAnswerRecord(</span>
+<span class="fc" id="L58">    val questionId: Int,</span>
+<span class="pc" id="L59">    val mode: SalesforceMode,</span>
+<span class="pc" id="L60">    val selectedLabels: List&lt;String&gt;,</span>
+<span class="pc" id="L61">    val correctLabels: List&lt;String&gt;,</span>
+<span class="fc" id="L62">    val correct: Boolean,</span>
+<span class="fc" id="L63">    val answeredAt: String,</span>
+)
+
+<span class="pc" id="L66">enum class SalesforceMode(val wireValue: String) {</span>
+<span class="fc" id="L67">    Practice(&quot;practice&quot;),</span>
+<span class="fc" id="L68">    Exam(&quot;exam&quot;),</span>
+}
+
+<span class="fc" id="L71">data class SalesforceProgressSummary(</span>
+<span class="pc" id="L72">    val totalQuestions: Int = 0,</span>
+<span class="pc" id="L73">    val doneQuestions: Int = 0,</span>
+<span class="pc" id="L74">    val practiceAttempts: Int = 0,</span>
+<span class="pc" id="L75">    val examAttempts: Int = 0,</span>
+<span class="pc" id="L76">    val latestExamScore: Double? = null,</span>
+<span class="pc" id="L77">    val bestExamScore: Double? = null,</span>
+<span class="fc" id="L78">)</span>
+
+<span class="fc" id="L80">data class SalesforceExamResult(</span>
+<span class="fc" id="L81">    val startedAt: String?,</span>
+<span class="fc" id="L82">    val finishedAt: String,</span>
+<span class="pc" id="L83">    val questions: List&lt;SalesforceQuestion&gt;,</span>
+<span class="fc" id="L84">    val events: List&lt;SalesforceAnswerRecord&gt;,</span>
+) {
+<span class="pc" id="L86">    val totalCount: Int = events.size</span>
+<span class="pc" id="L87">    val correctCount: Int = events.count { it.correct }</span>
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">    val scorePercent: Double = if (totalCount == 0) {</span>
+<span class="nc" id="L89">        0.0</span>
+    } else {
+<span class="fc" id="L91">        kotlin.math.round((correctCount.toDouble() / totalCount.toDouble()) * 10000.0) / 100.0</span>
+    }
+}
+
+<span class="nc" id="L95">@Entity(tableName = &quot;salesforce_question&quot;)</span>
+<span class="nc" id="L96">data class SalesforceQuestionEntity(</span>
+<span class="nc" id="L97">    @PrimaryKey</span>
+<span class="nc" id="L98">    val id: Int,</span>
+<span class="nc" id="L99">    val prompt: String,</span>
+<span class="nc" id="L100">    @ColumnInfo(name = &quot;answer_labels&quot;)</span>
+<span class="nc" id="L101">    val answerLabels: String,</span>
+<span class="nc" id="L102">    val explanation: String?,</span>
+)
+
+<span class="nc" id="L105">@Entity(</span>
+    tableName = &quot;salesforce_choice&quot;,
+    foreignKeys = [
+        ForeignKey(
+            entity = SalesforceQuestionEntity::class,
+            parentColumns = [&quot;id&quot;],
+            childColumns = [&quot;question_id&quot;],
+            onDelete = ForeignKey.CASCADE,
+        )
+    ],
+    indices = [
+        Index(value = [&quot;question_id&quot;]),
+        Index(value = [&quot;question_id&quot;, &quot;label&quot;], unique = true),
+    ],
+)
+<span class="nc" id="L120">data class SalesforceChoiceEntity(</span>
+<span class="nc" id="L121">    @PrimaryKey(autoGenerate = true)</span>
+<span class="nc" id="L122">    val id: Int = 0,</span>
+<span class="nc" id="L123">    @ColumnInfo(name = &quot;question_id&quot;)</span>
+<span class="nc" id="L124">    val questionId: Int,</span>
+<span class="nc" id="L125">    val label: String,</span>
+<span class="nc" id="L126">    val text: String,</span>
+<span class="nc" id="L127">)</span>
+
+<span class="nc" id="L129">@Entity(tableName = &quot;salesforce_local_progress&quot;)</span>
+<span class="nc" id="L130">data class SalesforceLocalProgressEntity(</span>
+<span class="nc" id="L131">    @PrimaryKey</span>
+    @ColumnInfo(name = &quot;question_id&quot;)
+<span class="nc" id="L133">    val questionId: Int,</span>
+<span class="nc" id="L134">    @ColumnInfo(defaultValue = &quot;0&quot;)</span>
+<span class="nc" id="L135">    val done: Boolean = false,</span>
+<span class="nc" id="L136">    @ColumnInfo(name = &quot;correct_count&quot;, defaultValue = &quot;0&quot;)</span>
+<span class="nc" id="L137">    val correctCount: Int = 0,</span>
+<span class="nc" id="L138">    @ColumnInfo(name = &quot;incorrect_count&quot;, defaultValue = &quot;0&quot;)</span>
+<span class="nc" id="L139">    val incorrectCount: Int = 0,</span>
+<span class="nc" id="L140">    @ColumnInfo(name = &quot;last_answered_at&quot;)</span>
+<span class="nc" id="L141">    val lastAnsweredAt: String? = null,</span>
+<span class="nc" id="L142">)</span>
+
+<span class="nc" id="L144">data class SalesforceQuestionWithChoices(</span>
+<span class="nc" id="L145">    @Embedded val question: SalesforceQuestionEntity,</span>
+<span class="nc" id="L146">    @Relation(</span>
+        parentColumn = &quot;id&quot;,
+        entityColumn = &quot;question_id&quot;,
+    )
+<span class="nc" id="L150">    val choices: List&lt;SalesforceChoiceEntity&gt;,</span>
+)
+
+fun SalesforceQuestionWithChoices.toDomain(): SalesforceQuestion =
+<span class="nc" id="L154">    SalesforceQuestion(</span>
+<span class="nc" id="L155">        id = question.id,</span>
+<span class="nc" id="L156">        prompt = question.prompt,</span>
+<span class="nc" id="L157">        answerLabels = question.answerLabels</span>
+<span class="nc" id="L158">            .split(&quot;,&quot;)</span>
+<span class="nc" id="L159">            .map { it.trim() }</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">            .filter { it.isNotEmpty() },</span>
+<span class="nc" id="L161">        explanation = question.explanation,</span>
+<span class="nc" id="L162">        choices = choices</span>
+<span class="nc" id="L163">            .sortedBy { it.label }</span>
+<span class="nc" id="L164">            .map { SalesforceChoice(label = it.label, text = it.text) },</span>
+<span class="nc" id="L165">    )</span>
+
+fun SalesforceLocalProgressEntity.toDomain(): SalesforceQuestionProgress =
+<span class="nc" id="L168">    SalesforceQuestionProgress(</span>
+<span class="nc" id="L169">        questionId = questionId,</span>
+<span class="nc" id="L170">        done = done,</span>
+<span class="nc" id="L171">        correctCount = correctCount,</span>
+<span class="nc" id="L172">        incorrectCount = incorrectCount,</span>
+<span class="nc" id="L173">        lastAnsweredAt = lastAnsweredAt,</span>
+<span class="nc" id="L174">    )</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

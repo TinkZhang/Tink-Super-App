@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HairViewModel.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.haircut</a> &gt; <span class="el_source">HairViewModel.kt</span></div><h1>HairViewModel.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.haircut
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.tinks.tink.haircut.data.Haircut
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.ui.components.AppSnackbarBus
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import javax.inject.Inject
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+
+sealed interface HaircutEvent {
+    object AddHaircutFabClick : HaircutEvent
+    object DismissDialog : HaircutEvent
+<span class="fc" id="L27">    data class SubmitHaircut(val price: Int, val shopName: String, val date: LocalDate) :</span>
+        HaircutEvent
+
+<span class="fc" id="L30">    data class DeleteHaircut(val id: Int) : HaircutEvent</span>
+    object RefreshHaircutList : HaircutEvent
+}
+
+<span class="pc" id="L34">data class HaircutUiState(</span>
+<span class="fc" id="L35">    val isLoading: Boolean,</span>
+<span class="fc" id="L36">    val history: List&lt;Haircut&gt;,</span>
+<span class="fc" id="L37">    val days: Int,</span>
+<span class="pc" id="L38">    val showDialog: Boolean = false,</span>
+<span class="nc" id="L39">)</span>
+
+<span class="fc" id="L41">data class HaircutState(</span>
+<span class="pc" id="L42">    val history: List&lt;Haircut&gt; = emptyList(),</span>
+<span class="pc" id="L43">    val days: Int = 0,</span>
+<span class="pc" id="L44">    val isLoading: Boolean = true,</span>
+<span class="pc" id="L45">    val showDialog: Boolean = false,</span>
+<span class="fc" id="L46">) {</span>
+<span class="fc" id="L47">    fun toUiState(): HaircutUiState = HaircutUiState(</span>
+<span class="fc" id="L48">        isLoading = isLoading,</span>
+<span class="fc" id="L49">        history = history,</span>
+<span class="fc" id="L50">        days = days,</span>
+<span class="fc" id="L51">        showDialog = showDialog,</span>
+<span class="fc" id="L52">    )</span>
+}
+
+<span class="fc" id="L55">@OptIn(ExperimentalTime::class)</span>
+@HiltViewModel
+<span class="fc" id="L57">class HaircutViewModel @Inject constructor(</span>
+<span class="fc" id="L58">    private val repository: HaircutRepository,</span>
+) : ViewModel() {
+
+<span class="fc" id="L61">    private val _state = MutableStateFlow(HaircutState())</span>
+<span class="fc" id="L62">    val uiState = _state.map { it.toUiState() }</span>
+<span class="fc" id="L63">        .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())</span>
+
+    private var refreshJob: Job? = null
+
+<span class="fc" id="L67">    init {</span>
+<span class="fc" id="L68">        refreshHaircuts()</span>
+<span class="fc" id="L69">    }</span>
+
+    fun onEvent(event: HaircutEvent) {
+<span class="fc" id="L72">        when (event) {</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">            is HaircutEvent.AddHaircutFabClick -&gt; _state.update { it.copy(showDialog = true) }</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">            is HaircutEvent.DismissDialog -&gt; _state.update { it.copy(showDialog = false) }</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">            is HaircutEvent.SubmitHaircut -&gt; submitHaircut(event.price, event.shopName, event.date)</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">            is HaircutEvent.DeleteHaircut -&gt; deleteHaircut(event.id)</span>
+<span class="nc" id="L77">            HaircutEvent.RefreshHaircutList -&gt; refreshHaircuts()</span>
+        }
+<span class="fc" id="L79">    }</span>
+
+    private fun submitHaircut(price: Int, shopName: String, date: LocalDate) {
+<span class="fc" id="L82">        repository.addHaircut(</span>
+<span class="fc" id="L83">            price = price,</span>
+<span class="fc" id="L84">            shopName = shopName,</span>
+<span class="fc" id="L85">            date = date,</span>
+<span class="fc" id="L86">        ).onEach { result -&gt;</span>
+<span class="fc" id="L87">            when (result) {</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">                is ApiResult.Loading -&gt; _state.update {</span>
+<span class="fc" id="L89">                    it.copy(isLoading = true, showDialog = false)</span>
+                }
+
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">                is ApiResult.Success -&gt; refreshHaircuts()</span>
+
+<span class="nc" id="L94">                is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L95">                    it.copy(isLoading = false)</span>
+<span class="nc" id="L96">                }.also {</span>
+<span class="nc" id="L97">                    AppSnackbarBus.showApiFailure(</span>
+<span class="nc" id="L98">                        onRetry = { submitHaircut(price, shopName, date) }</span>
+                    )
+<span class="nc" id="L100">                }</span>
+            }
+<span class="fc" id="L102">        }.launchIn(viewModelScope)</span>
+<span class="fc" id="L103">    }</span>
+
+    private fun deleteHaircut(id: Int) {
+<span class="fc" id="L106">        repository.deleteHaircut(id)</span>
+<span class="fc" id="L107">            .onEach { result -&gt;</span>
+<span class="fc" id="L108">                when (result) {</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">                    is ApiResult.Loading -&gt; _state.update {</span>
+<span class="fc" id="L110">                        it.copy(isLoading = true)</span>
+                    }
+
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">                    is ApiResult.Success -&gt; refreshHaircuts()</span>
+
+<span class="nc" id="L115">                    is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L116">                        it.copy(isLoading = false)</span>
+<span class="nc" id="L117">                    }.also {</span>
+<span class="nc" id="L118">                        AppSnackbarBus.showApiFailure(onRetry = { deleteHaircut(id) })</span>
+<span class="nc" id="L119">                    }</span>
+                }
+<span class="fc" id="L121">            }</span>
+<span class="fc" id="L122">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L123">    }</span>
+
+    private fun refreshHaircuts() {
+<span class="fc bfc" id="L126" title="All 2 branches covered.">        refreshJob?.cancel()</span>
+<span class="fc" id="L127">        refreshJob = repository.getHaircuts()</span>
+<span class="fc" id="L128">            .onEach { result -&gt;</span>
+<span class="fc" id="L129">                when (result) {</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">                    is ApiResult.Loading -&gt; _state.update {</span>
+<span class="fc" id="L131">                        it.copy(isLoading = true)</span>
+                    }
+
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">                    is ApiResult.Success -&gt; _state.update {</span>
+<span class="fc" id="L135">                        it.copy(</span>
+<span class="fc" id="L136">                            history = result.data,</span>
+<span class="fc" id="L137">                            days = calculateDaysSinceLatestHaircut(result.data),</span>
+<span class="fc" id="L138">                            isLoading = false,</span>
+<span class="fc" id="L139">                        )</span>
+                    }
+
+<span class="nc" id="L142">                    is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L143">                        it.copy(isLoading = false)</span>
+<span class="nc" id="L144">                    }.also {</span>
+<span class="nc" id="L145">                        AppSnackbarBus.showApiFailure(onRetry = ::refreshHaircuts)</span>
+<span class="nc" id="L146">                    }</span>
+                }
+<span class="fc" id="L148">            }</span>
+<span class="fc" id="L149">            .launchIn(viewModelScope)</span>
+<span class="fc" id="L150">    }</span>
+
+    private fun calculateDaysSinceLatestHaircut(haircuts: List&lt;Haircut&gt;): Int {
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        if (haircuts.isEmpty()) {</span>
+<span class="fc" id="L154">            return -1</span>
+        }
+
+<span class="fc" id="L157">        val today = Clock.System.now()</span>
+<span class="fc" id="L158">            .toLocalDateTime(TimeZone.currentSystemDefault())</span>
+<span class="fc" id="L159">            .date</span>
+<span class="fc" id="L160">        return (today.toEpochDays() - haircuts.first().date.toEpochDays()).toInt()</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

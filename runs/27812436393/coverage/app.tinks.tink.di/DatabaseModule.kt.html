@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DatabaseModule.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.di</a> &gt; <span class="el_source">DatabaseModule.kt</span></div><h1>DatabaseModule.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.di
+
+import android.content.Context
+import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import app.tinks.tink.db.TinkDatabase
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object DatabaseModule {
+<span class="nc" id="L18">    private val MIGRATION_1_2 = object : Migration(1, 2) {</span>
+        override fun migrate(db: SupportSQLiteDatabase) {
+<span class="nc" id="L20">            db.execSQL(&quot;DROP TABLE IF EXISTS `zi`&quot;)</span>
+<span class="nc" id="L21">        }</span>
+    }
+
+<span class="nc" id="L24">    private val MIGRATION_2_3 = object : Migration(2, 3) {</span>
+        override fun migrate(db: SupportSQLiteDatabase) {
+<span class="nc" id="L26">            db.execSQL(</span>
+                &quot;&quot;&quot;
+                CREATE TABLE IF NOT EXISTS `salesforce_question` (
+                  `id` INTEGER NOT NULL,
+                  `prompt` TEXT NOT NULL,
+                  `answer_labels` TEXT NOT NULL,
+                  `explanation` TEXT,
+                  PRIMARY KEY(`id`)
+                )
+<span class="nc" id="L35">                &quot;&quot;&quot;.trimIndent()</span>
+            )
+<span class="nc" id="L37">            db.execSQL(</span>
+                &quot;&quot;&quot;
+                CREATE TABLE IF NOT EXISTS `salesforce_choice` (
+                  `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                  `question_id` INTEGER NOT NULL,
+                  `label` TEXT NOT NULL,
+                  `text` TEXT NOT NULL,
+                  FOREIGN KEY(`question_id`) REFERENCES `salesforce_question`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                )
+<span class="nc" id="L46">                &quot;&quot;&quot;.trimIndent()</span>
+            )
+<span class="nc" id="L48">            db.execSQL(</span>
+<span class="nc" id="L49">                &quot;CREATE INDEX IF NOT EXISTS `index_salesforce_choice_question_id` ON `salesforce_choice` (`question_id`)&quot;</span>
+            )
+<span class="nc" id="L51">            db.execSQL(</span>
+<span class="nc" id="L52">                &quot;CREATE UNIQUE INDEX IF NOT EXISTS `index_salesforce_choice_question_id_label` ON `salesforce_choice` (`question_id`, `label`)&quot;</span>
+            )
+<span class="nc" id="L54">            db.execSQL(</span>
+                &quot;&quot;&quot;
+                CREATE TABLE IF NOT EXISTS `salesforce_local_progress` (
+                  `question_id` INTEGER NOT NULL,
+                  `done` INTEGER NOT NULL DEFAULT 0,
+                  `correct_count` INTEGER NOT NULL DEFAULT 0,
+                  `incorrect_count` INTEGER NOT NULL DEFAULT 0,
+                  `last_answered_at` TEXT,
+                  PRIMARY KEY(`question_id`)
+                )
+<span class="nc" id="L64">                &quot;&quot;&quot;.trimIndent()</span>
+            )
+<span class="nc" id="L66">        }</span>
+    }
+
+    @Provides
+    @Singleton
+    fun provideDatabase(@ApplicationContext context: Context): TinkDatabase {
+<span class="nc" id="L72">        return Room.databaseBuilder(</span>
+<span class="nc" id="L73">            context,</span>
+<span class="nc" id="L74">            TinkDatabase::class.java,</span>
+<span class="nc" id="L75">            &quot;tink.db&quot;</span>
+        )
+<span class="nc" id="L77">            .createFromAsset(&quot;database/tink.db&quot;)</span>
+<span class="nc" id="L78">            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)</span>
+<span class="nc" id="L79">            .build()</span>
+    }
+
+    @Provides
+<span class="nc" id="L83">    fun provideMerriamDao(db: TinkDatabase) = db.merriamDao()</span>
+
+    @Provides
+<span class="nc" id="L86">    fun provideSalesforceDao(db: TinkDatabase) = db.salesforceDao()</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

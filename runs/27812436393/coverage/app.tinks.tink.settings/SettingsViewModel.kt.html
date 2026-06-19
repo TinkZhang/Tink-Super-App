@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SettingsViewModel.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.settings</a> &gt; <span class="el_source">SettingsViewModel.kt</span></div><h1>SettingsViewModel.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.settings
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.tinks.tink.ui.components.AppSnackbarBus
+import app.tinks.tink.zi.ZiRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+<span class="nc" id="L16">data class SettingsUiState(</span>
+<span class="nc" id="L17">    val storyLength: Int = 200,</span>
+<span class="nc" id="L18">    val showStoryLengthDialog: Boolean = false,</span>
+<span class="nc" id="L19">    val apiEnvironment: ApiEnvironment = ApiEnvironment.Dev,</span>
+<span class="nc" id="L20">)</span>
+
+<span class="nc" id="L22">@HiltViewModel</span>
+<span class="nc" id="L23">class SettingsViewModel @Inject constructor(</span>
+<span class="nc" id="L24">    private val ziRepository: ZiRepository,</span>
+<span class="nc" id="L25">    private val appEnvironmentRepository: AppEnvironmentRepository,</span>
+) : ViewModel() {
+
+<span class="nc" id="L28">    private val _state = MutableStateFlow(SettingsUiState())</span>
+<span class="nc" id="L29">    val uiState = _state.map { it }</span>
+<span class="nc" id="L30">        .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value)</span>
+
+<span class="nc" id="L32">    init {</span>
+<span class="nc" id="L33">        loadStoryLength()</span>
+<span class="nc" id="L34">        observeApiEnvironment()</span>
+<span class="nc" id="L35">    }</span>
+
+    fun openStoryLengthDialog() {
+<span class="nc" id="L38">        _state.update { it.copy(showStoryLengthDialog = true) }</span>
+<span class="nc" id="L39">    }</span>
+
+    fun dismissStoryLengthDialog() {
+<span class="nc" id="L42">        _state.update { it.copy(showStoryLengthDialog = false) }</span>
+<span class="nc" id="L43">    }</span>
+
+    fun updateStoryLength(length: Int) {
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        if (length &lt;= 0) {</span>
+<span class="nc" id="L47">            AppSnackbarBus.showMessage(&quot;请输入有效长度&quot;)</span>
+<span class="nc" id="L48">            return</span>
+        }
+<span class="nc" id="L50">        viewModelScope.launch {</span>
+<span class="nc" id="L51">            ziRepository.setStoryLength(length)</span>
+<span class="nc" id="L52">            _state.update {</span>
+<span class="nc" id="L53">                it.copy(</span>
+<span class="nc" id="L54">                    storyLength = length,</span>
+<span class="nc" id="L55">                    showStoryLengthDialog = false</span>
+<span class="nc" id="L56">                )</span>
+            }
+<span class="nc" id="L58">            AppSnackbarBus.showMessage(&quot;设置已保存&quot;)</span>
+<span class="nc" id="L59">        }</span>
+<span class="nc" id="L60">    }</span>
+
+    private fun loadStoryLength() {
+<span class="nc" id="L63">        viewModelScope.launch {</span>
+<span class="nc" id="L64">            val length = ziRepository.getStoryLength()</span>
+<span class="nc" id="L65">            _state.update { it.copy(storyLength = length) }</span>
+<span class="nc" id="L66">        }</span>
+<span class="nc" id="L67">    }</span>
+
+    fun updateApiEnvironment(useDevApi: Boolean) {
+<span class="nc" id="L70">        viewModelScope.launch {</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">            val environment = if (useDevApi) ApiEnvironment.Dev else ApiEnvironment.Prod</span>
+<span class="nc" id="L72">            appEnvironmentRepository.setEnvironment(environment)</span>
+<span class="nc" id="L73">            AppSnackbarBus.showMessage(</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">                if (useDevApi) &quot;已切换到开发 API&quot; else &quot;已切换到生产 API&quot;</span>
+            )
+<span class="nc" id="L76">        }</span>
+<span class="nc" id="L77">    }</span>
+
+    private fun observeApiEnvironment() {
+<span class="nc" id="L80">        viewModelScope.launch {</span>
+<span class="nc" id="L81">            appEnvironmentRepository.observeEnvironment().collect { environment -&gt;</span>
+<span class="nc" id="L82">                _state.update { it.copy(apiEnvironment = environment) }</span>
+<span class="nc" id="L83">            }</span>
+<span class="nc" id="L84">        }</span>
+<span class="nc" id="L85">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

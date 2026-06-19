@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GeographyData.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.geography</a> &gt; <span class="el_source">GeographyData.kt</span></div><h1>GeographyData.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.geography
+
+import android.content.Context
+import org.json.JSONArray
+import kotlin.random.Random
+
+<span class="nc" id="L7">data class GeographyCountry(</span>
+<span class="nc" id="L8">    val id: String,</span>
+<span class="nc" id="L9">    val cca2: String,</span>
+<span class="nc" id="L10">    val chineseShortName: String,</span>
+<span class="nc" id="L11">    val chineseFullName: String,</span>
+<span class="nc" id="L12">    val englishName: String,</span>
+<span class="nc" id="L13">    val localName: String,</span>
+<span class="nc" id="L14">    val population: String,</span>
+<span class="nc" id="L15">    val area: String,</span>
+<span class="nc" id="L16">    val currency: String,</span>
+<span class="nc" id="L17">    val capital: String,</span>
+<span class="nc" id="L18">    val region: String,</span>
+<span class="nc" id="L19">    val latitude: Float,</span>
+<span class="nc" id="L20">    val longitude: Float,</span>
+<span class="nc" id="L21">    val flagEmoji: String,</span>
+)
+
+<span class="nc" id="L24">enum class GeographyQuizType(val label: String) {</span>
+<span class="nc" id="L25">    CountryToFlag(&quot;国家猜国旗&quot;),</span>
+<span class="nc" id="L26">    CountryToMap(&quot;国家猜地图&quot;),</span>
+<span class="nc" id="L27">    MapToCountry(&quot;地图猜国家&quot;),</span>
+<span class="nc" id="L28">    FlagToCountry(&quot;国旗猜国家&quot;),</span>
+}
+
+<span class="nc" id="L31">data class GeographyQuestion(</span>
+<span class="nc" id="L32">    val type: GeographyQuizType,</span>
+<span class="nc" id="L33">    val answer: GeographyCountry,</span>
+<span class="nc" id="L34">    val options: List&lt;GeographyCountry&gt;,</span>
+)
+
+object GeographyData {
+    fun loadCountries(context: Context): List&lt;GeographyCountry&gt; =
+<span class="nc" id="L39">        context.assets.open(&quot;geography/countries.json&quot;)</span>
+<span class="nc bnc" id="L40" title="All 2 branches missed.">            .bufferedReader()</span>
+<span class="nc" id="L41">            .use { loadCountriesFromJson(it.readText()) }</span>
+
+    fun loadCountriesFromJson(json: String): List&lt;GeographyCountry&gt; {
+<span class="nc" id="L44">        val array = JSONArray(json)</span>
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        return List(array.length()) { index -&gt;</span>
+<span class="nc" id="L46">            val item = array.getJSONObject(index)</span>
+<span class="nc" id="L47">            GeographyCountry(</span>
+<span class="nc" id="L48">                id = item.getString(&quot;id&quot;),</span>
+<span class="nc" id="L49">                cca2 = item.getString(&quot;cca2&quot;),</span>
+<span class="nc" id="L50">                chineseShortName = item.getString(&quot;chineseShortName&quot;),</span>
+<span class="nc" id="L51">                chineseFullName = item.getString(&quot;chineseFullName&quot;),</span>
+<span class="nc" id="L52">                englishName = item.getString(&quot;englishName&quot;),</span>
+<span class="nc" id="L53">                localName = item.getString(&quot;localName&quot;),</span>
+<span class="nc" id="L54">                population = item.getString(&quot;population&quot;),</span>
+<span class="nc" id="L55">                area = item.getString(&quot;area&quot;),</span>
+<span class="nc" id="L56">                currency = item.getString(&quot;currency&quot;),</span>
+<span class="nc" id="L57">                capital = item.getString(&quot;capital&quot;),</span>
+<span class="nc" id="L58">                region = item.getString(&quot;region&quot;),</span>
+<span class="nc" id="L59">                latitude = item.getDouble(&quot;latitude&quot;).toFloat(),</span>
+<span class="nc" id="L60">                longitude = item.getDouble(&quot;longitude&quot;).toFloat(),</span>
+<span class="nc" id="L61">                flagEmoji = item.optString(&quot;flagEmoji&quot;),</span>
+<span class="nc" id="L62">            )</span>
+        }
+    }
+
+<span class="nc" id="L66">    val previewCountries: List&lt;GeographyCountry&gt; = listOf(</span>
+<span class="nc" id="L67">        GeographyCountry(</span>
+<span class="nc" id="L68">            id = &quot;china&quot;,</span>
+<span class="nc" id="L69">            cca2 = &quot;CN&quot;,</span>
+<span class="nc" id="L70">            chineseShortName = &quot;中国&quot;,</span>
+<span class="nc" id="L71">            chineseFullName = &quot;中华人民共和国&quot;,</span>
+<span class="nc" id="L72">            englishName = &quot;China&quot;,</span>
+<span class="nc" id="L73">            localName = &quot;中国&quot;,</span>
+<span class="nc" id="L74">            population = &quot;约 14.1 亿&quot;,</span>
+<span class="nc" id="L75">            area = &quot;约 960 万平方公里&quot;,</span>
+<span class="nc" id="L76">            currency = &quot;人民币 CNY&quot;,</span>
+<span class="nc" id="L77">            capital = &quot;北京&quot;,</span>
+<span class="nc" id="L78">            region = &quot;东亚&quot;,</span>
+<span class="nc" id="L79">            latitude = 35.0f,</span>
+<span class="nc" id="L80">            longitude = 103.0f,</span>
+<span class="nc" id="L81">            flagEmoji = &quot;🇨🇳&quot;,</span>
+        ),
+<span class="nc" id="L83">        GeographyCountry(</span>
+<span class="nc" id="L84">            id = &quot;japan&quot;,</span>
+<span class="nc" id="L85">            cca2 = &quot;JP&quot;,</span>
+<span class="nc" id="L86">            chineseShortName = &quot;日本&quot;,</span>
+<span class="nc" id="L87">            chineseFullName = &quot;日本国&quot;,</span>
+<span class="nc" id="L88">            englishName = &quot;Japan&quot;,</span>
+<span class="nc" id="L89">            localName = &quot;日本&quot;,</span>
+<span class="nc" id="L90">            population = &quot;约 1.24 亿&quot;,</span>
+<span class="nc" id="L91">            area = &quot;约 37.8 万平方公里&quot;,</span>
+<span class="nc" id="L92">            currency = &quot;日元 JPY&quot;,</span>
+<span class="nc" id="L93">            capital = &quot;东京&quot;,</span>
+<span class="nc" id="L94">            region = &quot;东亚&quot;,</span>
+<span class="nc" id="L95">            latitude = 36.0f,</span>
+<span class="nc" id="L96">            longitude = 138.0f,</span>
+<span class="nc" id="L97">            flagEmoji = &quot;🇯🇵&quot;,</span>
+        ),
+<span class="nc" id="L99">        GeographyCountry(</span>
+<span class="nc" id="L100">            id = &quot;united_states&quot;,</span>
+<span class="nc" id="L101">            cca2 = &quot;US&quot;,</span>
+<span class="nc" id="L102">            chineseShortName = &quot;美国&quot;,</span>
+<span class="nc" id="L103">            chineseFullName = &quot;美利坚合众国&quot;,</span>
+<span class="nc" id="L104">            englishName = &quot;United States&quot;,</span>
+<span class="nc" id="L105">            localName = &quot;United States&quot;,</span>
+<span class="nc" id="L106">            population = &quot;约 3.35 亿&quot;,</span>
+<span class="nc" id="L107">            area = &quot;约 983 万平方公里&quot;,</span>
+<span class="nc" id="L108">            currency = &quot;美元 USD&quot;,</span>
+<span class="nc" id="L109">            capital = &quot;华盛顿哥伦比亚特区&quot;,</span>
+<span class="nc" id="L110">            region = &quot;北美洲&quot;,</span>
+<span class="nc" id="L111">            latitude = 39.0f,</span>
+<span class="nc" id="L112">            longitude = -98.0f,</span>
+<span class="nc" id="L113">            flagEmoji = &quot;🇺🇸&quot;,</span>
+        ),
+<span class="nc" id="L115">        GeographyCountry(</span>
+<span class="nc" id="L116">            id = &quot;canada&quot;,</span>
+<span class="nc" id="L117">            cca2 = &quot;CA&quot;,</span>
+<span class="nc" id="L118">            chineseShortName = &quot;加拿大&quot;,</span>
+<span class="nc" id="L119">            chineseFullName = &quot;加拿大&quot;,</span>
+<span class="nc" id="L120">            englishName = &quot;Canada&quot;,</span>
+<span class="nc" id="L121">            localName = &quot;Canada&quot;,</span>
+<span class="nc" id="L122">            population = &quot;约 4000 万&quot;,</span>
+<span class="nc" id="L123">            area = &quot;约 998 万平方公里&quot;,</span>
+<span class="nc" id="L124">            currency = &quot;加拿大元 CAD&quot;,</span>
+<span class="nc" id="L125">            capital = &quot;渥太华&quot;,</span>
+<span class="nc" id="L126">            region = &quot;北美洲&quot;,</span>
+<span class="nc" id="L127">            latitude = 57.0f,</span>
+<span class="nc" id="L128">            longitude = -106.0f,</span>
+<span class="nc" id="L129">            flagEmoji = &quot;🇨🇦&quot;,</span>
+        ),
+<span class="nc" id="L131">        GeographyCountry(</span>
+<span class="nc" id="L132">            id = &quot;brazil&quot;,</span>
+<span class="nc" id="L133">            cca2 = &quot;BR&quot;,</span>
+<span class="nc" id="L134">            chineseShortName = &quot;巴西&quot;,</span>
+<span class="nc" id="L135">            chineseFullName = &quot;巴西联邦共和国&quot;,</span>
+<span class="nc" id="L136">            englishName = &quot;Brazil&quot;,</span>
+<span class="nc" id="L137">            localName = &quot;Brasil&quot;,</span>
+<span class="nc" id="L138">            population = &quot;约 2.03 亿&quot;,</span>
+<span class="nc" id="L139">            area = &quot;约 851 万平方公里&quot;,</span>
+<span class="nc" id="L140">            currency = &quot;巴西雷亚尔 BRL&quot;,</span>
+<span class="nc" id="L141">            capital = &quot;巴西利亚&quot;,</span>
+<span class="nc" id="L142">            region = &quot;南美洲&quot;,</span>
+<span class="nc" id="L143">            latitude = -10.0f,</span>
+<span class="nc" id="L144">            longitude = -55.0f,</span>
+<span class="nc" id="L145">            flagEmoji = &quot;🇧🇷&quot;,</span>
+        ),
+<span class="nc" id="L147">        GeographyCountry(</span>
+<span class="nc" id="L148">            id = &quot;australia&quot;,</span>
+<span class="nc" id="L149">            cca2 = &quot;AU&quot;,</span>
+<span class="nc" id="L150">            chineseShortName = &quot;澳大利亚&quot;,</span>
+<span class="nc" id="L151">            chineseFullName = &quot;澳大利亚联邦&quot;,</span>
+<span class="nc" id="L152">            englishName = &quot;Australia&quot;,</span>
+<span class="nc" id="L153">            localName = &quot;Australia&quot;,</span>
+<span class="nc" id="L154">            population = &quot;约 2660 万&quot;,</span>
+<span class="nc" id="L155">            area = &quot;约 769 万平方公里&quot;,</span>
+<span class="nc" id="L156">            currency = &quot;澳大利亚元 AUD&quot;,</span>
+<span class="nc" id="L157">            capital = &quot;堪培拉&quot;,</span>
+<span class="nc" id="L158">            region = &quot;大洋洲&quot;,</span>
+<span class="nc" id="L159">            latitude = -25.0f,</span>
+<span class="nc" id="L160">            longitude = 133.0f,</span>
+<span class="nc" id="L161">            flagEmoji = &quot;🇦🇺&quot;,</span>
+        ),
+<span class="nc" id="L163">        GeographyCountry(</span>
+<span class="nc" id="L164">            id = &quot;france&quot;,</span>
+<span class="nc" id="L165">            cca2 = &quot;FR&quot;,</span>
+<span class="nc" id="L166">            chineseShortName = &quot;法国&quot;,</span>
+<span class="nc" id="L167">            chineseFullName = &quot;法兰西共和国&quot;,</span>
+<span class="nc" id="L168">            englishName = &quot;France&quot;,</span>
+<span class="nc" id="L169">            localName = &quot;France&quot;,</span>
+<span class="nc" id="L170">            population = &quot;约 6800 万&quot;,</span>
+<span class="nc" id="L171">            area = &quot;约 64.4 万平方公里&quot;,</span>
+<span class="nc" id="L172">            currency = &quot;欧元 EUR&quot;,</span>
+<span class="nc" id="L173">            capital = &quot;巴黎&quot;,</span>
+<span class="nc" id="L174">            region = &quot;欧洲&quot;,</span>
+<span class="nc" id="L175">            latitude = 46.0f,</span>
+<span class="nc" id="L176">            longitude = 2.0f,</span>
+<span class="nc" id="L177">            flagEmoji = &quot;🇫🇷&quot;,</span>
+        ),
+<span class="nc" id="L179">        GeographyCountry(</span>
+<span class="nc" id="L180">            id = &quot;germany&quot;,</span>
+<span class="nc" id="L181">            cca2 = &quot;DE&quot;,</span>
+<span class="nc" id="L182">            chineseShortName = &quot;德国&quot;,</span>
+<span class="nc" id="L183">            chineseFullName = &quot;德意志联邦共和国&quot;,</span>
+<span class="nc" id="L184">            englishName = &quot;Germany&quot;,</span>
+<span class="nc" id="L185">            localName = &quot;Deutschland&quot;,</span>
+<span class="nc" id="L186">            population = &quot;约 8400 万&quot;,</span>
+<span class="nc" id="L187">            area = &quot;约 35.7 万平方公里&quot;,</span>
+<span class="nc" id="L188">            currency = &quot;欧元 EUR&quot;,</span>
+<span class="nc" id="L189">            capital = &quot;柏林&quot;,</span>
+<span class="nc" id="L190">            region = &quot;欧洲&quot;,</span>
+<span class="nc" id="L191">            latitude = 51.0f,</span>
+<span class="nc" id="L192">            longitude = 10.0f,</span>
+<span class="nc" id="L193">            flagEmoji = &quot;🇩🇪&quot;,</span>
+        ),
+<span class="nc" id="L195">        GeographyCountry(</span>
+<span class="nc" id="L196">            id = &quot;india&quot;,</span>
+<span class="nc" id="L197">            cca2 = &quot;IN&quot;,</span>
+<span class="nc" id="L198">            chineseShortName = &quot;印度&quot;,</span>
+<span class="nc" id="L199">            chineseFullName = &quot;印度共和国&quot;,</span>
+<span class="nc" id="L200">            englishName = &quot;India&quot;,</span>
+<span class="nc" id="L201">            localName = &quot;भारत&quot;,</span>
+<span class="nc" id="L202">            population = &quot;约 14.3 亿&quot;,</span>
+<span class="nc" id="L203">            area = &quot;约 329 万平方公里&quot;,</span>
+<span class="nc" id="L204">            currency = &quot;印度卢比 INR&quot;,</span>
+<span class="nc" id="L205">            capital = &quot;新德里&quot;,</span>
+<span class="nc" id="L206">            region = &quot;南亚&quot;,</span>
+<span class="nc" id="L207">            latitude = 22.0f,</span>
+<span class="nc" id="L208">            longitude = 79.0f,</span>
+<span class="nc" id="L209">            flagEmoji = &quot;🇮🇳&quot;,</span>
+        ),
+<span class="nc" id="L211">        GeographyCountry(</span>
+<span class="nc" id="L212">            id = &quot;egypt&quot;,</span>
+<span class="nc" id="L213">            cca2 = &quot;EG&quot;,</span>
+<span class="nc" id="L214">            chineseShortName = &quot;埃及&quot;,</span>
+<span class="nc" id="L215">            chineseFullName = &quot;阿拉伯埃及共和国&quot;,</span>
+<span class="nc" id="L216">            englishName = &quot;Egypt&quot;,</span>
+<span class="nc" id="L217">            localName = &quot;مصر&quot;,</span>
+<span class="nc" id="L218">            population = &quot;约 1.13 亿&quot;,</span>
+<span class="nc" id="L219">            area = &quot;约 100 万平方公里&quot;,</span>
+<span class="nc" id="L220">            currency = &quot;埃及镑 EGP&quot;,</span>
+<span class="nc" id="L221">            capital = &quot;开罗&quot;,</span>
+<span class="nc" id="L222">            region = &quot;非洲东北部&quot;,</span>
+<span class="nc" id="L223">            latitude = 26.0f,</span>
+<span class="nc" id="L224">            longitude = 30.0f,</span>
+<span class="nc" id="L225">            flagEmoji = &quot;🇪🇬&quot;,</span>
+        ),
+<span class="nc" id="L227">        GeographyCountry(</span>
+<span class="nc" id="L228">            id = &quot;south_africa&quot;,</span>
+<span class="nc" id="L229">            cca2 = &quot;ZA&quot;,</span>
+<span class="nc" id="L230">            chineseShortName = &quot;南非&quot;,</span>
+<span class="nc" id="L231">            chineseFullName = &quot;南非共和国&quot;,</span>
+<span class="nc" id="L232">            englishName = &quot;South Africa&quot;,</span>
+<span class="nc" id="L233">            localName = &quot;South Africa&quot;,</span>
+<span class="nc" id="L234">            population = &quot;约 6200 万&quot;,</span>
+<span class="nc" id="L235">            area = &quot;约 122 万平方公里&quot;,</span>
+<span class="nc" id="L236">            currency = &quot;南非兰特 ZAR&quot;,</span>
+<span class="nc" id="L237">            capital = &quot;比勒陀利亚&quot;,</span>
+<span class="nc" id="L238">            region = &quot;非洲南部&quot;,</span>
+<span class="nc" id="L239">            latitude = -30.0f,</span>
+<span class="nc" id="L240">            longitude = 25.0f,</span>
+<span class="nc" id="L241">            flagEmoji = &quot;🇿🇦&quot;,</span>
+        ),
+<span class="nc" id="L243">        GeographyCountry(</span>
+<span class="nc" id="L244">            id = &quot;united_kingdom&quot;,</span>
+<span class="nc" id="L245">            cca2 = &quot;GB&quot;,</span>
+<span class="nc" id="L246">            chineseShortName = &quot;英国&quot;,</span>
+<span class="nc" id="L247">            chineseFullName = &quot;大不列颠及北爱尔兰联合王国&quot;,</span>
+<span class="nc" id="L248">            englishName = &quot;United Kingdom&quot;,</span>
+<span class="nc" id="L249">            localName = &quot;United Kingdom&quot;,</span>
+<span class="nc" id="L250">            population = &quot;约 6800 万&quot;,</span>
+<span class="nc" id="L251">            area = &quot;约 24.4 万平方公里&quot;,</span>
+<span class="nc" id="L252">            currency = &quot;英镑 GBP&quot;,</span>
+<span class="nc" id="L253">            capital = &quot;伦敦&quot;,</span>
+<span class="nc" id="L254">            region = &quot;欧洲西北部&quot;,</span>
+<span class="nc" id="L255">            latitude = 54.0f,</span>
+<span class="nc" id="L256">            longitude = -2.0f,</span>
+<span class="nc" id="L257">            flagEmoji = &quot;🇬🇧&quot;,</span>
+        ),
+    )
+}
+
+fun List&lt;GeographyCountry&gt;.filterByCountryName(query: String): List&lt;GeographyCountry&gt; {
+<span class="nc" id="L263">    val normalized = query.trim()</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">    if (normalized.isBlank()) return this</span>
+<span class="nc" id="L265">    return filter { country -&gt;</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">        country.chineseShortName.contains(normalized, ignoreCase = true) ||</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">            country.chineseFullName.contains(normalized, ignoreCase = true) ||</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">            country.englishName.contains(normalized, ignoreCase = true) ||</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">            country.localName.contains(normalized, ignoreCase = true)</span>
+    }
+}
+
+<span class="nc" id="L273">fun buildGeographyQuestion(</span>
+    countries: List&lt;GeographyCountry&gt;,
+    type: GeographyQuizType,
+<span class="nc" id="L276">    random: Random = Random.Default,</span>
+): GeographyQuestion {
+<span class="nc bnc" id="L278" title="All 4 branches missed.">    require(countries.size &gt;= 4) { &quot;At least four countries are required to build a geography quiz.&quot; }</span>
+
+<span class="nc" id="L280">    val answer = countries.random(random)</span>
+<span class="nc" id="L281">    val distractors = countries</span>
+<span class="nc" id="L282">        .filterNot { it.id == answer.id }</span>
+<span class="nc" id="L283">        .shuffled(random)</span>
+<span class="nc" id="L284">        .take(3)</span>
+
+<span class="nc" id="L286">    return GeographyQuestion(</span>
+<span class="nc" id="L287">        type = type,</span>
+<span class="nc" id="L288">        answer = answer,</span>
+<span class="nc" id="L289">        options = (distractors + answer).shuffled(random),</span>
+    )
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

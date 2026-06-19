@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LotteryRepository.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.lottery</a> &gt; <span class="el_source">LotteryRepository.kt</span></div><h1>LotteryRepository.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.lottery
+
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.network.safeApiCall
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import javax.inject.Inject
+import javax.inject.Singleton
+
+<span class="fc" id="L12">@Singleton</span>
+<span class="fc" id="L13">open class LotteryRepository @Inject constructor(</span>
+<span class="fc" id="L14">    private val api: LotteryApi,</span>
+) {
+<span class="fc" id="L16">    open fun getLotteryHistory(): Flow&lt;ApiResult&lt;List&lt;LotteryTicket&gt;&gt;&gt; = flow {</span>
+<span class="fc" id="L17">        emit(ApiResult.Loading)</span>
+<span class="fc" id="L18">        emit(</span>
+<span class="fc" id="L19">            safeApiCall {</span>
+<span class="fc" id="L20">                api.getLotteryHistory()</span>
+<span class="fc" id="L21">                    .map { it.toDomain() }</span>
+<span class="fc" id="L22">                    .sortedWith(compareByDescending&lt;LotteryTicket&gt; { it.revealTime }.thenByDescending { it.id })</span>
+            }
+        )
+<span class="fc" id="L25">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="fc" id="L27">    open fun createLottery(request: LotteryCreateRequest): Flow&lt;ApiResult&lt;LotteryTicket&gt;&gt; = flow {</span>
+<span class="fc" id="L28">        emit(ApiResult.Loading)</span>
+<span class="fc" id="L29">        emit(safeApiCall { api.createLottery(request).toDomain() })</span>
+<span class="fc" id="L30">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc" id="L32">    open fun updateLottery(id: Int, request: LotteryUpdateRequest): Flow&lt;ApiResult&lt;LotteryTicket&gt;&gt; = flow {</span>
+<span class="nc" id="L33">        emit(ApiResult.Loading)</span>
+<span class="nc" id="L34">        emit(safeApiCall { api.updateLottery(id, request).toDomain() })</span>
+<span class="nc" id="L35">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="fc" id="L37">    open fun deleteLottery(id: Int): Flow&lt;ApiResult&lt;Unit&gt;&gt; = flow {</span>
+<span class="fc" id="L38">        emit(ApiResult.Loading)</span>
+<span class="fc" id="L39">        emit(safeApiCall { api.deleteLottery(id) })</span>
+<span class="fc" id="L40">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="fc" id="L42">    open fun checkLottery(id: Int): Flow&lt;ApiResult&lt;LotteryCheckOutcome&gt;&gt; = flow {</span>
+<span class="fc" id="L43">        emit(ApiResult.Loading)</span>
+<span class="fc" id="L44">        emit(safeApiCall { api.checkLottery(id).toDomain() })</span>
+<span class="fc" id="L45">    }.flowOn(Dispatchers.IO)</span>
+
+<span class="nc" id="L47">    open fun getLotteryResult(issueId: String): Flow&lt;ApiResult&lt;LotteryResult&gt;&gt; = flow {</span>
+<span class="nc" id="L48">        emit(ApiResult.Loading)</span>
+<span class="nc" id="L49">        emit(safeApiCall { api.getLotteryResult(issueId).toDomain() })</span>
+<span class="nc" id="L50">    }.flowOn(Dispatchers.IO)</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

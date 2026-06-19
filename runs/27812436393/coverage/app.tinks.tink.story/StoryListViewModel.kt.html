@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StoryListViewModel.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.story</a> &gt; <span class="el_source">StoryListViewModel.kt</span></div><h1>StoryListViewModel.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.story
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.ui.components.AppSnackbarBus
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import javax.inject.Inject
+
+<span class="nc" id="L17">data class StoryListUiState(</span>
+<span class="nc" id="L18">    val isLoading: Boolean = false,</span>
+<span class="nc" id="L19">    val isRefreshing: Boolean = false,</span>
+<span class="nc" id="L20">    val isLoadingMore: Boolean = false,</span>
+<span class="nc" id="L21">    val stories: List&lt;Story&gt; = emptyList(),</span>
+<span class="nc" id="L22">    val deletingIds: Set&lt;String&gt; = emptySet(),</span>
+<span class="nc" id="L23">    val endReached: Boolean = false,</span>
+<span class="nc" id="L24">    val currentPage: Int = 0,</span>
+<span class="nc" id="L25">)</span>
+
+<span class="nc" id="L27">@HiltViewModel</span>
+<span class="nc" id="L28">class StoryListViewModel @Inject constructor(</span>
+<span class="nc" id="L29">    private val repository: StoryRepository,</span>
+) : ViewModel() {
+
+<span class="nc" id="L32">    private val _state = MutableStateFlow(StoryListUiState())</span>
+<span class="nc" id="L33">    val uiState = _state.map { it }</span>
+<span class="nc" id="L34">        .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value)</span>
+
+<span class="nc" id="L36">    private val pageSize = 10</span>
+
+<span class="nc" id="L38">    init {</span>
+<span class="nc" id="L39">        loadStories(refresh = true)</span>
+<span class="nc" id="L40">    }</span>
+
+    fun refresh() {
+<span class="nc" id="L43">        loadStories(refresh = true)</span>
+<span class="nc" id="L44">    }</span>
+
+    fun loadMore() {
+<span class="nc" id="L47">        val state = _state.value</span>
+<span class="nc bnc" id="L48" title="All 8 branches missed.">        if (state.isLoading || state.isRefreshing || state.isLoadingMore || state.endReached) return</span>
+<span class="nc" id="L49">        loadStories(page = state.currentPage + 1, refresh = false)</span>
+<span class="nc" id="L50">    }</span>
+
+<span class="nc" id="L52">    private fun loadStories(page: Int = 0, refresh: Boolean) {</span>
+<span class="nc" id="L53">        repository.getStoryList(page = page, size = pageSize).onEach { result -&gt;</span>
+<span class="nc" id="L54">            when (result) {</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">                is ApiResult.Loading -&gt; _state.update {</span>
+<span class="nc" id="L56">                    it.copy(</span>
+<span class="nc bnc" id="L57" title="All 4 branches missed.">                        isLoading = refresh &amp;&amp; it.stories.isEmpty(),</span>
+<span class="nc bnc" id="L58" title="All 6 branches missed.">                        isRefreshing = refresh &amp;&amp; it.stories.isNotEmpty(),</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">                        isLoadingMore = !refresh</span>
+<span class="nc" id="L60">                    )</span>
+                }
+<span class="nc bnc" id="L62" title="All 2 branches missed.">                is ApiResult.Success -&gt; _state.update {</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">                    val newStories = if (refresh) {</span>
+<span class="nc" id="L64">                        result.data</span>
+                    } else {
+<span class="nc" id="L66">                        it.stories + result.data</span>
+                    }
+<span class="nc" id="L68">                    it.copy(</span>
+<span class="nc" id="L69">                        isLoading = false,</span>
+<span class="nc" id="L70">                        isRefreshing = false,</span>
+<span class="nc" id="L71">                        isLoadingMore = false,</span>
+<span class="nc" id="L72">                        stories = newStories,</span>
+<span class="nc" id="L73">                        currentPage = page,</span>
+<span class="nc" id="L74">                        endReached = result.data.isEmpty()</span>
+<span class="nc" id="L75">                    )</span>
+                }
+<span class="nc" id="L77">                is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L78">                    it.copy(</span>
+<span class="nc" id="L79">                        isLoading = false,</span>
+<span class="nc" id="L80">                        isRefreshing = false,</span>
+<span class="nc" id="L81">                        isLoadingMore = false</span>
+<span class="nc" id="L82">                    )</span>
+<span class="nc" id="L83">                }.also {</span>
+<span class="nc" id="L84">                    AppSnackbarBus.showMessage(&quot;故事列表加载失败&quot;)</span>
+<span class="nc" id="L85">                }</span>
+            }
+<span class="nc" id="L87">        }.launchIn(viewModelScope)</span>
+<span class="nc" id="L88">    }</span>
+
+    fun deleteStory(storyId: String) {
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (storyId in _state.value.deletingIds) return</span>
+<span class="nc" id="L92">        val previousStories = _state.value.stories</span>
+<span class="nc" id="L93">        _state.update {</span>
+<span class="nc" id="L94">            it.copy(</span>
+<span class="nc" id="L95">                deletingIds = it.deletingIds + storyId,</span>
+<span class="nc" id="L96">                stories = it.stories.filterNot { story -&gt; story.id == storyId }</span>
+<span class="nc" id="L97">            )</span>
+        }
+<span class="nc" id="L99">        repository.deleteStory(storyId).onEach { result -&gt;</span>
+<span class="nc" id="L100">            when (result) {</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">                is ApiResult.Loading -&gt; Unit</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">                is ApiResult.Success -&gt; _state.update {</span>
+<span class="nc" id="L103">                    it.copy(deletingIds = it.deletingIds - storyId)</span>
+<span class="nc" id="L104">                }.also {</span>
+<span class="nc" id="L105">                    AppSnackbarBus.showMessage(&quot;删除成功&quot;)</span>
+<span class="nc" id="L106">                }</span>
+<span class="nc" id="L107">                is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L108">                    it.copy(</span>
+<span class="nc" id="L109">                        deletingIds = it.deletingIds - storyId,</span>
+<span class="nc" id="L110">                        stories = previousStories</span>
+<span class="nc" id="L111">                    )</span>
+<span class="nc" id="L112">                }.also {</span>
+<span class="nc" id="L113">                    AppSnackbarBus.showMessage(&quot;删除失败&quot;)</span>
+<span class="nc" id="L114">                }</span>
+            }
+<span class="nc" id="L116">        }.launchIn(viewModelScope)</span>
+<span class="nc" id="L117">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

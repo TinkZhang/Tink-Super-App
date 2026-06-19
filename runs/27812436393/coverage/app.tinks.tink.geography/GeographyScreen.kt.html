@@ -1,0 +1,1258 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GeographyScreen.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.geography</a> &gt; <span class="el_source">GeographyScreen.kt</span></div><h1>GeographyScreen.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.geography
+
+import android.media.AudioManager
+import android.media.ToneGenerator
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import app.tinks.tink.ui.theme.TinkTheme
+import kotlin.math.cos
+import kotlin.math.sin
+
+private enum class GeographyMode {
+<span class="nc" id="L86">    Browse,</span>
+<span class="nc" id="L87">    Quiz,</span>
+}
+
+private enum class GeographyVisualKind {
+<span class="nc" id="L91">    Flag,</span>
+<span class="nc" id="L92">    Map,</span>
+}
+
+<span class="nc" id="L95">private data class EnlargedGeographyVisual(</span>
+<span class="nc" id="L96">    val country: GeographyCountry,</span>
+<span class="nc" id="L97">    val kind: GeographyVisualKind,</span>
+)
+
+@Composable
+<span class="nc" id="L101">fun GeographyScreen() {</span>
+<span class="nc" id="L102">    val context = LocalContext.current</span>
+<span class="nc" id="L103">    val countries = remember(context) { GeographyData.loadCountries(context) }</span>
+<span class="nc" id="L104">    GeographyScreen(countries = countries)</span>
+<span class="nc" id="L105">}</span>
+
+@Composable
+internal fun GeographyScreen(
+    countries: List&lt;GeographyCountry&gt;,
+<span class="nc" id="L110">    enableFeedback: Boolean = true,</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">) {</span>
+<span class="nc" id="L112">    var mode by rememberSaveable { mutableStateOf(GeographyMode.Browse) }</span>
+<span class="nc" id="L113">    var searchQuery by rememberSaveable { mutableStateOf(&quot;&quot;) }</span>
+<span class="nc" id="L114">    var selectedCountryId by rememberSaveable { mutableStateOf&lt;String?&gt;(null) }</span>
+<span class="nc" id="L115">    var quizType by rememberSaveable { mutableStateOf(GeographyQuizType.CountryToFlag) }</span>
+<span class="nc" id="L116">    var question by remember(quizType, countries) {</span>
+<span class="nc" id="L117">        mutableStateOf(buildGeographyQuestion(countries, quizType))</span>
+    }
+<span class="nc" id="L119">    var selectedAnswerId by rememberSaveable(question) { mutableStateOf&lt;String?&gt;(null) }</span>
+<span class="nc" id="L120">    var enlargedVisual by remember { mutableStateOf&lt;EnlargedGeographyVisual?&gt;(null) }</span>
+
+<span class="nc" id="L122">    val filteredCountries = countries.filterByCountryName(searchQuery)</span>
+
+<span class="nc" id="L124">    Column(</span>
+<span class="nc" id="L125">        modifier = Modifier</span>
+<span class="nc" id="L126">            .fillMaxSize()</span>
+<span class="nc" id="L127">            .background(Color(0xFFF4FBFF))</span>
+<span class="nc" id="L128">            .testTag(&quot;geography_screen&quot;),</span>
+    ) {
+<span class="nc" id="L130">        GeographyModeHeader(</span>
+<span class="nc" id="L131">            selectedMode = mode,</span>
+<span class="nc" id="L132">            onModeSelected = { mode = it },</span>
+        )
+
+<span class="nc bnc" id="L135" title="All 3 branches missed.">        when (mode) {</span>
+<span class="nc" id="L136">            GeographyMode.Browse -&gt; {</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">                if (selectedCountryId == null) {</span>
+<span class="nc" id="L138">                    GeographyCountryList(</span>
+<span class="nc" id="L139">                        query = searchQuery,</span>
+<span class="nc" id="L140">                        countries = filteredCountries,</span>
+<span class="nc" id="L141">                        onQueryChange = { searchQuery = it },</span>
+<span class="nc" id="L142">                        onCountryClick = { selectedCountryId = it.id },</span>
+                    )
+<span class="nc" id="L144">                } else {</span>
+<span class="nc" id="L145">                    GeographyCountryPager(</span>
+<span class="nc" id="L146">                        countries = countries,</span>
+<span class="nc" id="L147">                        selectedCountryId = selectedCountryId,</span>
+<span class="nc" id="L148">                        onSelectedCountryChanged = { selectedCountryId = it.id },</span>
+<span class="nc" id="L149">                        onBackToList = { selectedCountryId = null },</span>
+<span class="nc" id="L150">                        onVisualClick = { country, kind -&gt;</span>
+<span class="nc" id="L151">                            enlargedVisual = EnlargedGeographyVisual(country, kind)</span>
+<span class="nc" id="L152">                        },</span>
+                    )
+                }
+            }
+
+<span class="nc" id="L157">            GeographyMode.Quiz -&gt; GeographyQuizScreen(</span>
+<span class="nc" id="L158">                countries = countries,</span>
+<span class="nc" id="L159">                quizType = quizType,</span>
+<span class="nc" id="L160">                question = question,</span>
+<span class="nc" id="L161">                selectedAnswerId = selectedAnswerId,</span>
+<span class="nc" id="L162">                enableFeedback = enableFeedback,</span>
+<span class="nc" id="L163">                onQuizTypeChange = { nextType -&gt;</span>
+<span class="nc" id="L164">                    quizType = nextType</span>
+<span class="nc" id="L165">                    question = buildGeographyQuestion(countries, nextType)</span>
+<span class="nc" id="L166">                    selectedAnswerId = null</span>
+<span class="nc" id="L167">                },</span>
+<span class="nc" id="L168">                onAnswer = { country -&gt;</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">                    if (selectedAnswerId == null) {</span>
+<span class="nc" id="L170">                        selectedAnswerId = country.id</span>
+                    }
+<span class="nc" id="L172">                },</span>
+<span class="nc" id="L173">                onNextQuestion = {</span>
+<span class="nc" id="L174">                    question = buildGeographyQuestion(countries, quizType)</span>
+<span class="nc" id="L175">                    selectedAnswerId = null</span>
+<span class="nc" id="L176">                },</span>
+<span class="nc" id="L177">                onVisualClick = { country, kind -&gt;</span>
+<span class="nc" id="L178">                    enlargedVisual = EnlargedGeographyVisual(country, kind)</span>
+<span class="nc" id="L179">                },</span>
+            )
+<span class="nc" id="L181">        }</span>
+<span class="nc" id="L182">    }</span>
+
+<span class="nc bnc" id="L184" title="All 2 branches missed.">    enlargedVisual?.let { visual -&gt;</span>
+<span class="nc" id="L185">        GeographyImageDialog(</span>
+<span class="nc" id="L186">            visual = visual,</span>
+<span class="nc" id="L187">            onDismiss = { enlargedVisual = null },</span>
+        )
+<span class="nc" id="L189">    }</span>
+<span class="nc" id="L190">}</span>
+
+@Composable
+private fun GeographyModeHeader(
+    selectedMode: GeographyMode,
+    onModeSelected: (GeographyMode) -&gt; Unit,
+<span class="nc" id="L196">) {</span>
+<span class="nc" id="L197">    Surface(color = Color(0xFF12355B), contentColor = Color.White) {</span>
+<span class="nc" id="L198">        Column(</span>
+<span class="nc" id="L199">            modifier = Modifier</span>
+<span class="nc" id="L200">                .fillMaxWidth()</span>
+<span class="nc" id="L201">                .padding(16.dp),</span>
+<span class="nc" id="L202">            verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+        ) {
+<span class="nc" id="L204">            Row(</span>
+<span class="nc" id="L205">                verticalAlignment = Alignment.CenterVertically,</span>
+<span class="nc" id="L206">                horizontalArrangement = Arrangement.spacedBy(12.dp),</span>
+            ) {
+<span class="nc" id="L208">                Box(</span>
+<span class="nc" id="L209">                    modifier = Modifier</span>
+<span class="nc" id="L210">                        .size(48.dp)</span>
+<span class="nc" id="L211">                        .clip(CircleShape)</span>
+<span class="nc" id="L212">                        .background(Color(0xFFFFD166)),</span>
+<span class="nc" id="L213">                    contentAlignment = Alignment.Center,</span>
+                ) {
+<span class="nc" id="L215">                    Icon(</span>
+<span class="nc" id="L216">                        Icons.Filled.Public,</span>
+<span class="nc" id="L217">                        contentDescription = null,</span>
+<span class="nc" id="L218">                        tint = Color(0xFF12355B),</span>
+                    )
+<span class="nc" id="L220">                }</span>
+<span class="nc" id="L221">                Column {</span>
+<span class="nc" id="L222">                    Text(</span>
+<span class="nc" id="L223">                        text = &quot;地理探险&quot;,</span>
+<span class="nc" id="L224">                        style = MaterialTheme.typography.headlineMedium,</span>
+<span class="nc" id="L225">                        fontWeight = FontWeight.Black,</span>
+                    )
+<span class="nc" id="L227">                    Text(</span>
+<span class="nc" id="L228">                        text = &quot;看国家资料，玩四选一挑战&quot;,</span>
+<span class="nc" id="L229">                        style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L230">                        color = Color(0xFFE6F4FF),</span>
+                    )
+<span class="nc" id="L232">                }</span>
+<span class="nc" id="L233">            }</span>
+
+<span class="nc" id="L235">            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {</span>
+<span class="nc" id="L236">                ModeButton(</span>
+<span class="nc" id="L237">                    label = &quot;浏览&quot;,</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">                    selected = selectedMode == GeographyMode.Browse,</span>
+<span class="nc" id="L239">                    icon = Icons.Filled.Map,</span>
+<span class="nc" id="L240">                    testTag = &quot;geography_mode_browse&quot;,</span>
+<span class="nc" id="L241">                    onClick = { onModeSelected(GeographyMode.Browse) },</span>
+                )
+<span class="nc" id="L243">                ModeButton(</span>
+<span class="nc" id="L244">                    label = &quot;测试&quot;,</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">                    selected = selectedMode == GeographyMode.Quiz,</span>
+<span class="nc" id="L246">                    icon = Icons.Filled.SportsEsports,</span>
+<span class="nc" id="L247">                    testTag = &quot;geography_mode_quiz&quot;,</span>
+<span class="nc" id="L248">                    onClick = { onModeSelected(GeographyMode.Quiz) },</span>
+                )
+<span class="nc" id="L250">            }</span>
+<span class="nc" id="L251">        }</span>
+<span class="nc" id="L252">    }</span>
+<span class="nc" id="L253">}</span>
+
+@Composable
+private fun ModeButton(
+    label: String,
+    selected: Boolean,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    testTag: String,
+    onClick: () -&gt; Unit,
+<span class="nc" id="L262">) {</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">    val container = if (selected) Color(0xFFFFD166) else Color(0xFFE6F4FF)</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">    val content = if (selected) Color(0xFF12355B) else Color(0xFF1D4E89)</span>
+<span class="nc" id="L265">    Button(</span>
+<span class="nc" id="L266">        onClick = onClick,</span>
+<span class="nc" id="L267">        modifier = Modifier</span>
+<span class="nc" id="L268">            .height(48.dp)</span>
+<span class="nc" id="L269">            .testTag(testTag),</span>
+<span class="nc" id="L270">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L271">        colors = androidx.compose.material3.ButtonDefaults.buttonColors(</span>
+<span class="nc" id="L272">            containerColor = container,</span>
+<span class="nc" id="L273">            contentColor = content,</span>
+        ),
+<span class="nc" id="L275">    ) {</span>
+<span class="nc" id="L276">        Icon(icon, contentDescription = null)</span>
+<span class="nc" id="L277">        Spacer(Modifier.width(8.dp))</span>
+<span class="nc" id="L278">        Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)</span>
+<span class="nc" id="L279">    }</span>
+<span class="nc" id="L280">}</span>
+
+@Composable
+private fun GeographyCountryList(
+    query: String,
+    countries: List&lt;GeographyCountry&gt;,
+    onQueryChange: (String) -&gt; Unit,
+    onCountryClick: (GeographyCountry) -&gt; Unit,
+<span class="nc" id="L288">) {</span>
+<span class="nc" id="L289">    LazyColumn(</span>
+<span class="nc" id="L290">        modifier = Modifier</span>
+<span class="nc" id="L291">            .fillMaxSize()</span>
+<span class="nc" id="L292">            .testTag(&quot;geography_country_list&quot;),</span>
+<span class="nc" id="L293">        contentPadding = PaddingValues(16.dp),</span>
+<span class="nc" id="L294">        verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+<span class="nc bnc" id="L295" title="All 6 branches missed.">    ) {</span>
+<span class="nc" id="L296">        item(&quot;search&quot;) {</span>
+<span class="nc" id="L297">            OutlinedTextField(</span>
+<span class="nc" id="L298">                value = query,</span>
+<span class="nc" id="L299">                onValueChange = onQueryChange,</span>
+<span class="nc" id="L300">                modifier = Modifier</span>
+<span class="nc" id="L301">                    .fillMaxWidth()</span>
+<span class="nc" id="L302">                    .testTag(&quot;geography_search_field&quot;),</span>
+<span class="nc" id="L303">                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },</span>
+<span class="nc" id="L304">                label = { Text(&quot;搜索国家&quot;) },</span>
+<span class="nc" id="L305">                placeholder = { Text(&quot;中国 / Japan / Brasil&quot;) },</span>
+<span class="nc" id="L306">                textStyle = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L307">                singleLine = true,</span>
+<span class="nc" id="L308">                shape = RoundedCornerShape(8.dp),</span>
+            )
+<span class="nc" id="L310">        }</span>
+
+<span class="nc bnc" id="L312" title="All 2 branches missed.">        if (countries.isEmpty()) {</span>
+<span class="nc" id="L313">            item(&quot;empty&quot;) {</span>
+<span class="nc" id="L314">                Text(</span>
+<span class="nc" id="L315">                    text = &quot;没有找到这个国家&quot;,</span>
+<span class="nc" id="L316">                    modifier = Modifier</span>
+<span class="nc" id="L317">                        .fillMaxWidth()</span>
+<span class="nc" id="L318">                        .padding(24.dp)</span>
+<span class="nc" id="L319">                        .testTag(&quot;geography_empty_search&quot;),</span>
+<span class="nc" id="L320">                    style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L321">                    textAlign = TextAlign.Center,</span>
+                )
+<span class="nc" id="L323">            }</span>
+        } else {
+<span class="nc" id="L325">            items(countries, key = { it.id }) { country -&gt;</span>
+<span class="nc" id="L326">                CountryListItem(</span>
+<span class="nc" id="L327">                    country = country,</span>
+<span class="nc" id="L328">                    onClick = { onCountryClick(country) },</span>
+<span class="nc" id="L329">                )</span>
+<span class="nc" id="L330">            }</span>
+        }
+<span class="nc" id="L332">    }</span>
+<span class="nc" id="L333">}</span>
+
+@Composable
+private fun CountryListItem(
+    country: GeographyCountry,
+    onClick: () -&gt; Unit,
+<span class="nc" id="L339">) {</span>
+<span class="nc" id="L340">    ElevatedCard(</span>
+<span class="nc" id="L341">        modifier = Modifier</span>
+<span class="nc" id="L342">            .fillMaxWidth()</span>
+<span class="nc" id="L343">            .clickable(role = Role.Button, onClick = onClick)</span>
+<span class="nc" id="L344">            .testTag(&quot;geography_country_${country.id}&quot;),</span>
+<span class="nc" id="L345">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L346">        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),</span>
+<span class="nc" id="L347">    ) {</span>
+<span class="nc" id="L348">        Row(</span>
+<span class="nc" id="L349">            modifier = Modifier.padding(14.dp),</span>
+<span class="nc" id="L350">            verticalAlignment = Alignment.CenterVertically,</span>
+<span class="nc" id="L351">            horizontalArrangement = Arrangement.spacedBy(14.dp),</span>
+        ) {
+<span class="nc" id="L353">            CountryFlagArt(</span>
+<span class="nc" id="L354">                country = country,</span>
+<span class="nc" id="L355">                modifier = Modifier</span>
+<span class="nc" id="L356">                    .width(88.dp)</span>
+<span class="nc" id="L357">                    .aspectRatio(1.55f),</span>
+            )
+<span class="nc" id="L359">            Column(</span>
+<span class="nc" id="L360">                modifier = Modifier.weight(1f),</span>
+<span class="nc" id="L361">                verticalArrangement = Arrangement.spacedBy(4.dp),</span>
+            ) {
+<span class="nc" id="L363">                Text(</span>
+<span class="nc" id="L364">                    text = country.chineseShortName,</span>
+<span class="nc" id="L365">                    style = MaterialTheme.typography.headlineSmall,</span>
+<span class="nc" id="L366">                    fontWeight = FontWeight.Black,</span>
+                )
+<span class="nc" id="L368">                Text(</span>
+<span class="nc" id="L369">                    text = &quot;${country.englishName} · ${country.region}&quot;,</span>
+<span class="nc" id="L370">                    style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L371">                    color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+                )
+<span class="nc" id="L373">            }</span>
+<span class="nc" id="L374">        }</span>
+<span class="nc" id="L375">    }</span>
+<span class="nc" id="L376">}</span>
+
+@Composable
+private fun GeographyCountryPager(
+    countries: List&lt;GeographyCountry&gt;,
+    selectedCountryId: String?,
+    onSelectedCountryChanged: (GeographyCountry) -&gt; Unit,
+    onBackToList: () -&gt; Unit,
+    onVisualClick: (GeographyCountry, GeographyVisualKind) -&gt; Unit,
+<span class="nc" id="L385">) {</span>
+<span class="nc" id="L386">    val initialPage = countries.indexOfFirst { it.id == selectedCountryId }.coerceAtLeast(0)</span>
+<span class="nc" id="L387">    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { countries.size })</span>
+
+<span class="nc bnc" id="L389" title="All 2 branches missed.">    LaunchedEffect(pagerState.currentPage) {</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">        countries.getOrNull(pagerState.currentPage)?.let(onSelectedCountryChanged)</span>
+<span class="nc" id="L391">    }</span>
+
+<span class="nc" id="L393">    Column(modifier = Modifier.fillMaxSize()) {</span>
+<span class="nc" id="L394">        Row(</span>
+<span class="nc" id="L395">            modifier = Modifier</span>
+<span class="nc" id="L396">                .fillMaxWidth()</span>
+<span class="nc" id="L397">                .padding(horizontal = 16.dp, vertical = 12.dp),</span>
+<span class="nc" id="L398">            verticalAlignment = Alignment.CenterVertically,</span>
+<span class="nc" id="L399">            horizontalArrangement = Arrangement.SpaceBetween,</span>
+        ) {
+<span class="nc" id="L401">            OutlinedButton(</span>
+<span class="nc" id="L402">                onClick = onBackToList,</span>
+<span class="nc" id="L403">                shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L404">                modifier = Modifier.testTag(&quot;geography_back_to_list&quot;),</span>
+<span class="nc" id="L405">            ) {</span>
+<span class="nc" id="L406">                Text(&quot;返回列表&quot;, style = MaterialTheme.typography.titleMedium)</span>
+<span class="nc" id="L407">            }</span>
+<span class="nc" id="L408">            Text(</span>
+<span class="nc" id="L409">                text = &quot;${pagerState.currentPage + 1} / ${countries.size}&quot;,</span>
+<span class="nc" id="L410">                style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L411">                fontWeight = FontWeight.Bold,</span>
+<span class="nc" id="L412">                color = Color(0xFF1D4E89),</span>
+            )
+<span class="nc" id="L414">        }</span>
+
+<span class="nc" id="L416">        HorizontalPager(</span>
+<span class="nc" id="L417">            state = pagerState,</span>
+<span class="nc" id="L418">            modifier = Modifier</span>
+<span class="nc" id="L419">                .fillMaxSize()</span>
+<span class="nc" id="L420">                .testTag(&quot;geography_country_pager&quot;),</span>
+<span class="nc" id="L421">            contentPadding = PaddingValues(horizontal = 16.dp),</span>
+<span class="nc" id="L422">            pageSpacing = 12.dp,</span>
+<span class="nc" id="L423">        ) { page -&gt;</span>
+<span class="nc" id="L424">            CountryDetailPage(</span>
+<span class="nc" id="L425">                country = countries[page],</span>
+<span class="nc" id="L426">                onVisualClick = onVisualClick,</span>
+            )
+<span class="nc" id="L428">        }</span>
+<span class="nc" id="L429">    }</span>
+<span class="nc" id="L430">}</span>
+
+@Composable
+private fun CountryDetailPage(
+    country: GeographyCountry,
+    onVisualClick: (GeographyCountry, GeographyVisualKind) -&gt; Unit,
+<span class="nc" id="L436">) {</span>
+<span class="nc" id="L437">    LazyColumn(</span>
+<span class="nc" id="L438">        modifier = Modifier</span>
+<span class="nc" id="L439">            .fillMaxSize()</span>
+<span class="nc" id="L440">            .testTag(&quot;geography_detail_${country.id}&quot;),</span>
+<span class="nc" id="L441">        verticalArrangement = Arrangement.spacedBy(14.dp),</span>
+<span class="nc" id="L442">        contentPadding = PaddingValues(bottom = 24.dp),</span>
+<span class="nc bnc" id="L443" title="All 4 branches missed.">    ) {</span>
+<span class="nc" id="L444">        item(&quot;title&quot;) {</span>
+<span class="nc" id="L445">            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {</span>
+<span class="nc" id="L446">                Text(</span>
+<span class="nc" id="L447">                    text = country.chineseShortName,</span>
+<span class="nc" id="L448">                    style = MaterialTheme.typography.displaySmall,</span>
+<span class="nc" id="L449">                    fontWeight = FontWeight.Black,</span>
+<span class="nc" id="L450">                    color = Color(0xFF12355B),</span>
+                )
+<span class="nc" id="L452">                Text(</span>
+<span class="nc" id="L453">                    text = country.chineseFullName,</span>
+<span class="nc" id="L454">                    style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L455">                    color = Color(0xFF1D4E89),</span>
+                )
+<span class="nc" id="L457">                Text(</span>
+<span class="nc" id="L458">                    text = &quot;${country.englishName} · ${country.localName}&quot;,</span>
+<span class="nc" id="L459">                    style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L460">                    fontWeight = FontWeight.SemiBold,</span>
+                )
+<span class="nc" id="L462">            }</span>
+<span class="nc" id="L463">        }</span>
+
+<span class="nc" id="L465">        item(&quot;visuals&quot;) {</span>
+<span class="nc" id="L466">            Row(</span>
+<span class="nc" id="L467">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L468">                horizontalArrangement = Arrangement.spacedBy(12.dp),</span>
+            ) {
+<span class="nc" id="L470">                DetailVisualCard(</span>
+<span class="nc" id="L471">                    title = &quot;国旗&quot;,</span>
+<span class="nc" id="L472">                    testTag = &quot;geography_detail_flag_${country.id}&quot;,</span>
+<span class="nc" id="L473">                    modifier = Modifier.weight(1f),</span>
+<span class="nc" id="L474">                    onClick = { onVisualClick(country, GeographyVisualKind.Flag) },</span>
+<span class="nc" id="L475">                ) {</span>
+<span class="nc" id="L476">                    CountryFlagArt(</span>
+<span class="nc" id="L477">                        country = country,</span>
+<span class="nc" id="L478">                        modifier = Modifier</span>
+<span class="nc" id="L479">                            .fillMaxWidth()</span>
+<span class="nc" id="L480">                            .aspectRatio(1.55f),</span>
+                    )
+<span class="nc" id="L482">                }</span>
+<span class="nc" id="L483">                DetailVisualCard(</span>
+<span class="nc" id="L484">                    title = &quot;地图位置&quot;,</span>
+<span class="nc" id="L485">                    testTag = &quot;geography_detail_map_${country.id}&quot;,</span>
+<span class="nc" id="L486">                    modifier = Modifier.weight(1f),</span>
+<span class="nc" id="L487">                    onClick = { onVisualClick(country, GeographyVisualKind.Map) },</span>
+<span class="nc" id="L488">                ) {</span>
+<span class="nc" id="L489">                    CountryMapArt(</span>
+<span class="nc" id="L490">                        country = country,</span>
+<span class="nc" id="L491">                        modifier = Modifier</span>
+<span class="nc" id="L492">                            .fillMaxWidth()</span>
+<span class="nc" id="L493">                            .aspectRatio(1f),</span>
+                    )
+<span class="nc" id="L495">                }</span>
+<span class="nc" id="L496">            }</span>
+<span class="nc" id="L497">        }</span>
+
+<span class="nc" id="L499">        item(&quot;facts&quot;) {</span>
+<span class="nc" id="L500">            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {</span>
+<span class="nc" id="L501">                FactRow(&quot;首都&quot;, country.capital)</span>
+<span class="nc" id="L502">                FactRow(&quot;人口&quot;, country.population)</span>
+<span class="nc" id="L503">                FactRow(&quot;面积&quot;, country.area)</span>
+<span class="nc" id="L504">                FactRow(&quot;货币&quot;, country.currency)</span>
+<span class="nc" id="L505">                FactRow(&quot;地区&quot;, country.region)</span>
+<span class="nc" id="L506">            }</span>
+<span class="nc" id="L507">        }</span>
+<span class="nc" id="L508">    }</span>
+<span class="nc" id="L509">}</span>
+
+@Composable
+private fun DetailVisualCard(
+    title: String,
+    testTag: String,
+<span class="nc" id="L515">    modifier: Modifier = Modifier,</span>
+    onClick: () -&gt; Unit,
+    content: @Composable () -&gt; Unit,
+<span class="nc bnc" id="L518" title="All 2 branches missed.">) {</span>
+<span class="nc" id="L519">    ElevatedCard(</span>
+<span class="nc" id="L520">        modifier = modifier</span>
+<span class="nc" id="L521">            .clickable(role = Role.Button, onClick = onClick)</span>
+<span class="nc" id="L522">            .testTag(testTag),</span>
+<span class="nc" id="L523">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L524">        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),</span>
+<span class="nc" id="L525">    ) {</span>
+<span class="nc" id="L526">        Column(</span>
+<span class="nc" id="L527">            modifier = Modifier.padding(10.dp),</span>
+<span class="nc" id="L528">            verticalArrangement = Arrangement.spacedBy(8.dp),</span>
+        ) {
+<span class="nc" id="L530">            Text(</span>
+<span class="nc" id="L531">                text = title,</span>
+<span class="nc" id="L532">                style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L533">                fontWeight = FontWeight.Bold,</span>
+            )
+<span class="nc" id="L535">            content()</span>
+<span class="nc" id="L536">        }</span>
+<span class="nc" id="L537">    }</span>
+<span class="nc" id="L538">}</span>
+
+@Composable
+<span class="nc" id="L541">private fun FactRow(label: String, value: String) {</span>
+<span class="nc" id="L542">    Surface(</span>
+<span class="nc" id="L543">        modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L544">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L545">        color = Color.White,</span>
+<span class="nc" id="L546">        tonalElevation = 1.dp,</span>
+<span class="nc" id="L547">    ) {</span>
+<span class="nc" id="L548">        Row(</span>
+<span class="nc" id="L549">            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),</span>
+<span class="nc" id="L550">            verticalAlignment = Alignment.CenterVertically,</span>
+<span class="nc" id="L551">            horizontalArrangement = Arrangement.spacedBy(12.dp),</span>
+        ) {
+<span class="nc" id="L553">            Text(</span>
+<span class="nc" id="L554">                text = label,</span>
+<span class="nc" id="L555">                modifier = Modifier.width(64.dp),</span>
+<span class="nc" id="L556">                style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L557">                fontWeight = FontWeight.Black,</span>
+<span class="nc" id="L558">                color = Color(0xFF1D4E89),</span>
+            )
+<span class="nc" id="L560">            Text(</span>
+<span class="nc" id="L561">                text = value,</span>
+<span class="nc" id="L562">                modifier = Modifier.weight(1f),</span>
+<span class="nc" id="L563">                style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L564">                fontWeight = FontWeight.SemiBold,</span>
+            )
+<span class="nc" id="L566">        }</span>
+<span class="nc" id="L567">    }</span>
+<span class="nc" id="L568">}</span>
+
+@Composable
+private fun GeographyQuizScreen(
+    countries: List&lt;GeographyCountry&gt;,
+    quizType: GeographyQuizType,
+    question: GeographyQuestion,
+    selectedAnswerId: String?,
+    enableFeedback: Boolean,
+    onQuizTypeChange: (GeographyQuizType) -&gt; Unit,
+    onAnswer: (GeographyCountry) -&gt; Unit,
+    onNextQuestion: () -&gt; Unit,
+    onVisualClick: (GeographyCountry, GeographyVisualKind) -&gt; Unit,
+<span class="nc" id="L581">) {</span>
+<span class="nc" id="L582">    val haptic = LocalHapticFeedback.current</span>
+<span class="nc bnc" id="L583" title="All 2 branches missed.">    val toneGenerator = remember(enableFeedback) {</span>
+<span class="nc bnc" id="L584" title="All 2 branches missed.">        if (enableFeedback) ToneGenerator(AudioManager.STREAM_MUSIC, 80) else null</span>
+    }
+
+<span class="nc" id="L587">    DisposableEffect(toneGenerator) {</span>
+<span class="nc" id="L588">        onDispose { toneGenerator?.release() }</span>
+    }
+
+    fun submit(country: GeographyCountry) {
+<span class="nc bnc" id="L592" title="All 2 branches missed.">        if (selectedAnswerId != null) return</span>
+<span class="nc" id="L593">        onAnswer(country)</span>
+<span class="nc bnc" id="L594" title="All 2 branches missed.">        if (enableFeedback) {</span>
+<span class="nc" id="L595">            val correct = country.id == question.answer.id</span>
+<span class="nc" id="L596">            haptic.performHapticFeedback(HapticFeedbackType.LongPress)</span>
+<span class="nc bnc" id="L597" title="All 2 branches missed.">            toneGenerator?.startTone(</span>
+<span class="nc bnc" id="L598" title="All 2 branches missed.">                if (correct) ToneGenerator.TONE_PROP_ACK else ToneGenerator.TONE_PROP_NACK,</span>
+<span class="nc" id="L599">                180,</span>
+            )
+        }
+<span class="nc" id="L602">    }</span>
+
+<span class="nc" id="L604">    LazyColumn(</span>
+<span class="nc" id="L605">        modifier = Modifier</span>
+<span class="nc" id="L606">            .fillMaxSize()</span>
+<span class="nc" id="L607">            .testTag(&quot;geography_quiz_screen&quot;),</span>
+<span class="nc" id="L608">        contentPadding = PaddingValues(16.dp),</span>
+<span class="nc" id="L609">        verticalArrangement = Arrangement.spacedBy(14.dp),</span>
+<span class="nc bnc" id="L610" title="All 14 branches missed.">    ) {</span>
+<span class="nc" id="L611">        item(&quot;types&quot;) {</span>
+<span class="nc" id="L612">            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {</span>
+<span class="nc" id="L613">                Text(</span>
+<span class="nc" id="L614">                    text = &quot;选择挑战&quot;,</span>
+<span class="nc" id="L615">                    style = MaterialTheme.typography.headlineSmall,</span>
+<span class="nc" id="L616">                    fontWeight = FontWeight.Black,</span>
+<span class="nc" id="L617">                    color = Color(0xFF12355B),</span>
+                )
+<span class="nc" id="L619">                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L620">                    GeographyQuizType.entries.take(2).forEach { type -&gt;</span>
+<span class="nc" id="L621">                        QuizTypeChip(</span>
+<span class="nc" id="L622">                            type = type,</span>
+<span class="nc bnc" id="L623" title="All 2 branches missed.">                            selected = type == quizType,</span>
+<span class="nc" id="L624">                            onClick = { onQuizTypeChange(type) },</span>
+                        )
+<span class="nc" id="L626">                    }</span>
+<span class="nc" id="L627">                }</span>
+<span class="nc" id="L628">                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L629">                    GeographyQuizType.entries.drop(2).forEach { type -&gt;</span>
+<span class="nc" id="L630">                        QuizTypeChip(</span>
+<span class="nc" id="L631">                            type = type,</span>
+<span class="nc bnc" id="L632" title="All 2 branches missed.">                            selected = type == quizType,</span>
+<span class="nc" id="L633">                            onClick = { onQuizTypeChange(type) },</span>
+                        )
+<span class="nc" id="L635">                    }</span>
+<span class="nc" id="L636">                }</span>
+<span class="nc" id="L637">            }</span>
+<span class="nc" id="L638">        }</span>
+
+<span class="nc" id="L640">        item(&quot;question&quot;) {</span>
+<span class="nc" id="L641">            QuizPromptCard(</span>
+<span class="nc" id="L642">                question = question,</span>
+<span class="nc" id="L643">                selectedAnswerId = selectedAnswerId,</span>
+<span class="nc" id="L644">                onVisualClick = onVisualClick,</span>
+            )
+<span class="nc" id="L646">        }</span>
+
+<span class="nc" id="L648">        item(&quot;options&quot;) {</span>
+<span class="nc" id="L649">            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {</span>
+<span class="nc" id="L650">                question.options.chunked(2).forEach { rowCountries -&gt;</span>
+<span class="nc" id="L651">                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {</span>
+<span class="nc" id="L652">                        rowCountries.forEach { country -&gt;</span>
+<span class="nc" id="L653">                            GeographyAnswerOption(</span>
+<span class="nc" id="L654">                                country = country,</span>
+<span class="nc" id="L655">                                question = question,</span>
+<span class="nc" id="L656">                                selectedAnswerId = selectedAnswerId,</span>
+<span class="nc" id="L657">                                modifier = Modifier.weight(1f),</span>
+<span class="nc" id="L658">                                onClick = { submit(country) },</span>
+                            )
+<span class="nc" id="L660">                        }</span>
+<span class="nc bnc" id="L661" title="All 2 branches missed.">                        if (rowCountries.size == 1) {</span>
+<span class="nc" id="L662">                            Spacer(Modifier.weight(1f))</span>
+<span class="nc" id="L663">                        }</span>
+<span class="nc" id="L664">                    }</span>
+<span class="nc" id="L665">                }</span>
+<span class="nc" id="L666">            }</span>
+<span class="nc" id="L667">        }</span>
+
+<span class="nc" id="L669">        item(&quot;next&quot;) {</span>
+<span class="nc" id="L670">            FilledTonalButton(</span>
+<span class="nc" id="L671">                onClick = onNextQuestion,</span>
+<span class="nc" id="L672">                modifier = Modifier</span>
+<span class="nc" id="L673">                    .fillMaxWidth()</span>
+<span class="nc" id="L674">                    .height(56.dp)</span>
+<span class="nc" id="L675">                    .testTag(&quot;geography_next_question&quot;),</span>
+<span class="nc" id="L676">                shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L677">            ) {</span>
+<span class="nc" id="L678">                Text(</span>
+<span class="nc bnc" id="L679" title="All 2 branches missed.">                    text = if (selectedAnswerId == null) &quot;换一题&quot; else &quot;下一题&quot;,</span>
+<span class="nc" id="L680">                    style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L681">                    fontWeight = FontWeight.Black,</span>
+                )
+<span class="nc" id="L683">            }</span>
+<span class="nc" id="L684">        }</span>
+<span class="nc" id="L685">    }</span>
+
+    @Suppress(&quot;UNUSED_VARIABLE&quot;)
+<span class="nc" id="L688">    val keepCountriesStable = countries</span>
+<span class="nc" id="L689">}</span>
+
+@Composable
+private fun QuizTypeChip(
+    type: GeographyQuizType,
+    selected: Boolean,
+    onClick: () -&gt; Unit,
+<span class="nc" id="L696">) {</span>
+<span class="nc" id="L697">    AssistChip(</span>
+<span class="nc" id="L698">        onClick = onClick,</span>
+<span class="nc" id="L699">        label = {</span>
+<span class="nc" id="L700">            Text(</span>
+<span class="nc" id="L701">                text = type.label,</span>
+<span class="nc" id="L702">                style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L703">                fontWeight = FontWeight.Bold,</span>
+            )
+<span class="nc" id="L705">        },</span>
+<span class="nc" id="L706">        leadingIcon = {</span>
+<span class="nc" id="L707">            Icon(</span>
+<span class="nc bnc" id="L708" title="All 4 branches missed.">                if (type == GeographyQuizType.CountryToFlag || type == GeographyQuizType.FlagToCountry) {</span>
+<span class="nc" id="L709">                    Icons.Filled.Flag</span>
+                } else {
+<span class="nc" id="L711">                    Icons.Filled.Map</span>
+                },
+<span class="nc" id="L713">                contentDescription = null,</span>
+            )
+<span class="nc" id="L715">        },</span>
+<span class="nc" id="L716">        modifier = Modifier.testTag(&quot;geography_quiz_type_${type.name}&quot;),</span>
+<span class="nc" id="L717">        colors = androidx.compose.material3.AssistChipDefaults.assistChipColors(</span>
+<span class="nc bnc" id="L718" title="All 2 branches missed.">            containerColor = if (selected) Color(0xFFFFD166) else Color.White,</span>
+<span class="nc" id="L719">            labelColor = Color(0xFF12355B),</span>
+<span class="nc" id="L720">            leadingIconContentColor = Color(0xFF1D4E89),</span>
+        ),
+<span class="nc" id="L722">        border = androidx.compose.material3.AssistChipDefaults.assistChipBorder(</span>
+<span class="nc" id="L723">            enabled = true,</span>
+<span class="nc bnc" id="L724" title="All 2 branches missed.">            borderColor = if (selected) Color(0xFFEF476F) else Color(0xFF9BC9E8),</span>
+        ),
+    )
+<span class="nc" id="L727">}</span>
+
+@Composable
+private fun QuizPromptCard(
+    question: GeographyQuestion,
+    selectedAnswerId: String?,
+    onVisualClick: (GeographyCountry, GeographyVisualKind) -&gt; Unit,
+<span class="nc" id="L734">) {</span>
+<span class="nc bnc" id="L735" title="All 2 branches missed.">    val isAnswered = selectedAnswerId != null</span>
+<span class="nc" id="L736">    val isCorrect = selectedAnswerId == question.answer.id</span>
+
+<span class="nc" id="L738">    ElevatedCard(</span>
+<span class="nc" id="L739">        modifier = Modifier</span>
+<span class="nc" id="L740">            .fillMaxWidth()</span>
+<span class="nc" id="L741">            .testTag(&quot;geography_quiz_prompt&quot;),</span>
+<span class="nc" id="L742">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L743">        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),</span>
+<span class="nc" id="L744">    ) {</span>
+<span class="nc" id="L745">        Column(</span>
+<span class="nc" id="L746">            modifier = Modifier.padding(16.dp),</span>
+<span class="nc" id="L747">            horizontalAlignment = Alignment.CenterHorizontally,</span>
+<span class="nc" id="L748">            verticalArrangement = Arrangement.spacedBy(12.dp),</span>
+        ) {
+<span class="nc" id="L750">            Text(</span>
+<span class="nc" id="L751">                text = question.promptText(),</span>
+<span class="nc" id="L752">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L753">                style = MaterialTheme.typography.headlineSmall,</span>
+<span class="nc" id="L754">                fontWeight = FontWeight.Black,</span>
+<span class="nc" id="L755">                color = Color(0xFF12355B),</span>
+<span class="nc" id="L756">                textAlign = TextAlign.Center,</span>
+            )
+
+<span class="nc bnc" id="L759" title="All 3 branches missed.">            when (question.type) {</span>
+<span class="nc" id="L760">                GeographyQuizType.MapToCountry -&gt; CountryMapArt(</span>
+<span class="nc" id="L761">                    country = question.answer,</span>
+<span class="nc" id="L762">                    modifier = Modifier</span>
+<span class="nc" id="L763">                        .fillMaxWidth(0.72f)</span>
+<span class="nc" id="L764">                        .aspectRatio(1f)</span>
+<span class="nc" id="L765">                        .clickable {</span>
+<span class="nc" id="L766">                            onVisualClick(question.answer, GeographyVisualKind.Map)</span>
+<span class="nc" id="L767">                        }</span>
+<span class="nc" id="L768">                        .testTag(&quot;geography_prompt_map&quot;),</span>
+                )
+
+<span class="nc" id="L771">                GeographyQuizType.FlagToCountry -&gt; CountryFlagArt(</span>
+<span class="nc" id="L772">                    country = question.answer,</span>
+<span class="nc" id="L773">                    modifier = Modifier</span>
+<span class="nc" id="L774">                        .fillMaxWidth(0.78f)</span>
+<span class="nc" id="L775">                        .aspectRatio(1.55f)</span>
+<span class="nc" id="L776">                        .clickable {</span>
+<span class="nc" id="L777">                            onVisualClick(question.answer, GeographyVisualKind.Flag)</span>
+<span class="nc" id="L778">                        }</span>
+<span class="nc" id="L779">                        .testTag(&quot;geography_prompt_flag&quot;),</span>
+                )
+
+<span class="nc" id="L782">                else -&gt; Unit</span>
+            }
+
+<span class="nc" id="L785">            AnimatedVisibility(visible = isAnswered) {</span>
+<span class="nc bnc" id="L786" title="All 2 branches missed.">                val text = if (isCorrect) {</span>
+<span class="nc" id="L787">                    &quot;答对了！就是 ${question.answer.chineseShortName}&quot;</span>
+                } else {
+<span class="nc" id="L789">                    &quot;差一点，答案是 ${question.answer.chineseShortName}&quot;</span>
+                }
+<span class="nc bnc" id="L791" title="All 2 branches missed.">                val color = if (isCorrect) Color(0xFF06A77D) else Color(0xFFEF476F)</span>
+<span class="nc" id="L792">                Text(</span>
+<span class="nc" id="L793">                    text = text,</span>
+<span class="nc" id="L794">                    modifier = Modifier</span>
+<span class="nc" id="L795">                        .fillMaxWidth()</span>
+<span class="nc" id="L796">                        .testTag(&quot;geography_answer_feedback&quot;),</span>
+<span class="nc" id="L797">                    style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L798">                    fontWeight = FontWeight.Black,</span>
+<span class="nc" id="L799">                    color = color,</span>
+<span class="nc" id="L800">                    textAlign = TextAlign.Center,</span>
+                )
+<span class="nc" id="L802">            }</span>
+<span class="nc" id="L803">        }</span>
+<span class="nc" id="L804">    }</span>
+<span class="nc" id="L805">}</span>
+
+<span class="nc bnc" id="L807" title="All 4 branches missed.">private fun GeographyQuestion.promptText(): String = when (type) {</span>
+<span class="nc" id="L808">    GeographyQuizType.CountryToFlag -&gt; &quot;${answer.chineseShortName} 的国旗是哪一个？&quot;</span>
+<span class="nc" id="L809">    GeographyQuizType.CountryToMap -&gt; &quot;${answer.chineseShortName} 在地图上的位置是哪一个？&quot;</span>
+<span class="nc" id="L810">    GeographyQuizType.MapToCountry -&gt; &quot;地图上标出的是哪个国家？&quot;</span>
+<span class="nc" id="L811">    GeographyQuizType.FlagToCountry -&gt; &quot;这面国旗属于哪个国家？&quot;</span>
+<span class="nc" id="L812">}</span>
+
+@Composable
+private fun GeographyAnswerOption(
+    country: GeographyCountry,
+    question: GeographyQuestion,
+    selectedAnswerId: String?,
+<span class="nc" id="L819">    modifier: Modifier = Modifier,</span>
+    onClick: () -&gt; Unit,
+<span class="nc bnc" id="L821" title="All 2 branches missed.">) {</span>
+<span class="nc bnc" id="L822" title="All 2 branches missed.">    val answered = selectedAnswerId != null</span>
+<span class="nc" id="L823">    val isCorrectOption = country.id == question.answer.id</span>
+<span class="nc" id="L824">    val isSelected = country.id == selectedAnswerId</span>
+<span class="nc" id="L825">    val targetColor = when {</span>
+<span class="nc bnc" id="L826" title="All 4 branches missed.">        answered &amp;&amp; isCorrectOption -&gt; Color(0xFFD9FBE8)</span>
+<span class="nc bnc" id="L827" title="All 4 branches missed.">        answered &amp;&amp; isSelected -&gt; Color(0xFFFFDDE6)</span>
+<span class="nc" id="L828">        else -&gt; Color.White</span>
+    }
+<span class="nc" id="L830">    val borderColor = when {</span>
+<span class="nc bnc" id="L831" title="All 4 branches missed.">        answered &amp;&amp; isCorrectOption -&gt; Color(0xFF06A77D)</span>
+<span class="nc bnc" id="L832" title="All 4 branches missed.">        answered &amp;&amp; isSelected -&gt; Color(0xFFEF476F)</span>
+<span class="nc" id="L833">        else -&gt; Color(0xFF9BC9E8)</span>
+    }
+<span class="nc" id="L835">    val containerColor by animateColorAsState(targetColor, label = &quot;answer-color&quot;)</span>
+<span class="nc" id="L836">    val scale by animateFloatAsState(</span>
+<span class="nc bnc" id="L837" title="All 8 branches missed.">        targetValue = if (answered &amp;&amp; isCorrectOption) 1.04f else if (answered &amp;&amp; isSelected) 0.97f else 1f,</span>
+<span class="nc" id="L838">        label = &quot;answer-scale&quot;,</span>
+    )
+
+<span class="nc" id="L841">    Surface(</span>
+<span class="nc" id="L842">        modifier = modifier</span>
+<span class="nc" id="L843">            .scale(scale)</span>
+<span class="nc" id="L844">            .height(160.dp)</span>
+<span class="nc" id="L845">            .border(3.dp, borderColor, RoundedCornerShape(8.dp))</span>
+<span class="nc" id="L846">            .clip(RoundedCornerShape(8.dp))</span>
+<span class="nc bnc" id="L847" title="All 2 branches missed.">            .clickable(enabled = !answered, role = Role.Button, onClick = onClick)</span>
+<span class="nc" id="L848">            .testTag(&quot;geography_answer_${country.id}&quot;),</span>
+<span class="nc" id="L849">        color = containerColor,</span>
+<span class="nc" id="L850">        shape = RoundedCornerShape(8.dp),</span>
+<span class="nc" id="L851">        shadowElevation = 2.dp,</span>
+<span class="nc" id="L852">    ) {</span>
+<span class="nc" id="L853">        Column(</span>
+<span class="nc" id="L854">            modifier = Modifier.padding(10.dp),</span>
+<span class="nc" id="L855">            horizontalAlignment = Alignment.CenterHorizontally,</span>
+<span class="nc" id="L856">            verticalArrangement = Arrangement.Center,</span>
+        ) {
+<span class="nc bnc" id="L858" title="All 4 branches missed.">            when (question.type) {</span>
+<span class="nc" id="L859">                GeographyQuizType.CountryToFlag -&gt; CountryFlagArt(</span>
+<span class="nc" id="L860">                    country = country,</span>
+<span class="nc" id="L861">                    modifier = Modifier</span>
+<span class="nc" id="L862">                        .fillMaxWidth()</span>
+<span class="nc" id="L863">                        .aspectRatio(1.55f),</span>
+                )
+
+<span class="nc" id="L866">                GeographyQuizType.CountryToMap -&gt; CountryMapArt(</span>
+<span class="nc" id="L867">                    country = country,</span>
+<span class="nc" id="L868">                    modifier = Modifier</span>
+<span class="nc" id="L869">                        .fillMaxHeight(0.78f)</span>
+<span class="nc" id="L870">                        .aspectRatio(1f),</span>
+                )
+
+                GeographyQuizType.MapToCountry,
+<span class="nc" id="L874">                GeographyQuizType.FlagToCountry -&gt; {</span>
+<span class="nc" id="L875">                    Text(</span>
+<span class="nc" id="L876">                        text = country.chineseShortName,</span>
+<span class="nc" id="L877">                        style = MaterialTheme.typography.headlineSmall,</span>
+<span class="nc" id="L878">                        fontWeight = FontWeight.Black,</span>
+<span class="nc" id="L879">                        textAlign = TextAlign.Center,</span>
+<span class="nc" id="L880">                        color = Color(0xFF12355B),</span>
+                    )
+<span class="nc" id="L882">                    Text(</span>
+<span class="nc" id="L883">                        text = country.region,</span>
+<span class="nc" id="L884">                        style = MaterialTheme.typography.titleMedium,</span>
+<span class="nc" id="L885">                        color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+<span class="nc" id="L886">                        textAlign = TextAlign.Center,</span>
+                    )
+                }
+<span class="nc" id="L889">            }</span>
+<span class="nc" id="L890">        }</span>
+<span class="nc" id="L891">    }</span>
+<span class="nc" id="L892">}</span>
+
+@Composable
+private fun GeographyImageDialog(
+    visual: EnlargedGeographyVisual,
+    onDismiss: () -&gt; Unit,
+<span class="nc" id="L898">) {</span>
+<span class="nc" id="L899">    Dialog(</span>
+<span class="nc" id="L900">        onDismissRequest = onDismiss,</span>
+<span class="nc" id="L901">        properties = DialogProperties(usePlatformDefaultWidth = false),</span>
+<span class="nc" id="L902">    ) {</span>
+<span class="nc" id="L903">        Box(</span>
+<span class="nc" id="L904">            modifier = Modifier</span>
+<span class="nc" id="L905">                .fillMaxSize()</span>
+<span class="nc" id="L906">                .background(Color(0xEE071421))</span>
+<span class="nc" id="L907">                .padding(16.dp)</span>
+<span class="nc" id="L908">                .testTag(&quot;geography_image_dialog&quot;),</span>
+<span class="nc" id="L909">            contentAlignment = Alignment.Center,</span>
+        ) {
+<span class="nc bnc" id="L911" title="All 2 branches missed.">            if (visual.kind == GeographyVisualKind.Flag) {</span>
+<span class="nc" id="L912">                CountryFlagArt(</span>
+<span class="nc" id="L913">                    country = visual.country,</span>
+<span class="nc" id="L914">                    modifier = Modifier</span>
+<span class="nc" id="L915">                        .fillMaxWidth()</span>
+<span class="nc" id="L916">                        .aspectRatio(1.55f),</span>
+                )
+<span class="nc" id="L918">            } else {</span>
+<span class="nc" id="L919">                CountryMapArt(</span>
+<span class="nc" id="L920">                    country = visual.country,</span>
+<span class="nc" id="L921">                    modifier = Modifier</span>
+<span class="nc" id="L922">                        .fillMaxWidth()</span>
+<span class="nc" id="L923">                        .aspectRatio(1f),</span>
+                )
+            }
+
+<span class="nc" id="L927">            IconButton(</span>
+<span class="nc" id="L928">                onClick = onDismiss,</span>
+<span class="nc" id="L929">                modifier = Modifier</span>
+<span class="nc" id="L930">                    .align(Alignment.TopEnd)</span>
+<span class="nc" id="L931">                    .size(56.dp)</span>
+<span class="nc" id="L932">                    .testTag(&quot;geography_image_close&quot;),</span>
+<span class="nc" id="L933">            ) {</span>
+<span class="nc" id="L934">                Icon(</span>
+<span class="nc" id="L935">                    Icons.Filled.Close,</span>
+<span class="nc" id="L936">                    contentDescription = &quot;关闭大图&quot;,</span>
+<span class="nc" id="L937">                    tint = Color.White,</span>
+                )
+<span class="nc" id="L939">            }</span>
+<span class="nc" id="L940">        }</span>
+<span class="nc" id="L941">    }</span>
+<span class="nc" id="L942">}</span>
+
+@Composable
+private fun CountryFlagArt(
+    country: GeographyCountry,
+<span class="nc" id="L947">    modifier: Modifier = Modifier,</span>
+<span class="nc bnc" id="L948" title="All 2 branches missed.">) {</span>
+<span class="nc" id="L949">    val handDrawnFlagIds = remember {</span>
+<span class="nc" id="L950">        setOf(&quot;chn&quot;, &quot;jpn&quot;, &quot;usa&quot;, &quot;can&quot;, &quot;bra&quot;, &quot;aus&quot;, &quot;fra&quot;, &quot;deu&quot;, &quot;ind&quot;, &quot;egy&quot;, &quot;zaf&quot;, &quot;gbr&quot;)</span>
+    }
+
+<span class="nc bnc" id="L953" title="All 2 branches missed.">    if (country.id in handDrawnFlagIds) {</span>
+<span class="nc" id="L954">        Canvas(</span>
+<span class="nc" id="L955">            modifier = modifier</span>
+<span class="nc" id="L956">                .clip(RoundedCornerShape(8.dp))</span>
+<span class="nc" id="L957">                .background(Color.White)</span>
+<span class="nc" id="L958">                .border(2.dp, Color(0x33000000), RoundedCornerShape(8.dp)),</span>
+<span class="nc bnc" id="L959" title="All 2 branches missed.">        ) {</span>
+<span class="nc" id="L960">            drawFlag(country.id)</span>
+<span class="nc" id="L961">        }</span>
+<span class="nc" id="L962">    } else {</span>
+<span class="nc" id="L963">        Box(</span>
+<span class="nc" id="L964">            modifier = modifier</span>
+<span class="nc" id="L965">                .clip(RoundedCornerShape(8.dp))</span>
+<span class="nc" id="L966">                .background(Color.White)</span>
+<span class="nc" id="L967">                .border(2.dp, Color(0x33000000), RoundedCornerShape(8.dp))</span>
+<span class="nc" id="L968">                .padding(4.dp),</span>
+<span class="nc" id="L969">            contentAlignment = Alignment.Center,</span>
+        ) {
+<span class="nc" id="L971">            Text(</span>
+<span class="nc bnc" id="L972" title="All 2 branches missed.">                text = country.flagEmoji.ifBlank { country.cca2 },</span>
+<span class="nc" id="L973">                style = MaterialTheme.typography.displayMedium,</span>
+<span class="nc" id="L974">                textAlign = TextAlign.Center,</span>
+            )
+<span class="nc" id="L976">        }</span>
+    }
+<span class="nc" id="L978">}</span>
+
+@Composable
+private fun CountryMapArt(
+    country: GeographyCountry,
+<span class="nc" id="L983">    modifier: Modifier = Modifier,</span>
+<span class="nc bnc" id="L984" title="All 2 branches missed.">) {</span>
+<span class="nc" id="L985">    Canvas(</span>
+<span class="nc" id="L986">        modifier = modifier</span>
+<span class="nc" id="L987">            .clip(RoundedCornerShape(8.dp))</span>
+<span class="nc" id="L988">            .background(Color(0xFFE6F4FF)),</span>
+<span class="nc bnc" id="L989" title="All 2 branches missed.">    ) {</span>
+<span class="nc" id="L990">        drawGlobe(country)</span>
+<span class="nc" id="L991">    }</span>
+<span class="nc" id="L992">}</span>
+
+private fun DrawScope.drawFlag(countryId: String) {
+<span class="nc bnc" id="L995" title="All 13 branches missed.">    when (countryId) {</span>
+<span class="nc" id="L996">        &quot;chn&quot; -&gt; drawChinaFlag()</span>
+        &quot;jpn&quot; -&gt; {
+<span class="nc" id="L998">            drawRect(Color.White)</span>
+<span class="nc" id="L999">            drawCircle(Color(0xFFBC002D), radius = size.minDimension * 0.18f, center = center)</span>
+        }
+
+<span class="nc" id="L1002">        &quot;usa&quot; -&gt; drawUnitedStatesFlag()</span>
+<span class="nc" id="L1003">        &quot;can&quot; -&gt; drawCanadaFlag()</span>
+<span class="nc" id="L1004">        &quot;bra&quot; -&gt; drawBrazilFlag()</span>
+<span class="nc" id="L1005">        &quot;aus&quot; -&gt; drawAustraliaFlag()</span>
+<span class="nc" id="L1006">        &quot;fra&quot; -&gt; drawVerticalTricolor(Color(0xFF0055A4), Color.White, Color(0xFFEF4135))</span>
+<span class="nc" id="L1007">        &quot;deu&quot; -&gt; drawHorizontalTricolor(Color.Black, Color(0xFFDD0000), Color(0xFFFFCE00))</span>
+<span class="nc" id="L1008">        &quot;ind&quot; -&gt; drawIndiaFlag()</span>
+<span class="nc" id="L1009">        &quot;egy&quot; -&gt; drawHorizontalTricolor(Color(0xFFCE1126), Color.White, Color.Black)</span>
+<span class="nc" id="L1010">        &quot;zaf&quot; -&gt; drawSouthAfricaFlag()</span>
+<span class="nc" id="L1011">        &quot;gbr&quot; -&gt; drawUnitedKingdomFlag()</span>
+<span class="nc" id="L1012">        else -&gt; drawRect(Color(0xFFE6F4FF))</span>
+    }
+<span class="nc" id="L1014">}</span>
+
+private fun DrawScope.drawChinaFlag() {
+<span class="nc" id="L1017">    drawRect(Color(0xFFDE2910))</span>
+<span class="nc" id="L1018">    drawStar(center = Offset(size.width * 0.2f, size.height * 0.28f), radius = size.height * 0.12f, color = Color(0xFFFFDE00))</span>
+<span class="nc" id="L1019">    listOf(</span>
+<span class="nc" id="L1020">        Offset(size.width * 0.34f, size.height * 0.16f),</span>
+<span class="nc" id="L1021">        Offset(size.width * 0.40f, size.height * 0.28f),</span>
+<span class="nc" id="L1022">        Offset(size.width * 0.40f, size.height * 0.42f),</span>
+<span class="nc" id="L1023">        Offset(size.width * 0.34f, size.height * 0.54f),</span>
+<span class="nc" id="L1024">    ).forEach {</span>
+<span class="nc" id="L1025">        drawStar(center = it, radius = size.height * 0.04f, color = Color(0xFFFFDE00))</span>
+<span class="nc" id="L1026">    }</span>
+<span class="nc" id="L1027">}</span>
+
+private fun DrawScope.drawUnitedStatesFlag() {
+<span class="nc" id="L1030">    val stripeHeight = size.height / 13f</span>
+<span class="nc bnc" id="L1031" title="All 2 branches missed.">    repeat(13) { index -&gt;</span>
+<span class="nc" id="L1032">        drawRect(</span>
+<span class="nc bnc" id="L1033" title="All 2 branches missed.">            color = if (index % 2 == 0) Color(0xFFB22234) else Color.White,</span>
+<span class="nc" id="L1034">            topLeft = Offset(0f, stripeHeight * index),</span>
+<span class="nc" id="L1035">            size = Size(size.width, stripeHeight),</span>
+        )
+<span class="nc" id="L1037">    }</span>
+<span class="nc" id="L1038">    drawRect(Color(0xFF3C3B6E), size = Size(size.width * 0.42f, stripeHeight * 7f))</span>
+<span class="nc bnc" id="L1039" title="All 2 branches missed.">    repeat(5) { row -&gt;</span>
+<span class="nc bnc" id="L1040" title="All 2 branches missed.">        repeat(6) { column -&gt;</span>
+<span class="nc" id="L1041">            drawCircle(</span>
+<span class="nc" id="L1042">                color = Color.White,</span>
+<span class="nc" id="L1043">                radius = size.height * 0.012f,</span>
+<span class="nc" id="L1044">                center = Offset(size.width * (0.06f + column * 0.06f), size.height * (0.08f + row * 0.095f)),</span>
+            )
+<span class="nc" id="L1046">        }</span>
+<span class="nc" id="L1047">    }</span>
+<span class="nc" id="L1048">}</span>
+
+private fun DrawScope.drawCanadaFlag() {
+<span class="nc" id="L1051">    drawRect(Color.White)</span>
+<span class="nc" id="L1052">    drawRect(Color(0xFFD52B1E), size = Size(size.width * 0.25f, size.height))</span>
+<span class="nc" id="L1053">    drawRect(</span>
+<span class="nc" id="L1054">        color = Color(0xFFD52B1E),</span>
+<span class="nc" id="L1055">        topLeft = Offset(size.width * 0.75f, 0f),</span>
+<span class="nc" id="L1056">        size = Size(size.width * 0.25f, size.height),</span>
+    )
+<span class="nc" id="L1058">    drawStar(center = center, radius = size.height * 0.18f, color = Color(0xFFD52B1E), points = 8)</span>
+<span class="nc" id="L1059">}</span>
+
+private fun DrawScope.drawBrazilFlag() {
+<span class="nc" id="L1062">    drawRect(Color(0xFF009B3A))</span>
+<span class="nc" id="L1063">    val diamond = Path().apply {</span>
+<span class="nc" id="L1064">        moveTo(size.width * 0.5f, size.height * 0.12f)</span>
+<span class="nc" id="L1065">        lineTo(size.width * 0.88f, size.height * 0.5f)</span>
+<span class="nc" id="L1066">        lineTo(size.width * 0.5f, size.height * 0.88f)</span>
+<span class="nc" id="L1067">        lineTo(size.width * 0.12f, size.height * 0.5f)</span>
+<span class="nc" id="L1068">        close()</span>
+<span class="nc" id="L1069">    }</span>
+<span class="nc" id="L1070">    drawPath(diamond, Color(0xFFFFDF00))</span>
+<span class="nc" id="L1071">    drawCircle(Color(0xFF002776), radius = size.height * 0.22f, center = center)</span>
+<span class="nc" id="L1072">    drawLine(</span>
+<span class="nc" id="L1073">        color = Color.White,</span>
+<span class="nc" id="L1074">        start = Offset(size.width * 0.32f, size.height * 0.45f),</span>
+<span class="nc" id="L1075">        end = Offset(size.width * 0.68f, size.height * 0.55f),</span>
+<span class="nc" id="L1076">        strokeWidth = size.height * 0.035f,</span>
+<span class="nc" id="L1077">        cap = StrokeCap.Round,</span>
+    )
+<span class="nc" id="L1079">}</span>
+
+private fun DrawScope.drawAustraliaFlag() {
+<span class="nc" id="L1082">    drawRect(Color(0xFF012169))</span>
+<span class="nc" id="L1083">    drawUnitedKingdomFlag(Size(size.width * 0.46f, size.height * 0.52f))</span>
+<span class="nc" id="L1084">    drawStar(Offset(size.width * 0.72f, size.height * 0.32f), size.height * 0.08f, Color.White, points = 7)</span>
+<span class="nc" id="L1085">    drawStar(Offset(size.width * 0.62f, size.height * 0.70f), size.height * 0.06f, Color.White, points = 7)</span>
+<span class="nc" id="L1086">    drawStar(Offset(size.width * 0.82f, size.height * 0.68f), size.height * 0.05f, Color.White, points = 7)</span>
+<span class="nc" id="L1087">}</span>
+
+private fun DrawScope.drawIndiaFlag() {
+<span class="nc" id="L1090">    drawHorizontalTricolor(Color(0xFFFF9933), Color.White, Color(0xFF138808))</span>
+<span class="nc" id="L1091">    drawCircle(Color(0xFF000080), radius = size.height * 0.11f, center = center, style = Stroke(width = size.height * 0.018f))</span>
+<span class="nc bnc" id="L1092" title="All 2 branches missed.">    repeat(12) { index -&gt;</span>
+<span class="nc" id="L1093">        val angle = Math.toRadians((index * 30).toDouble())</span>
+<span class="nc" id="L1094">        drawLine(</span>
+<span class="nc" id="L1095">            color = Color(0xFF000080),</span>
+<span class="nc" id="L1096">            start = center,</span>
+<span class="nc" id="L1097">            end = Offset(</span>
+<span class="nc" id="L1098">                center.x + cos(angle).toFloat() * size.height * 0.105f,</span>
+<span class="nc" id="L1099">                center.y + sin(angle).toFloat() * size.height * 0.105f,</span>
+            ),
+<span class="nc" id="L1101">            strokeWidth = size.height * 0.006f,</span>
+        )
+<span class="nc" id="L1103">    }</span>
+<span class="nc" id="L1104">}</span>
+
+private fun DrawScope.drawSouthAfricaFlag() {
+<span class="nc" id="L1107">    drawRect(Color(0xFFDE3831))</span>
+<span class="nc" id="L1108">    drawRect(Color(0xFF002395), topLeft = Offset(0f, size.height * 0.5f), size = Size(size.width, size.height * 0.5f))</span>
+<span class="nc" id="L1109">    val green = Path().apply {</span>
+<span class="nc" id="L1110">        moveTo(0f, size.height * 0.08f)</span>
+<span class="nc" id="L1111">        lineTo(size.width * 0.46f, size.height * 0.5f)</span>
+<span class="nc" id="L1112">        lineTo(0f, size.height * 0.92f)</span>
+<span class="nc" id="L1113">        lineTo(0f, size.height * 0.68f)</span>
+<span class="nc" id="L1114">        lineTo(size.width * 0.25f, size.height * 0.5f)</span>
+<span class="nc" id="L1115">        lineTo(0f, size.height * 0.32f)</span>
+<span class="nc" id="L1116">        close()</span>
+<span class="nc" id="L1117">    }</span>
+<span class="nc" id="L1118">    drawPath(green, Color.White)</span>
+<span class="nc" id="L1119">    drawPath(green, Color(0xFF007A4D))</span>
+<span class="nc" id="L1120">    val black = Path().apply {</span>
+<span class="nc" id="L1121">        moveTo(0f, size.height * 0.20f)</span>
+<span class="nc" id="L1122">        lineTo(size.width * 0.22f, size.height * 0.5f)</span>
+<span class="nc" id="L1123">        lineTo(0f, size.height * 0.80f)</span>
+<span class="nc" id="L1124">        close()</span>
+<span class="nc" id="L1125">    }</span>
+<span class="nc" id="L1126">    drawPath(black, Color(0xFF000000))</span>
+<span class="nc" id="L1127">}</span>
+
+<span class="nc" id="L1129">private fun DrawScope.drawUnitedKingdomFlag(flagSize: Size = size) {</span>
+<span class="nc" id="L1130">    val scaleX = flagSize.width / size.width</span>
+<span class="nc" id="L1131">    val scaleY = flagSize.height / size.height</span>
+<span class="nc" id="L1132">    fun sx(value: Float) = value * scaleX</span>
+<span class="nc" id="L1133">    fun sy(value: Float) = value * scaleY</span>
+<span class="nc" id="L1134">    drawRect(Color(0xFF012169), size = flagSize)</span>
+<span class="nc" id="L1135">    drawLine(Color.White, Offset(0f, 0f), Offset(flagSize.width, flagSize.height), strokeWidth = sy(size.height * 0.20f))</span>
+<span class="nc" id="L1136">    drawLine(Color.White, Offset(flagSize.width, 0f), Offset(0f, flagSize.height), strokeWidth = sy(size.height * 0.20f))</span>
+<span class="nc" id="L1137">    drawLine(Color(0xFFC8102E), Offset(0f, 0f), Offset(flagSize.width, flagSize.height), strokeWidth = sy(size.height * 0.09f))</span>
+<span class="nc" id="L1138">    drawLine(Color(0xFFC8102E), Offset(flagSize.width, 0f), Offset(0f, flagSize.height), strokeWidth = sy(size.height * 0.09f))</span>
+<span class="nc" id="L1139">    drawRect(</span>
+<span class="nc" id="L1140">        Color.White,</span>
+<span class="nc" id="L1141">        topLeft = Offset(0f, flagSize.height * 0.38f),</span>
+<span class="nc" id="L1142">        size = Size(flagSize.width, sy(size.height * 0.24f)),</span>
+    )
+<span class="nc" id="L1144">    drawRect(</span>
+<span class="nc" id="L1145">        Color.White,</span>
+<span class="nc" id="L1146">        topLeft = Offset(flagSize.width * 0.40f, 0f),</span>
+<span class="nc" id="L1147">        size = Size(sx(size.width * 0.20f), flagSize.height),</span>
+    )
+<span class="nc" id="L1149">    drawRect(</span>
+<span class="nc" id="L1150">        Color(0xFFC8102E),</span>
+<span class="nc" id="L1151">        topLeft = Offset(0f, flagSize.height * 0.43f),</span>
+<span class="nc" id="L1152">        size = Size(flagSize.width, sy(size.height * 0.14f)),</span>
+    )
+<span class="nc" id="L1154">    drawRect(</span>
+<span class="nc" id="L1155">        Color(0xFFC8102E),</span>
+<span class="nc" id="L1156">        topLeft = Offset(flagSize.width * 0.44f, 0f),</span>
+<span class="nc" id="L1157">        size = Size(sx(size.width * 0.12f), flagSize.height),</span>
+    )
+<span class="nc" id="L1159">}</span>
+
+private fun DrawScope.drawVerticalTricolor(left: Color, middle: Color, right: Color) {
+<span class="nc" id="L1162">    val third = size.width / 3f</span>
+<span class="nc" id="L1163">    drawRect(left, size = Size(third, size.height))</span>
+<span class="nc" id="L1164">    drawRect(middle, topLeft = Offset(third, 0f), size = Size(third, size.height))</span>
+<span class="nc" id="L1165">    drawRect(right, topLeft = Offset(third * 2f, 0f), size = Size(third, size.height))</span>
+<span class="nc" id="L1166">}</span>
+
+private fun DrawScope.drawHorizontalTricolor(top: Color, middle: Color, bottom: Color) {
+<span class="nc" id="L1169">    val third = size.height / 3f</span>
+<span class="nc" id="L1170">    drawRect(top, size = Size(size.width, third))</span>
+<span class="nc" id="L1171">    drawRect(middle, topLeft = Offset(0f, third), size = Size(size.width, third))</span>
+<span class="nc" id="L1172">    drawRect(bottom, topLeft = Offset(0f, third * 2f), size = Size(size.width, third))</span>
+<span class="nc" id="L1173">}</span>
+
+<span class="nc" id="L1175">private fun DrawScope.drawStar(center: Offset, radius: Float, color: Color, points: Int = 5) {</span>
+<span class="nc" id="L1176">    val path = Path()</span>
+<span class="nc" id="L1177">    val innerRadius = radius * 0.45f</span>
+<span class="nc bnc" id="L1178" title="All 2 branches missed.">    repeat(points * 2) { index -&gt;</span>
+<span class="nc" id="L1179">        val angle = -Math.PI / 2.0 + index * Math.PI / points</span>
+<span class="nc bnc" id="L1180" title="All 2 branches missed.">        val currentRadius = if (index % 2 == 0) radius else innerRadius</span>
+<span class="nc" id="L1181">        val point = Offset(</span>
+<span class="nc" id="L1182">            x = center.x + cos(angle).toFloat() * currentRadius,</span>
+<span class="nc" id="L1183">            y = center.y + sin(angle).toFloat() * currentRadius,</span>
+        )
+<span class="nc bnc" id="L1185" title="All 2 branches missed.">        if (index == 0) {</span>
+<span class="nc" id="L1186">            path.moveTo(point.x, point.y)</span>
+        } else {
+<span class="nc" id="L1188">            path.lineTo(point.x, point.y)</span>
+        }
+<span class="nc" id="L1190">    }</span>
+<span class="nc" id="L1191">    path.close()</span>
+<span class="nc" id="L1192">    drawPath(path, color)</span>
+<span class="nc" id="L1193">}</span>
+
+private fun DrawScope.drawGlobe(country: GeographyCountry) {
+<span class="nc" id="L1196">    val radius = size.minDimension * 0.43f</span>
+<span class="nc" id="L1197">    val globeCenter = center</span>
+<span class="nc" id="L1198">    drawCircle(Color(0xFF75C7F0), radius = radius, center = globeCenter)</span>
+<span class="nc" id="L1199">    drawCircle(Color(0xFF0B6FA4), radius = radius, center = globeCenter, style = Stroke(width = size.minDimension * 0.018f))</span>
+
+<span class="nc" id="L1201">    listOf(-60f, -30f, 0f, 30f, 60f).forEach { latitude -&gt;</span>
+<span class="nc" id="L1202">        val y = globeCenter.y - (latitude / 90f) * radius</span>
+<span class="nc" id="L1203">        val width = radius * 2f * cos(Math.toRadians(latitude.toDouble())).toFloat()</span>
+<span class="nc" id="L1204">        drawOval(</span>
+<span class="nc" id="L1205">            color = Color(0x55FFFFFF),</span>
+<span class="nc" id="L1206">            topLeft = Offset(globeCenter.x - width / 2f, y - radius * 0.06f),</span>
+<span class="nc" id="L1207">            size = Size(width, radius * 0.12f),</span>
+<span class="nc" id="L1208">            style = Stroke(width = size.minDimension * 0.006f),</span>
+        )
+<span class="nc" id="L1210">    }</span>
+
+<span class="nc" id="L1212">    listOf(-120f, -60f, 0f, 60f, 120f).forEach { longitude -&gt;</span>
+<span class="nc" id="L1213">        val x = globeCenter.x + (longitude / 180f) * radius</span>
+<span class="nc" id="L1214">        drawOval(</span>
+<span class="nc" id="L1215">            color = Color(0x55FFFFFF),</span>
+<span class="nc" id="L1216">            topLeft = Offset(x - radius * 0.18f, globeCenter.y - radius),</span>
+<span class="nc" id="L1217">            size = Size(radius * 0.36f, radius * 2f),</span>
+<span class="nc" id="L1218">            style = Stroke(width = size.minDimension * 0.006f),</span>
+        )
+<span class="nc" id="L1220">    }</span>
+
+<span class="nc" id="L1222">    drawLandBlobs(globeCenter, radius)</span>
+
+<span class="nc" id="L1224">    val marker = Offset(</span>
+<span class="nc" id="L1225">        x = globeCenter.x + (country.longitude / 180f) * radius,</span>
+<span class="nc" id="L1226">        y = globeCenter.y - (country.latitude / 90f) * radius,</span>
+    )
+<span class="nc" id="L1228">    drawCircle(Color.White, radius = size.minDimension * 0.065f, center = marker)</span>
+<span class="nc" id="L1229">    drawCircle(Color(0xFFEF476F), radius = size.minDimension * 0.045f, center = marker)</span>
+<span class="nc" id="L1230">    drawCircle(Color(0xFFFFD166), radius = size.minDimension * 0.018f, center = marker)</span>
+<span class="nc" id="L1231">}</span>
+
+private fun DrawScope.drawLandBlobs(globeCenter: Offset, radius: Float) {
+    fun blob(points: List&lt;Offset&gt;) {
+<span class="nc" id="L1235">        val path = Path()</span>
+<span class="nc" id="L1236">        points.forEachIndexed { index, point -&gt;</span>
+<span class="nc" id="L1237">            val mapped = Offset(globeCenter.x + point.x * radius, globeCenter.y + point.y * radius)</span>
+<span class="nc bnc" id="L1238" title="All 2 branches missed.">            if (index == 0) path.moveTo(mapped.x, mapped.y) else path.lineTo(mapped.x, mapped.y)</span>
+<span class="nc" id="L1239">        }</span>
+<span class="nc" id="L1240">        path.close()</span>
+<span class="nc" id="L1241">        drawPath(path, Color(0xFF55B96C))</span>
+<span class="nc" id="L1242">    }</span>
+
+<span class="nc" id="L1244">    blob(listOf(Offset(-0.72f, -0.45f), Offset(-0.28f, -0.62f), Offset(-0.10f, -0.18f), Offset(-0.34f, 0.05f), Offset(-0.62f, -0.10f)))</span>
+<span class="nc" id="L1245">    blob(listOf(Offset(-0.36f, 0.10f), Offset(-0.12f, 0.25f), Offset(-0.24f, 0.70f), Offset(-0.52f, 0.58f), Offset(-0.58f, 0.24f)))</span>
+<span class="nc" id="L1246">    blob(listOf(Offset(-0.06f, -0.50f), Offset(0.52f, -0.56f), Offset(0.74f, -0.18f), Offset(0.40f, 0.10f), Offset(0.02f, -0.04f)))</span>
+<span class="nc" id="L1247">    blob(listOf(Offset(0.24f, 0.12f), Offset(0.50f, 0.24f), Offset(0.40f, 0.66f), Offset(0.12f, 0.58f)))</span>
+<span class="nc" id="L1248">    blob(listOf(Offset(0.54f, 0.48f), Offset(0.78f, 0.58f), Offset(0.68f, 0.76f), Offset(0.46f, 0.66f)))</span>
+<span class="nc" id="L1249">}</span>
+
+@Preview(showBackground = true)
+@Composable
+<span class="nc" id="L1253">private fun GeographyScreenPreview() {</span>
+<span class="nc" id="L1254">    TinkTheme(dynamicColor = false) {</span>
+<span class="nc" id="L1255">        GeographyScreen(countries = GeographyData.previewCountries, enableFeedback = false)</span>
+<span class="nc" id="L1256">    }</span>
+<span class="nc" id="L1257">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

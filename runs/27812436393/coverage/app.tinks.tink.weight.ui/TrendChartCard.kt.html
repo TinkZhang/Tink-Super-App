@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrendChartCard.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.weight.ui</a> &gt; <span class="el_source">TrendChartCard.kt</span></div><h1>TrendChartCard.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.weight.ui
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AllInclusive
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.outlined.AllInclusive
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.tinks.tink.weight.TrendChartCardUiState
+import app.tinks.tink.weight.WeightEvent
+import app.tinks.tink.weight.data.Weight
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun TrendChartCard(
+    trendChartCardUiState: TrendChartCardUiState,
+<span class="nc" id="L61">    onEvent: (WeightEvent) -&gt; Unit = {},</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">) {</span>
+<span class="nc" id="L63">    ElevatedCard(</span>
+<span class="nc" id="L64">        modifier = Modifier</span>
+<span class="nc" id="L65">            .fillMaxWidth()</span>
+<span class="nc" id="L66">            .testTag(&quot;weight_trend_card&quot;),</span>
+<span class="nc" id="L67">        colors = CardDefaults.elevatedCardColors(</span>
+<span class="nc" id="L68">            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,</span>
+        ),
+<span class="nc" id="L70">        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),</span>
+<span class="nc" id="L71">    ) {</span>
+<span class="nc" id="L72">        Column(</span>
+<span class="nc" id="L73">            modifier = Modifier.padding(20.dp),</span>
+<span class="nc" id="L74">            verticalArrangement = Arrangement.spacedBy(18.dp),</span>
+        ) {
+<span class="nc" id="L76">            Row(</span>
+<span class="nc" id="L77">                modifier = Modifier.fillMaxWidth(),</span>
+<span class="nc" id="L78">                horizontalArrangement = Arrangement.SpaceBetween,</span>
+<span class="nc" id="L79">                verticalAlignment = Alignment.CenterVertically,</span>
+            ) {
+<span class="nc" id="L81">                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {</span>
+<span class="nc" id="L82">                    Text(</span>
+<span class="nc" id="L83">                        &quot;体重趋势&quot;,</span>
+<span class="nc" id="L84">                        style = MaterialTheme.typography.titleLarge,</span>
+<span class="nc" id="L85">                        color = MaterialTheme.colorScheme.onSurface,</span>
+                    )
+<span class="nc" id="L87">                    Text(</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">                        if (trendChartCardUiState.selectedIndex == 0) &quot;本月变化&quot; else &quot;全部记录&quot;,</span>
+<span class="nc" id="L89">                        style = MaterialTheme.typography.bodyMedium,</span>
+<span class="nc" id="L90">                        color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+                    )
+<span class="nc" id="L92">                }</span>
+<span class="nc" id="L93">                TrendRangeToggle(</span>
+<span class="nc" id="L94">                    selectedIndex = trendChartCardUiState.selectedIndex,</span>
+<span class="nc" id="L95">                    onSelected = { onEvent(WeightEvent.ChangeSelectedTrendIndex(it)) },</span>
+                )
+<span class="nc" id="L97">            }</span>
+
+<span class="nc" id="L99">            Box(</span>
+<span class="nc" id="L100">                modifier = Modifier</span>
+<span class="nc" id="L101">                    .fillMaxWidth()</span>
+<span class="nc" id="L102">                    .height(236.dp)</span>
+<span class="nc" id="L103">                    .testTag(&quot;weight_trend_chart&quot;)</span>
+            ) {
+<span class="nc bnc" id="L105" title="All 2 branches missed.">                if (trendChartCardUiState.weightList.isEmpty()) {</span>
+<span class="nc" id="L106">                    Text(</span>
+<span class="nc" id="L107">                        &quot;暂无趋势数据&quot;,</span>
+<span class="nc" id="L108">                        modifier = Modifier.align(Alignment.Center),</span>
+<span class="nc" id="L109">                        color = MaterialTheme.colorScheme.onSurfaceVariant,</span>
+                    )
+<span class="nc" id="L111">                } else {</span>
+<span class="nc" id="L112">                    WeightTrendCanvas(</span>
+<span class="nc" id="L113">                        weights = trendChartCardUiState.weightList,</span>
+<span class="nc" id="L114">                        modifier = Modifier.fillMaxSize(),</span>
+                    )
+                }
+<span class="nc" id="L117">            }</span>
+<span class="nc" id="L118">        }</span>
+<span class="nc" id="L119">    }</span>
+<span class="nc" id="L120">}</span>
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+<span class="nc" id="L124">private fun TrendRangeToggle(selectedIndex: Int, onSelected: (Int) -&gt; Unit) {</span>
+<span class="nc" id="L125">    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="nc" id="L126">        val options = listOf(&quot;本月&quot;, &quot;全部&quot;)</span>
+<span class="nc" id="L127">        val uncheckedIcons = listOf(Icons.Outlined.CalendarMonth, Icons.Outlined.AllInclusive)</span>
+<span class="nc" id="L128">        val checkedIcons = listOf(Icons.Filled.CalendarMonth, Icons.Filled.AllInclusive)</span>
+
+<span class="nc" id="L130">        options.forEachIndexed { index, label -&gt;</span>
+<span class="nc" id="L131">            ToggleButton(</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">                checked = selectedIndex == index,</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">                onCheckedChange = { onSelected(index) },</span>
+<span class="nc" id="L134">                modifier = Modifier</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">                    .testTag(&quot;weight_trend_${if (index == 0) &quot;month&quot; else &quot;all&quot;}&quot;)</span>
+<span class="nc" id="L136">                    .semantics { role = Role.RadioButton },</span>
+<span class="nc" id="L137">            ) {</span>
+<span class="nc" id="L138">                Icon(</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">                    imageVector = if (selectedIndex == index) checkedIcons[index] else uncheckedIcons[index],</span>
+<span class="nc" id="L140">                    contentDescription = label,</span>
+                )
+<span class="nc" id="L142">                Spacer(Modifier.width(6.dp))</span>
+<span class="nc" id="L143">                Text(label)</span>
+<span class="nc" id="L144">            }</span>
+<span class="nc" id="L145">        }</span>
+<span class="nc" id="L146">    }</span>
+<span class="nc" id="L147">}</span>
+
+@Composable
+<span class="nc bnc" id="L150" title="All 2 branches missed.">private fun WeightTrendCanvas(weights: List&lt;Weight&gt;, modifier: Modifier = Modifier) {</span>
+<span class="nc" id="L151">    val textMeasurer = rememberTextMeasurer()</span>
+<span class="nc" id="L152">    val primary = MaterialTheme.colorScheme.primary</span>
+<span class="nc" id="L153">    val outline = MaterialTheme.colorScheme.outlineVariant</span>
+<span class="nc" id="L154">    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant</span>
+<span class="nc" id="L155">    val sortedWeights = weights.sortedBy { it.createdTime }</span>
+
+<span class="nc" id="L157">    Canvas(modifier = modifier.padding(top = 8.dp, end = 8.dp, bottom = 6.dp)) {</span>
+<span class="nc" id="L158">        val leftPadding = 42.dp.toPx()</span>
+<span class="nc" id="L159">        val rightPadding = 10.dp.toPx()</span>
+<span class="nc" id="L160">        val topPadding = 10.dp.toPx()</span>
+<span class="nc" id="L161">        val bottomPadding = 34.dp.toPx()</span>
+<span class="nc" id="L162">        val chartLeft = leftPadding</span>
+<span class="nc" id="L163">        val chartRight = size.width - rightPadding</span>
+<span class="nc" id="L164">        val chartTop = topPadding</span>
+<span class="nc" id="L165">        val chartBottom = size.height - bottomPadding</span>
+<span class="nc" id="L166">        val chartWidth = (chartRight - chartLeft).coerceAtLeast(1f)</span>
+<span class="nc" id="L167">        val chartHeight = (chartBottom - chartTop).coerceAtLeast(1f)</span>
+
+<span class="nc" id="L169">        val minTimestamp = sortedWeights.first().createdTime</span>
+<span class="nc" id="L170">        val maxTimestamp = sortedWeights.last().createdTime</span>
+<span class="nc" id="L171">        val timestampRange = (maxTimestamp - minTimestamp).coerceAtLeast(1L)</span>
+
+<span class="nc bnc" id="L173" title="All 4 branches missed.">        val minWeightValue = sortedWeights.minOf { it.weight }</span>
+<span class="nc bnc" id="L174" title="All 4 branches missed.">        val maxWeightValue = sortedWeights.maxOf { it.weight }</span>
+<span class="nc" id="L175">        val paddedMinWeight = floor((minWeightValue - 1.0) * 2.0) / 2.0</span>
+<span class="nc" id="L176">        val paddedMaxWeight = ceil((maxWeightValue + 1.0) * 2.0) / 2.0</span>
+<span class="nc" id="L177">        val weightRange = (paddedMaxWeight - paddedMinWeight).coerceAtLeast(1.0)</span>
+
+        fun pointFor(weight: Weight): Offset {
+<span class="nc bnc" id="L180" title="All 2 branches missed.">            val timeProgress = if (sortedWeights.size == 1) {</span>
+<span class="nc" id="L181">                0.5f</span>
+            } else {
+<span class="nc" id="L183">                ((weight.createdTime - minTimestamp).toFloat() / timestampRange.toFloat())</span>
+<span class="nc" id="L184">                    .coerceIn(0f, 1f)</span>
+            }
+<span class="nc" id="L186">            val valueProgress = ((weight.weight - paddedMinWeight) / weightRange).toFloat()</span>
+<span class="nc" id="L187">                .coerceIn(0f, 1f)</span>
+<span class="nc" id="L188">            return Offset(</span>
+<span class="nc" id="L189">                x = chartLeft + chartWidth * timeProgress,</span>
+<span class="nc" id="L190">                y = chartBottom - chartHeight * valueProgress,</span>
+            )
+        }
+
+<span class="nc" id="L194">        val yTicks = buildWeightTicks(paddedMinWeight, paddedMaxWeight)</span>
+<span class="nc" id="L195">        yTicks.forEach { tick -&gt;</span>
+<span class="nc" id="L196">            val progress = ((tick - paddedMinWeight) / weightRange).toFloat().coerceIn(0f, 1f)</span>
+<span class="nc" id="L197">            val y = chartBottom - chartHeight * progress</span>
+<span class="nc" id="L198">            drawLine(</span>
+<span class="nc" id="L199">                color = outline,</span>
+<span class="nc" id="L200">                start = Offset(chartLeft, y),</span>
+<span class="nc" id="L201">                end = Offset(chartRight, y),</span>
+<span class="nc" id="L202">                strokeWidth = 1.dp.toPx(),</span>
+<span class="nc" id="L203">                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f)),</span>
+            )
+<span class="nc" id="L205">            drawText(</span>
+<span class="nc" id="L206">                textMeasurer = textMeasurer,</span>
+<span class="nc" id="L207">                text = &quot;%.1f&quot;.format(tick),</span>
+<span class="nc" id="L208">                topLeft = Offset(0f, y - 8.dp.toPx()),</span>
+<span class="nc" id="L209">                style = TextStyle(color = labelColor, fontSize = 10.sp),</span>
+            )
+<span class="nc" id="L211">        }</span>
+
+<span class="nc" id="L213">        val path = Path()</span>
+<span class="nc" id="L214">        sortedWeights.forEachIndexed { index, weight -&gt;</span>
+<span class="nc" id="L215">            val point = pointFor(weight)</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">            if (index == 0) {</span>
+<span class="nc" id="L217">                path.moveTo(point.x, point.y)</span>
+            } else {
+<span class="nc" id="L219">                path.lineTo(point.x, point.y)</span>
+            }
+<span class="nc" id="L221">        }</span>
+
+<span class="nc" id="L223">        drawPath(</span>
+<span class="nc" id="L224">            path = path,</span>
+<span class="nc" id="L225">            color = primary,</span>
+<span class="nc" id="L226">            style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round),</span>
+        )
+
+<span class="nc" id="L229">        val fillPath = Path().apply {</span>
+<span class="nc" id="L230">            addPath(path)</span>
+<span class="nc" id="L231">            lineTo(pointFor(sortedWeights.last()).x, chartBottom)</span>
+<span class="nc" id="L232">            lineTo(pointFor(sortedWeights.first()).x, chartBottom)</span>
+<span class="nc" id="L233">            close()</span>
+<span class="nc" id="L234">        }</span>
+<span class="nc" id="L235">        drawPath(</span>
+<span class="nc" id="L236">            path = fillPath,</span>
+<span class="nc" id="L237">            brush = Brush.verticalGradient(</span>
+<span class="nc" id="L238">                colors = listOf(primary.copy(alpha = 0.22f), Color.Transparent),</span>
+<span class="nc" id="L239">                startY = chartTop,</span>
+<span class="nc" id="L240">                endY = chartBottom,</span>
+            ),
+        )
+
+<span class="nc" id="L244">        sortedWeights.forEach { weight -&gt;</span>
+<span class="nc" id="L245">            val point = pointFor(weight)</span>
+<span class="nc" id="L246">            drawCircle(</span>
+<span class="nc" id="L247">                color = primary,</span>
+<span class="nc" id="L248">                radius = 4.dp.toPx(),</span>
+<span class="nc" id="L249">                center = point,</span>
+            )
+<span class="nc" id="L251">        }</span>
+
+<span class="nc" id="L253">        val dateFormatter = DateTimeFormatter.ofPattern(&quot;MM/dd&quot;)</span>
+<span class="nc" id="L254">        val startDate = Instant.ofEpochMilli(minTimestamp).atZone(ZoneId.systemDefault())</span>
+<span class="nc" id="L255">        val endDate = Instant.ofEpochMilli(maxTimestamp).atZone(ZoneId.systemDefault())</span>
+<span class="nc" id="L256">        drawText(</span>
+<span class="nc" id="L257">            textMeasurer = textMeasurer,</span>
+<span class="nc" id="L258">            text = startDate.format(dateFormatter),</span>
+<span class="nc" id="L259">            topLeft = Offset(chartLeft, chartBottom + 10.dp.toPx()),</span>
+<span class="nc" id="L260">            style = TextStyle(color = labelColor, fontSize = 10.sp),</span>
+        )
+<span class="nc" id="L262">        drawText(</span>
+<span class="nc" id="L263">            textMeasurer = textMeasurer,</span>
+<span class="nc" id="L264">            text = endDate.format(dateFormatter),</span>
+<span class="nc" id="L265">            topLeft = Offset(chartRight - 32.dp.toPx(), chartBottom + 10.dp.toPx()),</span>
+<span class="nc" id="L266">            style = TextStyle(color = labelColor, fontSize = 10.sp),</span>
+        )
+<span class="nc" id="L268">    }</span>
+<span class="nc" id="L269">}</span>
+
+private fun buildWeightTicks(minWeight: Double, maxWeight: Double): List&lt;Double&gt; {
+<span class="nc" id="L272">    val lower = min(minWeight, maxWeight)</span>
+<span class="nc" id="L273">    val upper = max(minWeight, maxWeight)</span>
+<span class="nc" id="L274">    val step = max(0.5, ceil((upper - lower) / 4.0 * 2.0) / 2.0)</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">    return List(5) { index -&gt; lower + step * index }</span>
+}
+
+@Preview
+@Composable
+<span class="nc" id="L280">private fun TrendChartCardPreview() {</span>
+<span class="nc" id="L281">    TrendChartCard(</span>
+<span class="nc" id="L282">        TrendChartCardUiState(</span>
+<span class="nc" id="L283">            selectedIndex = 1,</span>
+<span class="nc" id="L284">            weightList = listOf(</span>
+<span class="nc" id="L285">                Weight(id = 1, weight = 142.0, createdTime = 1767225600000),</span>
+<span class="nc" id="L286">                Weight(id = 2, weight = 141.2, createdTime = 1767657600000),</span>
+<span class="nc" id="L287">                Weight(id = 3, weight = 139.8, createdTime = 1768521600000),</span>
+<span class="nc" id="L288">                Weight(id = 4, weight = 140.4, createdTime = 1770249600000),</span>
+            )
+        )
+    )
+<span class="nc" id="L292">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

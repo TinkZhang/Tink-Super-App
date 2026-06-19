@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ZiViewModel.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">app.tinks.tink.zi</a> &gt; <span class="el_source">ZiViewModel.kt</span></div><h1>ZiViewModel.kt</h1><pre class="source lang-java linenums">package app.tinks.tink.zi
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.ui.components.AppSnackbarBus
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+sealed interface ZiEvent {
+<span class="nc" id="L19">    data class UpdateZi(val proficiency: Int, val zis: String) : ZiEvent</span>
+    object Refresh : ZiEvent
+    object DismissDialog : ZiEvent
+    object AddZiDialogOpen : ZiEvent
+    object GenerateStory : ZiEvent
+}
+
+<span class="nc" id="L26">data class ZiUiState(</span>
+<span class="nc" id="L27">    val isLoading: Boolean,</span>
+<span class="nc" id="L28">    val showDialog: Boolean,</span>
+<span class="nc" id="L29">    val learntZiNum: Int = 0,</span>
+<span class="nc" id="L30">    val allZis: List&lt;Zi&gt; = emptyList(),</span>
+<span class="nc" id="L31">    val isNetworkError: Boolean = false,</span>
+<span class="nc" id="L32">    val reviewList: List&lt;Zi&gt; = emptyList(),</span>
+<span class="nc" id="L33">)</span>
+
+<span class="nc" id="L35">data class ZiState(</span>
+<span class="nc" id="L36">    val learntZiNum: Int = 0,</span>
+<span class="nc" id="L37">    val showDialog: Boolean = false,</span>
+<span class="nc" id="L38">    val isNetworkError: Boolean = false,</span>
+<span class="nc" id="L39">    val allZis: List&lt;Zi&gt; = emptyList(),</span>
+<span class="nc" id="L40">    val isLoading: Boolean = true,</span>
+<span class="nc" id="L41">    val selectedIndex: Int = 0,</span>
+<span class="nc" id="L42">    val reviewList: List&lt;Zi&gt; = emptyList(),</span>
+<span class="nc" id="L43">) {</span>
+<span class="nc" id="L44">    fun toUiState(): ZiUiState = ZiUiState(</span>
+<span class="nc" id="L45">        isLoading = isLoading,</span>
+<span class="nc" id="L46">        showDialog = showDialog,</span>
+<span class="nc" id="L47">        learntZiNum = learntZiNum,</span>
+<span class="nc" id="L48">        reviewList = reviewList,</span>
+<span class="nc" id="L49">        isNetworkError = isNetworkError,</span>
+<span class="nc" id="L50">        allZis = allZis,</span>
+<span class="nc" id="L51">    )</span>
+}
+
+<span class="nc" id="L54">@HiltViewModel</span>
+<span class="nc" id="L55">class ZiViewModel @Inject constructor(</span>
+<span class="nc" id="L56">    private val repository: ZiRepository</span>
+) : ViewModel() {
+
+<span class="nc" id="L59">    private val _state = MutableStateFlow(ZiState())</span>
+<span class="nc" id="L60">    val uiState = _state.map { it.toUiState() }</span>
+<span class="nc" id="L61">        .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())</span>
+
+<span class="nc" id="L63">    init {</span>
+<span class="nc" id="L64">        refreshAllData()</span>
+<span class="nc" id="L65">    }</span>
+
+    fun onEvent(event: ZiEvent) {
+<span class="nc" id="L68">        when (event) {</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">            is ZiEvent.UpdateZi -&gt; {</span>
+<span class="nc" id="L70">                _state.update { it.copy(showDialog = false) }</span>
+<span class="nc" id="L71">                updateZi(</span>
+<span class="nc" id="L72">                    event.proficiency,</span>
+<span class="nc" id="L73">                    event.zis.filterNot { it.isWhitespace() })</span>
+            }
+
+<span class="nc bnc" id="L76" title="All 2 branches missed.">            ZiEvent.Refresh -&gt; refreshAllData()</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">            is ZiEvent.DismissDialog -&gt; _state.update { it.copy(showDialog = false) }</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">            is ZiEvent.AddZiDialogOpen -&gt; _state.update { it.copy(showDialog = true) }</span>
+<span class="nc" id="L79">            ZiEvent.GenerateStory -&gt; generateStory()</span>
+        }
+<span class="nc" id="L81">    }</span>
+
+    fun refreshAllData() {
+<span class="nc" id="L84">        repository.getAllZis().onEach { result -&gt;</span>
+<span class="nc" id="L85">            when (result) {</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">                is ApiResult.Loading -&gt; _state.update {</span>
+<span class="nc" id="L87">                    it.copy(</span>
+<span class="nc" id="L88">                        isLoading = true, isNetworkError = false</span>
+<span class="nc" id="L89">                    )</span>
+                }
+
+<span class="nc bnc" id="L92" title="All 2 branches missed.">                is ApiResult.Success -&gt; _state.update {</span>
+<span class="nc" id="L93">                    it.copy(</span>
+<span class="nc" id="L94">                        isLoading = false,</span>
+<span class="nc" id="L95">                        isNetworkError = false,</span>
+<span class="nc" id="L96">                        allZis = result.data,</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">                        learntZiNum = result.data.filter { it.proficiency == 5 }.size,</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">                        reviewList = result.data.filter { it.proficiency &lt; 5 }</span>
+<span class="nc" id="L99">                            .sortedBy { it.proficiency }.take(9),</span>
+<span class="nc" id="L100">                    )</span>
+                }
+
+<span class="nc" id="L103">                is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L104">                    it.copy(</span>
+<span class="nc" id="L105">                        isLoading = false, isNetworkError = true</span>
+<span class="nc" id="L106">                    )</span>
+<span class="nc" id="L107">                }.also {</span>
+<span class="nc" id="L108">                    AppSnackbarBus.showApiFailure(onRetry = ::refreshAllData)</span>
+<span class="nc" id="L109">                }</span>
+            }
+<span class="nc" id="L111">        }.launchIn(viewModelScope)</span>
+<span class="nc" id="L112">    }</span>
+
+    private fun updateZi(proficiency: Int, zis: String) {
+<span class="nc" id="L115">        repository.putZi(zis, proficiency).onEach { result -&gt;</span>
+<span class="nc" id="L116">            when (result) {</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">                is ApiResult.Loading -&gt; _state.update {</span>
+<span class="nc" id="L118">                    it.copy(</span>
+<span class="nc" id="L119">                        isLoading = true, isNetworkError = false</span>
+<span class="nc" id="L120">                    )</span>
+                }
+
+<span class="nc bnc" id="L123" title="All 2 branches missed.">                is ApiResult.Success -&gt; _state.update {</span>
+<span class="nc" id="L124">                    refreshAllData()</span>
+<span class="nc" id="L125">                    it.copy(</span>
+<span class="nc" id="L126">                        isLoading = false,</span>
+<span class="nc" id="L127">                        isNetworkError = false,</span>
+<span class="nc" id="L128">                    )</span>
+                }
+
+<span class="nc" id="L131">                is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L132">                    it.copy(</span>
+<span class="nc" id="L133">                        isLoading = false, isNetworkError = true</span>
+<span class="nc" id="L134">                    )</span>
+<span class="nc" id="L135">                }.also {</span>
+<span class="nc" id="L136">                    AppSnackbarBus.showApiFailure(onRetry = ::refreshAllData)</span>
+<span class="nc" id="L137">                }</span>
+            }
+<span class="nc" id="L139">        }.launchIn(viewModelScope)</span>
+<span class="nc" id="L140">    }</span>
+
+    private fun generateStory() {
+<span class="nc" id="L143">        viewModelScope.launch {</span>
+<span class="nc" id="L144">            val length = repository.getStoryLength()</span>
+<span class="nc" id="L145">            repository.generateStory(length = length).onEach { result -&gt;</span>
+<span class="nc" id="L146">                when (result) {</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">                    is ApiResult.Loading -&gt; _state.update {</span>
+<span class="nc" id="L148">                        it.copy(isLoading = true)</span>
+                    }
+
+<span class="nc bnc" id="L151" title="All 2 branches missed.">                    is ApiResult.Success -&gt; _state.update {</span>
+<span class="nc" id="L152">                        it.copy(isLoading = false)</span>
+<span class="nc" id="L153">                    }.also {</span>
+<span class="nc" id="L154">                        AppSnackbarBus.showMessage(&quot;故事生成成功&quot;)</span>
+<span class="nc" id="L155">                    }</span>
+
+<span class="nc" id="L157">                    is ApiResult.Error -&gt; _state.update {</span>
+<span class="nc" id="L158">                        it.copy(isLoading = false)</span>
+<span class="nc" id="L159">                    }.also {</span>
+<span class="nc" id="L160">                        AppSnackbarBus.showMessage(&quot;故事生成失败&quot;)</span>
+<span class="nc" id="L161">                    }</span>
+                }
+<span class="nc" id="L163">            }.launchIn(viewModelScope)</span>
+<span class="nc" id="L164">        }</span>
+<span class="nc" id="L165">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
