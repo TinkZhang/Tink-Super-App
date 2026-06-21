@@ -313,8 +313,26 @@ private object NoopBookApi : BookApi {
 private object NoopTimeApi : TimeApi {
     override suspend fun getStatistics(startDate: String, endDate: String): List<TimeStatisticDto> = emptyList()
     override suspend fun getTimeEntries(startDate: String, endDate: String): List<TimeEntryDto> = emptyList()
-    override suspend fun createTimeEntry(payload: TimeUpsertRequest) = Unit
-    override suspend fun updateTimeEntry(timeId: Long, payload: TimeUpsertRequest) = Unit
+    override suspend fun createTimeEntry(payload: TimeUpsertRequest): TimeEntryDto =
+        TimeEntryDto(
+            id = 1,
+            type = payload.type,
+            start = payload.start,
+            end = payload.end,
+            title = payload.title,
+            description = payload.description,
+        )
+
+    override suspend fun updateTimeEntry(timeId: Long, payload: TimeUpsertRequest): TimeEntryDto =
+        TimeEntryDto(
+            id = timeId,
+            type = payload.type,
+            start = payload.start,
+            end = payload.end,
+            title = payload.title,
+            description = payload.description,
+        )
+
     override suspend fun deleteTimeEntry(timeId: Long) = Unit
     override suspend fun getTimeLabels(type: Int?): List<TimeLabelDto> = emptyList()
     override suspend fun createTimeLabel(payload: TimeLabelCreateRequest): TimeLabelDto = error("not used")

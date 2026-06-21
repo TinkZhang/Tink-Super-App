@@ -9,6 +9,7 @@ class NavigationHierarchyTest {
     fun topDestination_returnsSelf_forTopLevelDestinations() {
         assertEquals(ScreenWeight, ScreenWeight.topDestination())
         assertEquals(ScreenTime, ScreenTime.topDestination())
+        assertEquals(ScreenDiaryLoom, ScreenDiaryLoom.topDestination())
     }
 
     @Test

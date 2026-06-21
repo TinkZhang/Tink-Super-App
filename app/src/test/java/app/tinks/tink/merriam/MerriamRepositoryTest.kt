@@ -74,6 +74,7 @@ class MerriamRepositoryTest {
 
     private class FakeMerriamDao : MerriamDao {
         override fun getAllRootsFlow(): Flow<List<RootEntity>> = flowOf(emptyList())
+        override suspend fun getRootsBetween(startExclusive: Int, endInclusive: Int): List<RootEntity> = emptyList()
     }
 
     private class FakeMerriamApi(

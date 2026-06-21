@@ -13,9 +13,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Year
 import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
 
 @Composable
 fun YearContributionGraph(
@@ -28,7 +30,7 @@ fun YearContributionGraph(
     val days = remember(year) {
         val firstDay = LocalDate.of(year, 1, 1)
         val lastDay = LocalDate.of(year, 12, 31)
-        val gridStart = firstDay.minusDays((firstDay.dayOfWeek.value % 7).toLong())
+        val gridStart = firstDay.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         val weekCount = (ChronoUnit.WEEKS.between(gridStart, lastDay) + 1).toInt()
         (0 until weekCount).flatMap { week ->
             (0..6).map { day ->

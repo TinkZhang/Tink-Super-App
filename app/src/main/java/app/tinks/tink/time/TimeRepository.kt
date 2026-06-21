@@ -48,6 +48,7 @@ open class TimeRepository @Inject constructor(
         emit(
             safeApiCall {
                 api.createTimeEntry(payload = payload)
+                Unit
             }
         )
     }.flowOn(Dispatchers.IO)
@@ -57,6 +58,7 @@ open class TimeRepository @Inject constructor(
         emit(
             safeApiCall {
                 api.updateTimeEntry(timeId = timeId, payload = payload)
+                Unit
             }
         )
     }.flowOn(Dispatchers.IO)

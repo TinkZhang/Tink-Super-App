@@ -21,6 +21,7 @@ import app.tinks.tink.time.TimeStatistic
 import app.tinks.tink.time.TimeUiState
 import app.tinks.tink.book.Book
 import app.tinks.tink.book.BookDraft
+import app.tinks.tink.book.BookPageFormat
 import app.tinks.tink.book.ArchiveStatus
 import app.tinks.tink.book.BookListCard
 import app.tinks.tink.book.BookSearchResultCard
@@ -28,6 +29,17 @@ import app.tinks.tink.book.BookScreen
 import app.tinks.tink.book.BookState
 import app.tinks.tink.book.BookUiState
 import app.tinks.tink.book.BooksScreenState
+import app.tinks.tink.diary.DailyRecord
+import app.tinks.tink.diary.DiaryScreen
+import app.tinks.tink.diary.DiaryUiState
+import app.tinks.tink.diary.RecordStatus
+import app.tinks.tink.diary.WeeklyRecordData
+import app.tinks.tink.diary.diarySampleDay
+import app.tinks.tink.diary.diarySampleWeek
+import app.tinks.tink.home.HomeReadKeeperBook
+import app.tinks.tink.home.HomeScreen
+import app.tinks.tink.home.HomeSnapshot
+import app.tinks.tink.home.HomeUiState
 import app.tinks.tink.lottery.LOTTERY_TYPE_DA_LE_TOU
 import app.tinks.tink.lottery.LotteryMatchSummary
 import app.tinks.tink.lottery.LotteryNumbers
@@ -60,6 +72,39 @@ fun TinkScreenshotSmokePreview() {
                 }
             }
         }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 740)
+@Composable
+fun HomeDashboardScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        HomeScreen(
+            state = HomeUiState(
+                snapshot = HomeSnapshot(
+                    merriamLatest = 128,
+                    readKeeperBook = HomeReadKeeperBook(
+                        id = 1,
+                        title = "The Left Hand of Darkness",
+                        coverUrl = null,
+                        pageFormat = BookPageFormat.Page,
+                        currentPage = 120,
+                        progressPercentage = null,
+                        pages = 360,
+                        sessionStartedAt = null,
+                        sessionStartPage = null,
+                        sessionStartProgressPercentage = null,
+                    ),
+                    haircutDays = 42,
+                    weightValue = 141.2,
+                    weightRecordedAt = 1779177600000L,
+                ),
+            ),
+            onEvent = {},
+            onAddTime = {},
+            onNewDiary = {},
+        )
     }
 }
 
@@ -177,6 +222,35 @@ fun TimeDashboardScreenshotPreview() {
 @PreviewTest
 @Preview(showBackground = true, widthDp = 400, heightDp = 900)
 @Composable
+fun DiaryLoomHomeScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        DiaryScreen(
+            state = DiaryUiState(
+                diaries = listOf(diarySampleDay, diarySampleWeek),
+                recentDiaries = listOf(diarySampleDay, diarySampleWeek),
+                drafts = listOf(diarySampleDay.copy(title = "A draft still breathing")),
+                weeklyRecordData = WeeklyRecordData(
+                    hasWeekSummary = true,
+                    records = (0..6).map { index ->
+                        DailyRecord(
+                            date = LocalDate.of(2026, 6, 15).plusDays(index.toLong()),
+                            status = when (index) {
+                                0, 1, 2 -> RecordStatus.DonePast
+                                3 -> RecordStatus.DoneToday
+                                else -> RecordStatus.Future
+                            },
+                        )
+                    },
+                ),
+                contributionYear = 2026,
+            ),
+        )
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 900)
+@Composable
 fun BookReadingTrackerScreenshotPreview() {
     TinkTheme(dynamicColor = false) {
         BookScreen(
@@ -196,6 +270,7 @@ fun BookReadingTrackerScreenshotPreview() {
                         publishYear = 1969,
                         state = BookState.Reading,
                         platform = "Paper",
+                        pageFormat = BookPageFormat.Page,
                         currentPage = 92,
                         progressPercentage = 30.0,
                         archiveStatus = null,
@@ -360,6 +435,7 @@ private fun listCardSample(
     publishYear = 1969,
     state = state,
     platform = platform,
+    pageFormat = BookPageFormat.Page,
     currentPage = currentPage,
     progressPercentage = progressPercentage,
     archiveStatus = archiveStatus,
