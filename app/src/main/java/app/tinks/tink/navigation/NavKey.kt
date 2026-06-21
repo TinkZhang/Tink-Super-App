@@ -22,7 +22,7 @@ sealed interface MyNavKey : NavKey {
 
 // 使用 data object 定义静态目的地
 data object ScreenA : MyNavKey {
-    override val label = "主页 A"
+    override val label = "Home"
     override val icon = Icons.Filled.Home
 }
 
@@ -76,6 +76,11 @@ data object ScreenBooks : MyNavKey {
     override val icon = Icons.Filled.LibraryBooks
 }
 
+data object ScreenDiaryLoom : MyNavKey {
+    override val label = "DiaryLoom"
+    override val icon = Icons.Filled.Bookmark
+}
+
 data object ScreenLottery : MyNavKey {
     override val label = "Lottery"
     override val icon = Icons.Filled.LocalActivity
@@ -113,6 +118,6 @@ data class ScreenStoryDetail(val storyId: String) : MyNavKey {
 
 val allTopDestinations = listOf(
     ScreenA, ScreenB, ScreenWeight, ScreenHair,
-    ScreenLeeter, ScreenZi, ScreenMerriam, ScreenTime, ScreenBooks, ScreenLottery, ScreenSalesforce,
+    ScreenLeeter, ScreenZi, ScreenMerriam, ScreenTime, ScreenBooks, ScreenDiaryLoom, ScreenLottery, ScreenSalesforce,
     ScreenGeography
 )

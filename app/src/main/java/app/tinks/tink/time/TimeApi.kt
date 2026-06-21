@@ -29,13 +29,13 @@ interface TimeApi {
     @POST("time")
     suspend fun createTimeEntry(
         @Body payload: TimeUpsertRequest,
-    )
+    ): TimeEntryDto
 
     @PATCH("time/{timeId}")
     suspend fun updateTimeEntry(
         @Path("timeId") timeId: Long,
         @Body payload: TimeUpsertRequest,
-    )
+    ): TimeEntryDto
 
     @DELETE("time/{timeId}")
     suspend fun deleteTimeEntry(
@@ -81,6 +81,11 @@ data class TimeEntryDto(
     val end: String,
     val title: String,
     val description: String? = null,
+    @SerialName("all_day")
+    val allDay: Boolean = false,
+    @SerialName("include_in_statistics")
+    val includeInStatistics: Boolean = true,
+    val source: String = "time",
 )
 
 @Serializable
@@ -90,6 +95,11 @@ data class TimeUpsertRequest(
     val end: String,
     val title: String,
     val description: String? = null,
+    @SerialName("all_day")
+    val allDay: Boolean = false,
+    @SerialName("include_in_statistics")
+    val includeInStatistics: Boolean = true,
+    val source: String = "time",
 )
 
 @Serializable
@@ -129,6 +139,9 @@ data class TimeEntry(
     val end: OffsetDateTime,
     val title: String,
     val description: String?,
+    val allDay: Boolean = false,
+    val includeInStatistics: Boolean = true,
+    val source: String = "time",
 )
 
 data class TimeDashboard(
@@ -155,6 +168,9 @@ fun TimeEntryDto.toDomain(): TimeEntry = TimeEntry(
     end = parseOffsetDateTime(end),
     title = title,
     description = description,
+    allDay = allDay,
+    includeInStatistics = includeInStatistics,
+    source = source,
 )
 
 fun TimeLabelDto.toDomain(): TimeLabel = TimeLabel(

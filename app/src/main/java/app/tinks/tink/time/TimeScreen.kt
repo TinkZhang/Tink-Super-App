@@ -502,21 +502,34 @@ private fun TimeEntryRow(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = start.toLocalTime().format(TIME_FORMATTER),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "|",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = end.toLocalTime().format(TIME_FORMATTER),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
+            if (entry.allDay) {
+                Text(
+                    text = "All",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = "day",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            } else {
+                Text(
+                    text = start.toLocalTime().format(TIME_FORMATTER),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = "|",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = end.toLocalTime().format(TIME_FORMATTER),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
 
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -536,9 +549,13 @@ private fun TimeEntryRow(
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    text = formatDurationMinutes(
-                        java.time.Duration.between(start, end).toMinutes().coerceAtLeast(0)
-                    ),
+                    text = if (entry.allDay) {
+                        "Full day"
+                    } else {
+                        formatDurationMinutes(
+                            java.time.Duration.between(start, end).toMinutes().coerceAtLeast(0)
+                        )
+                    },
                     style = MaterialTheme.typography.labelLarge,
                 )
             }

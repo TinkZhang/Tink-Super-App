@@ -133,6 +133,7 @@ class MerriamViewModelTest {
 
     private object NoopMerriamDao : MerriamDao {
         override fun getAllRootsFlow(): Flow<List<RootEntity>> = flowOf(emptyList())
+        override suspend fun getRootsBetween(startExclusive: Int, endInclusive: Int): List<RootEntity> = emptyList()
     }
 
     private object NoopMerriamApi : MerriamApi {

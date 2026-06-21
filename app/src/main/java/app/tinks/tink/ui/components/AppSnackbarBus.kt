@@ -26,11 +26,16 @@ object AppSnackbarBus {
         )
     }
 
-    fun showMessage(message: String) {
+    fun showMessage(
+        message: String,
+        actionLabel: String? = null,
+        onAction: () -> Unit = {},
+    ) {
         _events.tryEmit(
             AppSnackbarEvent(
                 message = message,
-                actionLabel = null
+                actionLabel = actionLabel,
+                onAction = onAction,
             )
         )
     }

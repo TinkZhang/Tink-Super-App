@@ -66,6 +66,85 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `diary` (
+                  `id` TEXT NOT NULL,
+                  `title` TEXT NOT NULL,
+                  `content` TEXT NOT NULL,
+                  `startDate` INTEGER NOT NULL,
+                  `endDate` INTEGER NOT NULL,
+                  `diaryType` TEXT NOT NULL,
+                  `timeEntryId` INTEGER,
+                  PRIMARY KEY(`id`)
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `draft` (
+                  `id` TEXT NOT NULL,
+                  `title` TEXT NOT NULL,
+                  `content` TEXT NOT NULL,
+                  `startDate` INTEGER NOT NULL,
+                  `endDate` INTEGER NOT NULL,
+                  `diaryType` TEXT NOT NULL,
+                  `updateTime` INTEGER NOT NULL,
+                  PRIMARY KEY(`id`)
+                )
+                """.trimIndent()
+            )
+        }
+    }
+
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `home_snapshot` (
+                  `id` INTEGER NOT NULL,
+                  `merriamLatest` INTEGER,
+                  `readKeeperBookId` INTEGER,
+                  `readKeeperTitle` TEXT,
+                  `readKeeperCoverUrl` TEXT,
+                  `readKeeperPageFormat` TEXT,
+                  `readKeeperCurrentPage` INTEGER,
+                  `readKeeperProgressPercentage` REAL,
+                  `readKeeperPages` INTEGER,
+                  `readKeeperSessionStartedAt` INTEGER,
+                  `readKeeperSessionStartPage` INTEGER,
+                  `readKeeperSessionStartProgressPercentage` REAL,
+                  `haircutDays` INTEGER,
+                  `weightValue` REAL,
+                  `weightRecordedAt` INTEGER,
+                  `updatedAt` INTEGER NOT NULL,
+                  PRIMARY KEY(`id`)
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `home_pending_action` (
+                  `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                  `type` TEXT NOT NULL,
+                  `startIntValue` INTEGER,
+                  `targetIntValue` INTEGER,
+                  `bookId` INTEGER,
+                  `pageValue` INTEGER,
+                  `progressValue` REAL,
+                  `weightValue` REAL,
+                  `startTimeMillis` INTEGER,
+                  `endTimeMillis` INTEGER,
+                  `textValue` TEXT,
+                  `createdAt` INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): TinkDatabase {
@@ -75,7 +154,7 @@ object DatabaseModule {
             "tink.db"
         )
             .createFromAsset("database/tink.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .build()
     }
 
@@ -84,4 +163,10 @@ object DatabaseModule {
 
     @Provides
     fun provideSalesforceDao(db: TinkDatabase) = db.salesforceDao()
+
+    @Provides
+    fun provideDiaryDao(db: TinkDatabase) = db.diaryDao()
+
+    @Provides
+    fun provideHomeDao(db: TinkDatabase) = db.homeDao()
 }

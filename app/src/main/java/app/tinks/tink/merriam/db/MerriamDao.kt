@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.Flow
 interface MerriamDao {
     @Query("SELECT * FROM merriam ORDER BY id ASC")
     fun getAllRootsFlow(): Flow<List<RootEntity>>
+
+    @Query("SELECT * FROM merriam WHERE id > :startExclusive AND id <= :endInclusive ORDER BY id ASC")
+    suspend fun getRootsBetween(startExclusive: Int, endInclusive: Int): List<RootEntity>
 }
 
 //data class MerriamRecordWithRootInfo(

@@ -87,11 +87,13 @@ class TimeRepositoryTest {
             return entries
         }
 
-        override suspend fun createTimeEntry(payload: TimeUpsertRequest) {
+        override suspend fun createTimeEntry(payload: TimeUpsertRequest): TimeEntryDto {
             createdEntries.add(payload)
+            return sampleEntryDto(id = 99, start = payload.start, end = payload.end, title = payload.title)
         }
 
-        override suspend fun updateTimeEntry(timeId: Long, payload: TimeUpsertRequest) = Unit
+        override suspend fun updateTimeEntry(timeId: Long, payload: TimeUpsertRequest): TimeEntryDto =
+            sampleEntryDto(id = timeId, start = payload.start, end = payload.end, title = payload.title)
 
         override suspend fun deleteTimeEntry(timeId: Long) = Unit
 

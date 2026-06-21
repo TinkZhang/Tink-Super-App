@@ -46,8 +46,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import app.tinks.tink.book.BookScreen
+import app.tinks.tink.diary.DiaryScreen
 import app.tinks.tink.geography.GeographyScreen
 import app.tinks.tink.haircut.HaircutScreen
+import app.tinks.tink.home.HomeScreen
 import app.tinks.tink.lottery.LotteryHistoryStatsScreen
 import app.tinks.tink.lottery.LotteryScreen
 import app.tinks.tink.merriam.MerriamScreen
@@ -55,6 +57,7 @@ import app.tinks.tink.navigation.MyNavKey
 import app.tinks.tink.navigation.ScreenA
 import app.tinks.tink.navigation.ScreenB
 import app.tinks.tink.navigation.ScreenBooks
+import app.tinks.tink.navigation.ScreenDiaryLoom
 import app.tinks.tink.navigation.ScreenGeography
 import app.tinks.tink.navigation.ScreenHair
 import app.tinks.tink.navigation.ScreenLearntZi
@@ -103,6 +106,9 @@ fun MyApp(
     var pendingQuickAddRequestId by remember { mutableStateOf<Int?>(null) }
     var handledQuickAddRequestId by remember { mutableStateOf<Int?>(null) }
     var pendingReadKeeperStopRequestId by remember { mutableStateOf<Int?>(null) }
+    var homeQuickAddRequestCounter by remember { mutableStateOf(0) }
+    var pendingDiaryComposeRequestId by remember { mutableStateOf<Int?>(null) }
+    var homeDiaryComposeRequestCounter by remember { mutableStateOf(0) }
 
     val onNavigate: (MyNavKey) -> Unit = { destination ->
         if (currentKey != destination) {
@@ -111,6 +117,18 @@ fun MyApp(
             }
             backStack.add(destination)
         }
+    }
+
+    val openTimeAddFromHome = {
+        homeQuickAddRequestCounter += 1
+        pendingQuickAddRequestId = -homeQuickAddRequestCounter
+        onNavigate(ScreenTime)
+    }
+
+    val openNewDiaryFromHome = {
+        homeDiaryComposeRequestCounter += 1
+        pendingDiaryComposeRequestId = homeDiaryComposeRequestCounter
+        onNavigate(ScreenDiaryLoom)
     }
 
     fun navigateBack() {
@@ -168,15 +186,26 @@ fun MyApp(
                     NavigationDrawerItem(
                         label = { Text(dest.label) },
                         icon = {
-                            if (dest is ScreenBooks) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_readkeeperlogo),
-                                    contentDescription = dest.label,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = Color.Unspecified,
-                                )
-                            } else {
-                                Icon(dest.icon, dest.label)
+                            when (dest) {
+                                is ScreenBooks -> {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_readkeeperlogo),
+                                        contentDescription = dest.label,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = Color.Unspecified,
+                                    )
+                                }
+                                is ScreenDiaryLoom -> {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_diaryloom_logo),
+                                        contentDescription = dest.label,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = Color.Unspecified,
+                                    )
+                                }
+                                else -> {
+                                    Icon(dest.icon, dest.label)
+                                }
                             }
                         },
                         selected = currentTopDestination == dest,
@@ -200,9 +229,9 @@ fun MyApp(
                 SnackbarHost(hostState = snackbarHostState)
             },
             topBar = {
-                if (currentKey !is ScreenBooks) {
+                if (currentKey !is ScreenBooks && currentKey !is ScreenDiaryLoom) {
                     TopAppBar(
-                    title = { Text(currentKey?.label ?: "响应式应用") },
+                    title = { Text(if (currentKey == ScreenA) "Tink" else currentKey?.label ?: "响应式应用") },
                     // 左上角添加菜单按钮，点击打开抽屉
                     navigationIcon = {
                         if (currentKey in allTopDestinations) {
@@ -228,7 +257,7 @@ fun MyApp(
                         }
                     },
                     actions = {
-                        if (currentKey == ScreenA || currentKey == ScreenTime) {
+                        if (currentKey == ScreenTime) {
                             IconButton(
                                 onClick = { timeViewModel.onEvent(TimeEvent.OpenLabelManager) },
                                 modifier = Modifier.testTag("top_bar_time_labels_button")
@@ -265,7 +294,11 @@ fun MyApp(
             ) { key ->
                 NavEntry(key) {
                     when (key) {
-                        is ScreenA -> TimeScreen(timeViewModel)
+                        is ScreenA -> HomeScreen(
+                            hiltViewModel(),
+                            onAddTime = openTimeAddFromHome,
+                            onNewDiary = openNewDiaryFromHome,
+                        )
                         is ScreenB -> WeightScreen(
                             hiltViewModel(),
                             onOpenHistory = { backStack.add(ScreenWeightHistory) },
@@ -303,6 +336,14 @@ fun MyApp(
                                 pendingReadKeeperStopRequestId = null
                             },
                         )
+                        is ScreenDiaryLoom -> DiaryScreen(
+                            hiltViewModel(),
+                            onOpenDrawer = { scope.launch { drawerState.open() } },
+                            newDiaryRequestId = pendingDiaryComposeRequestId ?: 0,
+                            onNewDiaryRequestConsumed = {
+                                pendingDiaryComposeRequestId = null
+                            },
+                        )
                         is ScreenLottery -> LotteryScreen(
                             hiltViewModel(),
                             onOpenHistoryStats = { backStack.add(ScreenLotteryHistoryStats) },
@@ -336,6 +377,7 @@ private fun MyNavKey.drawerTestTag(): String = when (this) {
     ScreenMerriam -> "drawer_destination_merriam"
     ScreenTime -> "drawer_destination_time"
     ScreenBooks -> "drawer_destination_books"
+    ScreenDiaryLoom -> "drawer_destination_diaryloom"
     ScreenLottery -> "drawer_destination_lottery"
     ScreenSalesforce -> "drawer_destination_salesforce"
     ScreenLotteryHistoryStats -> "drawer_destination_lottery_history_stats"
