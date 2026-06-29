@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.home.HomeStateTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-06-29T12:14:49.504Z" hostname="runnervmmklqx" time="0.013">
+  <properties/>
+  <testcase name="haircutReminder_showsOnlyAtThirtyFiveDaysOrMore" classname="app.tinks.tink.home.HomeStateTest" time="0.012"/>
+  <testcase name="readKeeperBook_reportsActiveSessionFromCachedStartTime" classname="app.tinks.tink.home.HomeStateTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

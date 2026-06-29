@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.leetkeeper.LeetKeeperRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-29T12:14:49.529Z" hostname="runnervmmklqx" time="0.023">
+  <properties/>
+  <testcase name="markProblemDone_createsTransactionAndPatchesDones" classname="app.tinks.tink.leetkeeper.LeetKeeperRepositoryTest" time="0.009"/>
+  <testcase name="getSnapshot_loadsPublicAndOngoingPlans" classname="app.tinks.tink.leetkeeper.LeetKeeperRepositoryTest" time="0.007"/>
+  <testcase name="startPlan_postsPublicPlanAndLanguage" classname="app.tinks.tink.leetkeeper.LeetKeeperRepositoryTest" time="0.007"/>
+  <system-out><![CDATA[safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

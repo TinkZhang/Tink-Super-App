@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-06-29T12:14:49.553Z" hostname="runnervmmklqx" time="0.023">
+  <properties/>
+  <testcase name="startSelectedPlan_postsLanguageAndShowsOngoingTab" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.011"/>
+  <testcase name="init_loadsPublicAndOngoingPlans" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.002"/>
+  <testcase name="confirmCompletion_keepsSheetForInvalidDuration" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.003"/>
+  <testcase name="confirmCompletion_marksProblemDoneAndClearsSheet" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.003"/>
+  <testcase name="selectPublicPlan_loadsPlanDetail" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
