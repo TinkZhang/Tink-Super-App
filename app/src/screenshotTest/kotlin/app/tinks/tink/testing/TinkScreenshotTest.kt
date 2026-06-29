@@ -49,6 +49,9 @@ import app.tinks.tink.lottery.LotteryTicket
 import app.tinks.tink.lottery.LotteryTicketStatus
 import app.tinks.tink.lottery.LotteryTicketUiState
 import app.tinks.tink.lottery.LotteryUiState
+import app.tinks.tink.leetkeeper.LeetKeeperScreen
+import app.tinks.tink.leetkeeper.sampleLeetKeeperState
+import app.tinks.tink.secureweb.SecureWebLockedContent
 import app.tinks.tink.weight.TrendChartCardUiState
 import app.tinks.tink.weight.WeightControlCardUiState
 import app.tinks.tink.weight.WeightScreen
@@ -136,6 +139,28 @@ fun WeightOverviewScreenshotPreview() {
                     Weight(id = 1, weight = 142.0, createdTime = 1778745600000L),
                 ),
             ),
+        )
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 900)
+@Composable
+fun LeetKeeperDashboardScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        LeetKeeperScreen(state = sampleLeetKeeperState())
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 600)
+@Composable
+fun SecureWebLockedScreenshotPreview() {
+    TinkTheme(dynamicColor = false) {
+        SecureWebLockedContent(
+            isAuthenticating = false,
+            errorMessage = null,
+            onRetry = {},
         )
     }
 }

@@ -10,6 +10,8 @@ class NavigationHierarchyTest {
         assertEquals(ScreenWeight, ScreenWeight.topDestination())
         assertEquals(ScreenTime, ScreenTime.topDestination())
         assertEquals(ScreenDiaryLoom, ScreenDiaryLoom.topDestination())
+        assertEquals(ScreenLeeter, ScreenLeeter.topDestination())
+        assertEquals(ScreenSecureWeb, ScreenSecureWeb.topDestination())
     }
 
     @Test

@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Looks
 import androidx.compose.material.icons.filled.LocalActivity
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Public
@@ -47,7 +48,7 @@ data object ScreenHair : MyNavKey {
 }
 
 data object ScreenLeeter : MyNavKey {
-    override val label = "Leeter"
+    override val label = "LeetKeeper"
     override val icon = Icons.Filled.Code
 }
 
@@ -96,6 +97,11 @@ data object ScreenGeography : MyNavKey {
     override val icon = Icons.Filled.Public
 }
 
+data object ScreenSecureWeb : MyNavKey {
+    override val label = "Baidu"
+    override val icon = Icons.Filled.Lock
+}
+
 data object ScreenLotteryHistoryStats : MyNavKey {
     override val label = "History & stats"
     override val icon = Icons.Filled.LocalActivity
@@ -119,5 +125,5 @@ data class ScreenStoryDetail(val storyId: String) : MyNavKey {
 val allTopDestinations = listOf(
     ScreenA, ScreenB, ScreenWeight, ScreenHair,
     ScreenLeeter, ScreenZi, ScreenMerriam, ScreenTime, ScreenBooks, ScreenDiaryLoom, ScreenLottery, ScreenSalesforce,
-    ScreenGeography
+    ScreenGeography, ScreenSecureWeb
 )

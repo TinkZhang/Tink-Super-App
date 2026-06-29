@@ -4,6 +4,7 @@ import android.content.Context
 import app.tinks.tink.BuildConfig
 import app.tinks.tink.book.BookApi
 import app.tinks.tink.haircut.HaircutApi
+import app.tinks.tink.leetkeeper.LeetKeeperApi
 import app.tinks.tink.lottery.LotteryApi
 import app.tinks.tink.merriam.network.MerriamApi
 import app.tinks.tink.salesforce.SalesforceApi
@@ -139,6 +140,11 @@ object NetworkModule {
     @Singleton
     fun provideHaircutApi(retrofit: Retrofit): HaircutApi =
         retrofit.create(HaircutApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideLeetKeeperApi(retrofit: Retrofit): LeetKeeperApi =
+        retrofit.create(LeetKeeperApi::class.java)
 
     @Provides
     @Singleton

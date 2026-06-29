@@ -1,9 +1,14 @@
 package app.tinks.tink
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Label
@@ -37,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -50,6 +56,7 @@ import app.tinks.tink.diary.DiaryScreen
 import app.tinks.tink.geography.GeographyScreen
 import app.tinks.tink.haircut.HaircutScreen
 import app.tinks.tink.home.HomeScreen
+import app.tinks.tink.leetkeeper.LeetKeeperScreen
 import app.tinks.tink.lottery.LotteryHistoryStatsScreen
 import app.tinks.tink.lottery.LotteryScreen
 import app.tinks.tink.merriam.MerriamScreen
@@ -66,6 +73,7 @@ import app.tinks.tink.navigation.ScreenLottery
 import app.tinks.tink.navigation.ScreenLotteryHistoryStats
 import app.tinks.tink.navigation.ScreenMerriam
 import app.tinks.tink.navigation.ScreenSalesforce
+import app.tinks.tink.navigation.ScreenSecureWeb
 import app.tinks.tink.navigation.ScreenSettings
 import app.tinks.tink.navigation.ScreenStoryDetail
 import app.tinks.tink.navigation.ScreenStoryList
@@ -76,6 +84,7 @@ import app.tinks.tink.navigation.ScreenZi
 import app.tinks.tink.navigation.allTopDestinations
 import app.tinks.tink.navigation.topDestination
 import app.tinks.tink.salesforce.SalesforceScreen
+import app.tinks.tink.secureweb.SecureWebScreen
 import app.tinks.tink.settings.SettingsScreen
 import app.tinks.tink.story.StoryDetailScreen
 import app.tinks.tink.story.StoryListScreen
@@ -175,7 +184,11 @@ fun MyApp(
 
     ModalNavigationDrawer(
         drawerContent = {
-            ModalDrawerSheet(Modifier.width(280.dp)) {
+            ModalDrawerSheet(
+                Modifier
+                    .width(280.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
                 Text(
                     "Tink's 2026",
                     style = MaterialTheme.typography.headlineSmall,
@@ -203,6 +216,14 @@ fun MyApp(
                                         tint = Color.Unspecified,
                                     )
                                 }
+                                is ScreenLeeter -> {
+                                    Icon(
+                                        painter = painterResource(R.drawable.leeter),
+                                        contentDescription = dest.label,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = Color.Unspecified,
+                                    )
+                                }
                                 else -> {
                                     Icon(dest.icon, dest.label)
                                 }
@@ -221,7 +242,7 @@ fun MyApp(
             }
         },
         drawerState = drawerState,
-        gesturesEnabled = true
+        gesturesEnabled = currentKey !is ScreenSecureWeb
     ) {
         Scaffold(
             modifier = modifier.fillMaxSize(),
@@ -231,7 +252,23 @@ fun MyApp(
             topBar = {
                 if (currentKey !is ScreenBooks && currentKey !is ScreenDiaryLoom) {
                     TopAppBar(
-                    title = { Text(if (currentKey == ScreenA) "Tink" else currentKey?.label ?: "响应式应用") },
+                    title = {
+                        if (currentKey is ScreenLeeter) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.leeter),
+                                    contentDescription = "LeetKeeper",
+                                    modifier = Modifier.size(28.dp),
+                                )
+                                Text(currentKey.label)
+                            }
+                        } else {
+                            Text(if (currentKey == ScreenA) "Tink" else currentKey?.label ?: "响应式应用")
+                        }
+                    },
                     // 左上角添加菜单按钮，点击打开抽屉
                     navigationIcon = {
                         if (currentKey in allTopDestinations) {
@@ -309,7 +346,7 @@ fun MyApp(
                         )
                         is ScreenWeightHistory -> WeightHistoryScreen(hiltViewModel())
                         is ScreenHair -> HaircutScreen(hiltViewModel())
-                        is ScreenLeeter -> HaircutScreen(hiltViewModel())
+                        is ScreenLeeter -> LeetKeeperScreen(hiltViewModel())
                         is ScreenZi -> ZiScreen(
                             hiltViewModel(),
                             onNavigationEvent = { backStack.add(ScreenLearntZi) },
@@ -351,6 +388,7 @@ fun MyApp(
                         is ScreenLotteryHistoryStats -> LotteryHistoryStatsScreen(hiltViewModel())
                         is ScreenSalesforce -> SalesforceScreen(hiltViewModel())
                         is ScreenGeography -> GeographyScreen()
+                        is ScreenSecureWeb -> SecureWebScreen()
                         is ScreenStoryList -> StoryListScreen(
                             hiltViewModel(),
                             onStoryClick = { story ->
@@ -383,6 +421,7 @@ private fun MyNavKey.drawerTestTag(): String = when (this) {
     ScreenLotteryHistoryStats -> "drawer_destination_lottery_history_stats"
     ScreenSettings -> "drawer_destination_settings"
     ScreenGeography -> "drawer_destination_geography"
+    ScreenSecureWeb -> "drawer_destination_secure_web"
     ScreenLearntZi -> "drawer_destination_learnt_zi"
     ScreenStoryList -> "drawer_destination_story_list"
     is ScreenStoryDetail -> "drawer_destination_story_detail"
