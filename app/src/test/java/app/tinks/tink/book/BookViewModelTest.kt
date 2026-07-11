@@ -159,33 +159,6 @@ class BookViewModelTest {
     }
 
     @Test
-    fun stoppingReadingSession_logsTimeEntryAndClearsSession() = runTest {
-        val timeRepository = FakeTimeRepository()
-        val viewModel = BookViewModel(FakeRepository(), timeRepository)
-        val book = sampleBook(BookState.Reading)
-        val startTime = Instant.parse("2026-06-17T12:00:00Z")
-        val stopTime = Instant.parse("2026-06-17T12:42:00Z")
-
-        viewModel.onEvent(BookEvent.StartReadingSession(book))
-        viewModel.onEvent(
-            BookEvent.StopReadingSession(
-                startTime = startTime,
-                stopTime = stopTime,
-                stopPage = 96,
-                stopProgressPercentage = null,
-            )
-        )
-        advanceUntilIdle()
-
-        val payload = timeRepository.createdEntries.single()
-        assertEquals(2, payload.type)
-        assertEquals(startTime.toString(), payload.start)
-        assertEquals(stopTime.toString(), payload.end)
-        assertEquals("Currently reading Page 80 - Page 96", payload.title)
-        assertEquals(null, viewModel.uiState.value.readingSession)
-    }
-
-    @Test
     fun updatingReadingProgress_logsTimeEntryAndUpdatesBook() = runTest {
         val repository = FakeRepository()
         val timeRepository = FakeTimeRepository()
@@ -296,13 +269,15 @@ private object NoopBookApi : BookApi {
     override suspend fun getWishlist(page: Int, size: Int, category: String?): List<BookDto> = emptyList()
     override suspend fun createWishlistBook(payload: BookCreateRequest): BookDto = error("not used")
     override suspend fun getReading(page: Int, size: Int, category: String?): List<BookDto> = emptyList()
-    override suspend fun getArchived(page: Int, size: Int, status: String?, category: String?): List<BookDto> = emptyList()
+    override suspend fun getAbandon(page: Int, size: Int, category: String?): List<BookDto> = emptyList()
+    override suspend fun getDone(page: Int, size: Int, category: String?): List<BookDto> = emptyList()
     override suspend fun getCategories(): List<String> = emptyList()
     override suspend fun getBook(bookId: Long): BookDto = error("not used")
     override suspend fun updateBook(bookId: Long, payload: BookUpdateRequest): BookDto = error("not used")
     override suspend fun deleteBook(bookId: Long) = Unit
     override suspend fun startReading(bookId: Long, payload: BookStartReadingRequest): BookDto = error("not used")
-    override suspend fun archiveBook(bookId: Long, payload: BookArchiveRequest): BookDto = error("not used")
+    override suspend fun abandonBook(bookId: Long): BookDto = error("not used")
+    override suspend fun markBookDone(bookId: Long): BookDto = error("not used")
     override suspend fun getNotes(bookId: Long, page: Int, size: Int): List<BookNoteDto> = emptyList()
     override suspend fun createNote(bookId: Long, payload: BookNoteCreateRequest): BookNoteDto = error("not used")
     override suspend fun updateNote(bookId: Long, noteId: Long, payload: BookNoteUpdateRequest): BookNoteDto =
@@ -355,7 +330,6 @@ internal fun sampleBook(state: BookState) = Book(
     isbn = null,
     description = null,
     rating = null,
-    amazonLink = null,
     pages = 200,
     publishYear = 2026,
     state = state,

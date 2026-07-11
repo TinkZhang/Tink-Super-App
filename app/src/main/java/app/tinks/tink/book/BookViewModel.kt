@@ -3,6 +3,7 @@ package app.tinks.tink.book
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tinks.tink.network.ApiResult
+import app.tinks.tink.time.TimeEntry
 import app.tinks.tink.time.TimeRepository
 import app.tinks.tink.time.TimeUpsertRequest
 import app.tinks.tink.ui.components.AppSnackbarBus
@@ -71,13 +72,6 @@ sealed interface BookEvent {
     data class SelectArchiveStatus(val status: ArchiveStatus?) : BookEvent
     data class Archive(val bookId: Long, val status: ArchiveStatus = ArchiveStatus.Done) : BookEvent
     data class DeleteBook(val bookId: Long) : BookEvent
-    data class StartReadingSession(val book: Book) : BookEvent
-    data class StopReadingSession(
-        val startTime: Instant,
-        val stopTime: Instant,
-        val stopPage: Int?,
-        val stopProgressPercentage: Double?,
-    ) : BookEvent
     data class SaveBook(
         val bookId: Long,
         val title: String,
@@ -86,7 +80,6 @@ sealed interface BookEvent {
         val pages: Int?,
         val pageFormat: BookPageFormat,
         val currentPage: Int?,
-        val progressPercentage: Double?,
     ) : BookEvent
     data class UpdateReadingProgress(
         val bookId: Long,
@@ -103,16 +96,6 @@ sealed interface BookEvent {
     ) : BookEvent
     data class DeleteNote(val noteId: Long) : BookEvent
 }
-
-data class ReadingSessionState(
-    val bookId: Long,
-    val bookTitle: String,
-    val pageFormat: BookPageFormat,
-    val startTime: Instant,
-    val startPage: Int?,
-    val startProgressPercentage: Double?,
-    val startProgressLabel: String,
-)
 
 data class BookUiState(
     val isLoading: Boolean = false,
@@ -135,8 +118,8 @@ data class BookUiState(
     val selectedArchiveStatus: ArchiveStatus? = null,
     val selectedSummaryYear: Int? = null,
     val navigationStack: List<BooksScreenState> = listOf(BooksScreenState.Home),
-    val readingSession: ReadingSessionState? = null,
     val readingRecordDates: Set<LocalDate> = emptySet(),
+    val readingTimeEntries: List<TimeEntry> = emptyList(),
 )
 
 @HiltViewModel
@@ -170,7 +153,16 @@ class BookViewModel @Inject constructor(
                 refreshAll()
             }
             is BookEvent.OpenList -> {
-                _state.update { it.copy(selectedCategory = null, selectedArchiveStatus = null) }
+                _state.update {
+                    it.copy(
+                        selectedCategory = null,
+                        selectedArchiveStatus = if (event.state == BookState.Archived) {
+                            ArchiveStatus.Abandon
+                        } else {
+                            null
+                        },
+                    )
+                }
                 navigateTo(BooksScreenState.List(event.state))
                 loadList(event.state, null)
             }
@@ -216,8 +208,6 @@ class BookViewModel @Inject constructor(
             is BookEvent.SelectArchiveStatus -> _state.update { it.copy(selectedArchiveStatus = event.status) }
             is BookEvent.Archive -> archive(event.bookId, event.status)
             is BookEvent.DeleteBook -> deleteBook(event.bookId)
-            is BookEvent.StartReadingSession -> startReadingSession(event.book)
-            is BookEvent.StopReadingSession -> stopReadingSession(event)
             is BookEvent.SaveBook -> saveBook(event)
             is BookEvent.UpdateReadingProgress -> updateReadingProgress(event)
             is BookEvent.SaveNote -> saveNote(event)
@@ -253,13 +243,14 @@ class BookViewModel @Inject constructor(
                 when (result) {
                     ApiResult.Loading -> Unit
                     is ApiResult.Success -> _state.update {
+                        val readingEntries = result.data.entries.filter { entry -> entry.type == READING_TIME_TYPE }
                         it.copy(
-                            readingRecordDates = result.data.entries
+                            readingRecordDates = readingEntries
                                 .asSequence()
-                                .filter { entry -> entry.type == READING_TIME_TYPE }
                                 .map { entry -> entry.start.toLocalDate() }
                                 .filter { date -> date.year == startDate.year }
-                                .toSet()
+                                .toSet(),
+                            readingTimeEntries = readingEntries,
                         )
                     }
                     is ApiResult.Error -> Unit
@@ -452,7 +443,6 @@ class BookViewModel @Inject constructor(
                 platform = book.platform ?: "General",
                 pageFormat = book.pageFormat,
                 currentPage = book.currentPage ?: 0,
-                progressPercentage = book.progressPercentage ?: 0.0,
             )
         }) {
             refreshAll()
@@ -493,54 +483,6 @@ class BookViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun startReadingSession(book: Book) {
-        _state.update {
-            it.copy(
-                readingSession = ReadingSessionState(
-                    bookId = book.id,
-                    bookTitle = book.title,
-                    pageFormat = book.pageFormat,
-                    startTime = Instant.now(),
-                    startPage = book.currentPage,
-                    startProgressPercentage = book.progressPercentage,
-                    startProgressLabel = book.readingSessionProgressLabel(),
-                )
-            )
-        }
-    }
-
-    private fun stopReadingSession(event: BookEvent.StopReadingSession) {
-        val session = _state.value.readingSession ?: return
-        val startTime = event.startTime
-        val stopTime = if (event.stopTime.isAfter(startTime)) {
-            event.stopTime
-        } else {
-            startTime.plusSeconds(1)
-        }
-        val stopProgressLabel = session.stopProgressLabel(event.stopPage, event.stopProgressPercentage)
-        val payload = TimeUpsertRequest(
-            type = READING_TIME_TYPE,
-            start = startTime.toString(),
-            end = stopTime.toString(),
-            title = "${session.bookTitle} ${session.startProgressLabel} - $stopProgressLabel",
-            description = "ReadKeeper reading session",
-        )
-        mutate({
-            timeRepository.createTimeEntry(payload)
-        }) {
-            _state.update { it.copy(readingSession = null) }
-            repository.updateBook(
-                session.bookId,
-                BookUpdateRequest(
-                    currentPage = if (session.pageFormat.usesPages) event.stopPage else null,
-                    progressPercentage = if (session.pageFormat.usesPages) null else event.stopProgressPercentage,
-                )
-            ).launchIn(viewModelScope)
-            openDetail(session.bookId)
-            refreshAll()
-        }
-    }
-
     private fun saveBook(event: BookEvent.SaveBook) {
         val currentBook = _state.value.selectedBook?.takeIf { it.id == event.bookId }
         mutate({
@@ -555,7 +497,6 @@ class BookViewModel @Inject constructor(
                         .takeIf { it != currentBook?.pageFormat }
                         ?.wireValue,
                     currentPage = event.currentPage,
-                    progressPercentage = event.progressPercentage,
                 )
             )
         }) {
@@ -580,7 +521,7 @@ class BookViewModel @Inject constructor(
             type = READING_TIME_TYPE,
             start = startTime.toString(),
             end = stopTime.toString(),
-            title = "${currentBook.title} ${currentBook.readingSessionProgressLabel()} - $stopProgressLabel",
+            title = "${currentBook.title} ${currentBook.currentProgressLabel()} - $stopProgressLabel",
             description = "ReadKeeper reading progress update",
         )
         mutate({
@@ -589,8 +530,11 @@ class BookViewModel @Inject constructor(
             repository.updateBook(
                 event.bookId,
                 BookUpdateRequest(
-                    currentPage = if (currentBook.pageFormat.usesPages) event.stopPage else null,
-                    progressPercentage = if (currentBook.pageFormat.usesPages) null else event.stopProgressPercentage,
+                    currentPage = if (currentBook.pageFormat.usesPages) {
+                        event.stopPage
+                    } else {
+                        event.stopProgressPercentage?.toBookProgressUnits(currentBook.pageFormat)
+                    },
                 )
             ).launchIn(viewModelScope)
             openDetail(event.bookId)
@@ -613,11 +557,16 @@ class BookViewModel @Inject constructor(
         }) {
             openNotes(bookId)
             if (event.page != null || event.progressPercentage != null) {
+                val currentBook = _state.value.selectedBook?.takeIf { it.id == bookId }
+                    ?: _state.value.findBook(bookId)
                 repository.updateBook(
                     bookId,
                     BookUpdateRequest(
-                        currentPage = event.page,
-                        progressPercentage = event.progressPercentage,
+                        currentPage = if (currentBook?.pageFormat?.usesPages != false) {
+                            event.page
+                        } else {
+                            event.progressPercentage?.toBookProgressUnits(currentBook.pageFormat)
+                        },
                     )
                 ).launchIn(viewModelScope)
             }
@@ -706,7 +655,7 @@ private fun BookUiState.findBook(bookId: Long): Book? =
 
 private const val READING_TIME_TYPE = 2
 
-private fun Book.readingSessionProgressLabel(): String =
+private fun Book.currentProgressLabel(): String =
     if (pageFormat.usesPages) {
         currentPage?.let { "Page $it" } ?: "Page --"
     } else {
@@ -721,16 +670,6 @@ private fun Book.progressLabel(
         page?.let { "Page $it" } ?: "Page --"
     } else {
         progressPercentage?.formatSessionPercent(pageFormat) ?: "--%"
-    }
-
-private fun ReadingSessionState.stopProgressLabel(
-    stopPage: Int?,
-    stopProgressPercentage: Double?,
-): String =
-    if (pageFormat.usesPages) {
-        stopPage?.let { "Page $it" } ?: "Page --"
-    } else {
-        stopProgressPercentage?.formatSessionPercent(pageFormat) ?: "--%"
     }
 
 private fun Double.formatSessionPercent(format: BookPageFormat): String =

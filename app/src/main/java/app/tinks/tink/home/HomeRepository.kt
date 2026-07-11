@@ -4,6 +4,7 @@ import app.tinks.tink.book.Book
 import app.tinks.tink.book.BookApi
 import app.tinks.tink.book.BookPageFormat
 import app.tinks.tink.book.BookUpdateRequest
+import app.tinks.tink.book.toBookProgressUnits
 import app.tinks.tink.book.toDomain as toBookDomain
 import app.tinks.tink.haircut.HaircutApi
 import app.tinks.tink.haircut.toDomain as toHaircutDomain
@@ -200,11 +201,16 @@ open class HomeRepository @Inject constructor(
             }
             HOME_ACTION_BOOK_PROGRESS -> {
                 val bookId = action.bookId ?: return
+                val snapshot = ensureSnapshot()
+                val pageFormat = BookPageFormat.fromWire(snapshot.readKeeperPageFormat)
                 val updated = bookApi.updateBook(
                     bookId,
                     BookUpdateRequest(
-                        currentPage = action.pageValue,
-                        progressPercentage = action.progressValue,
+                        currentPage = if (pageFormat.usesPages) {
+                            action.pageValue
+                        } else {
+                            action.progressValue?.toBookProgressUnits(pageFormat)
+                        },
                     )
                 ).toBookDomain()
                 updateSnapshot { it.withReadKeeperBook(updated) }

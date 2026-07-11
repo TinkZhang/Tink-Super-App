@@ -144,6 +144,18 @@ class BookRepositoryTest {
         assertEquals(listOf("Science Fiction"), api.wishlistCategories)
     }
 
+    @Test
+    fun getBooks_finalShelfLoadsAbandonedAndDoneBooks() = runTest {
+        val api = FakeBookApi()
+        val repository = BookRepository(api)
+
+        val result = repository.getBooks(BookState.Archived, "Memoir").take(2).toList().last() as ApiResult.Success
+
+        assertEquals(listOf("Memoir"), api.abandonCategories)
+        assertEquals(listOf("Memoir"), api.doneCategories)
+        assertEquals(listOf(ArchiveStatus.Abandon, ArchiveStatus.Done), result.data.map { it.archiveStatus })
+    }
+
     private class FakeBookApi(
         private val searchResponse: JsonElement = Json.encodeToJsonElement(listOf(searchResultDto())),
     ) : BookApi {
@@ -151,6 +163,8 @@ class BookRepositoryTest {
         val createdDrafts = mutableListOf<BookCreateRequest>()
         val startedReading = mutableListOf<Pair<Long, BookStartReadingRequest>>()
         val wishlistCategories = mutableListOf<String?>()
+        val abandonCategories = mutableListOf<String?>()
+        val doneCategories = mutableListOf<String?>()
 
         override suspend fun search(keyword: String, limit: Int): JsonElement {
             searchQueries.add(keyword)
@@ -172,12 +186,20 @@ class BookRepositoryTest {
             return emptyList()
         }
         override suspend fun getReading(page: Int, size: Int, category: String?): List<BookDto> = emptyList()
-        override suspend fun getArchived(page: Int, size: Int, status: String?, category: String?): List<BookDto> = emptyList()
+        override suspend fun getAbandon(page: Int, size: Int, category: String?): List<BookDto> {
+            abandonCategories.add(category)
+            return listOf(bookDto(state = "abandon"))
+        }
+        override suspend fun getDone(page: Int, size: Int, category: String?): List<BookDto> {
+            doneCategories.add(category)
+            return listOf(bookDto(state = "done"))
+        }
         override suspend fun getCategories(): List<String> = listOf("Science Fiction")
         override suspend fun getBook(bookId: Long): BookDto = bookDto()
         override suspend fun updateBook(bookId: Long, payload: BookUpdateRequest): BookDto = bookDto()
         override suspend fun deleteBook(bookId: Long) = Unit
-        override suspend fun archiveBook(bookId: Long, payload: BookArchiveRequest): BookDto = bookDto(state = "archived")
+        override suspend fun abandonBook(bookId: Long): BookDto = bookDto(state = "abandon")
+        override suspend fun markBookDone(bookId: Long): BookDto = bookDto(state = "done")
         override suspend fun getNotes(bookId: Long, page: Int, size: Int): List<BookNoteDto> = emptyList()
         override suspend fun createNote(bookId: Long, payload: BookNoteCreateRequest): BookNoteDto =
             error("not used")

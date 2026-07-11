@@ -40,6 +40,8 @@ import app.tinks.tink.book.Book
 import app.tinks.tink.book.BookDto
 import app.tinks.tink.book.BookPageFormat
 import app.tinks.tink.book.toDomain
+import app.tinks.tink.settings.ApiEnvironment
+import app.tinks.tink.settings.AppEnvironmentRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -49,7 +51,7 @@ import java.util.Locale
 
 class ReadKeeperWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val state = ReadKeeperWidgetLoader.load()
+        val state = ReadKeeperWidgetLoader.load(context.applicationContext)
         provideContent {
             ReadKeeperWidgetContent(state)
         }
@@ -70,16 +72,6 @@ private fun ReadKeeperWidgetContent(state: ReadKeeperWidgetState) {
             .padding(14.dp),
         verticalAlignment = Alignment.Vertical.CenterVertically,
     ) {
-        Text(
-            text = "ReadKeeper",
-            style = TextStyle(
-                color = ColorProvider(Color(0xFF31503B)),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-            ),
-            maxLines = 1,
-        )
-        Spacer(GlanceModifier.height(8.dp))
         when (state) {
             ReadKeeperWidgetState.Empty -> EmptyWidgetContent()
             ReadKeeperWidgetState.Error -> ErrorWidgetContent()
@@ -97,20 +89,35 @@ private fun LatestBookContent(state: ReadKeeperWidgetState.Loaded) {
         Image(
             provider = state.cover ?: ImageProvider(R.drawable.ic_readkeeperlogo),
             contentDescription = state.book.title,
-            contentScale = ContentScale.Crop,
-            modifier = GlanceModifier.size(72.dp),
+            contentScale = ContentScale.Fit,
+            modifier = GlanceModifier
+                .width(48.dp)
+                .height(72.dp),
         )
-        Spacer(GlanceModifier.width(12.dp))
+        Spacer(GlanceModifier.width(10.dp))
         Column(modifier = GlanceModifier.defaultWeight()) {
-            Text(
-                text = state.book.title,
-                style = TextStyle(
-                    color = ColorProvider(Color(0xFF111827)),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                ),
-                maxLines = 2,
-            )
+            Row(
+                modifier = GlanceModifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Vertical.CenterVertically,
+            ) {
+                Image(
+                    provider = ImageProvider(R.drawable.ic_readkeeperlogo),
+                    contentDescription = "ReadKeeper",
+                    contentScale = ContentScale.Fit,
+                    modifier = GlanceModifier.size(16.dp),
+                )
+                Spacer(GlanceModifier.width(6.dp))
+                Text(
+                    text = state.book.title,
+                    style = TextStyle(
+                        color = ColorProvider(Color(0xFF111827)),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
+                    maxLines = 2,
+                    modifier = GlanceModifier.defaultWeight(),
+                )
+            }
             Spacer(GlanceModifier.height(6.dp))
             Text(
                 text = state.progressLabel,
@@ -181,14 +188,18 @@ private sealed interface ReadKeeperWidgetState {
 }
 
 private object ReadKeeperWidgetLoader {
+    private const val DEBUG_API_OVERRIDE_PREFS = "debug_api_base_url_override"
+    private const val KEY_DEBUG_API_BASE_URL = "base_url"
     private val json = Json { ignoreUnknownKeys = true }
 
-    suspend fun load(): ReadKeeperWidgetState = withContext(Dispatchers.IO) {
+    suspend fun load(context: Context): ReadKeeperWidgetState = withContext(Dispatchers.IO) {
         runCatching {
-            val book = fetchLatestReadingBook() ?: return@withContext ReadKeeperWidgetState.Empty
+            val book = fetchLatestReadingBook(context) ?: return@withContext ReadKeeperWidgetState.Empty
             ReadKeeperWidgetState.Loaded(
                 book = book,
-                cover = book.coverUrl?.let(::downloadCover)?.let { ImageProvider(it) },
+                cover = book.coverUrl?.let { coverUrl ->
+                    runCatching { downloadCover(coverUrl) }.getOrNull()
+                }?.let { ImageProvider(it) },
                 progressLabel = book.widgetProgressLabel(),
                 progressFraction = ((book.widgetProgressPercent() ?: 0.0) / 100.0).toFloat()
                     .coerceIn(0f, 1f),
@@ -198,8 +209,8 @@ private object ReadKeeperWidgetLoader {
         }
     }
 
-    private fun fetchLatestReadingBook(): Book? {
-        val url = URL("${BuildConfig.TINK_API_BASE_URL.ensureTrailingSlash()}book/reading?page=0&size=1")
+    private fun fetchLatestReadingBook(context: Context): Book? {
+        val url = latestReadingBookUrl(context)
         val connection = (url.openConnection() as HttpURLConnection).apply {
             connectTimeout = 8_000
             readTimeout = 8_000
@@ -212,6 +223,27 @@ private object ReadKeeperWidgetLoader {
         } finally {
             connection.disconnect()
         }
+    }
+
+    private fun latestReadingBookUrl(context: Context): URL {
+        val baseUrl = widgetApiBaseUrl(context)
+        val shouldUseDevApi =
+            AppEnvironmentRepository(context).currentEnvironment() == ApiEnvironment.Dev &&
+                baseUrl.host == "api.tinks.app" &&
+                !baseUrl.path.startsWith("/dev/")
+        val pathPrefix = if (shouldUseDevApi) "dev/" else ""
+        return URL("${baseUrl.toString().ensureTrailingSlash()}${pathPrefix}book/reading?page=0&size=1")
+    }
+
+    private fun widgetApiBaseUrl(context: Context): URL {
+        val debugOverride = if (BuildConfig.DEBUG) {
+            context.getSharedPreferences(DEBUG_API_OVERRIDE_PREFS, Context.MODE_PRIVATE)
+                .getString(KEY_DEBUG_API_BASE_URL, null)
+                ?.takeIf { it.isNotBlank() }
+        } else {
+            null
+        }
+        return URL((debugOverride ?: BuildConfig.TINK_API_BASE_URL).ensureTrailingSlash())
     }
 
     private fun downloadCover(url: String): Bitmap? {

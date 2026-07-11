@@ -35,7 +35,7 @@ open class BookRepository @Inject constructor(
                 when (state) {
                     BookState.Wish -> bookApi.getWishlist(category = category)
                     BookState.Reading -> bookApi.getReading(category = category)
-                    BookState.Archived -> bookApi.getArchived(category = category)
+                    BookState.Archived -> bookApi.getAbandon(category = category) + bookApi.getDone(category = category)
                 }.map { it.toDomain() }
             }
         )
@@ -69,7 +69,6 @@ open class BookRepository @Inject constructor(
                     payload = BookStartReadingRequest(
                         platform = platform,
                         currentPage = 0,
-                        progressPercentage = 0.0,
                         pageFormat = draft.pageFormat.takeUnless { it == BookPageFormat.Page }?.wireValue,
                     )
                 ).toDomain()
@@ -82,7 +81,6 @@ open class BookRepository @Inject constructor(
         platform: String,
         pageFormat: BookPageFormat = BookPageFormat.Page,
         currentPage: Int? = null,
-        progressPercentage: Double? = null,
     ): Flow<ApiResult<Book>> = flow {
         emit(ApiResult.Loading)
         emit(
@@ -92,7 +90,6 @@ open class BookRepository @Inject constructor(
                     payload = BookStartReadingRequest(
                         platform = platform,
                         currentPage = currentPage,
-                        progressPercentage = progressPercentage,
                         pageFormat = pageFormat.takeUnless { it == BookPageFormat.Page }?.wireValue,
                     )
                 ).toDomain()
@@ -112,10 +109,10 @@ open class BookRepository @Inject constructor(
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
-                bookApi.archiveBook(
-                    bookId = bookId,
-                    payload = BookArchiveRequest(status = status.wireValue),
-                ).toDomain()
+                when (status) {
+                    ArchiveStatus.Abandon -> bookApi.abandonBook(bookId)
+                    ArchiveStatus.Done -> bookApi.markBookDone(bookId)
+                }.toDomain()
             }
         )
     }.flowOn(Dispatchers.IO)
@@ -229,7 +226,6 @@ private fun JsonObject.toFlexibleSearchResult(): BookSearchResultDto? {
         isbn = isbn,
         description = source.stringValue("description"),
         rating = source.doubleValue("rating") ?: source.doubleValue("averageRating"),
-        amazonLink = this.stringValue("amazon_link") ?: this.stringValue("amazonLink") ?: source.stringValue("infoLink"),
         pages = source.intValue("pages") ?: source.intValue("pageCount"),
         publishYear = source.intValue("publish_year")
             ?: source.intValue("publishYear")

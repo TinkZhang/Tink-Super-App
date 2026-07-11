@@ -28,10 +28,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.Year
 
 @RunWith(RobolectricTestRunner::class)
@@ -60,25 +57,6 @@ class BookScreenTest {
     }
 
     @Test
-    fun home_startFabStartsLatestReadingBook() {
-        val events = mutableListOf<BookEvent>()
-        val latestBook = sampleBook(BookState.Reading)
-
-        composeRule.setContent {
-            TinkTheme(dynamicColor = false) {
-                BookScreen(
-                    state = BookUiState(readingBooks = listOf(latestBook)),
-                    onEvent = events::add,
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag("book_reading_session_fab").performClick()
-
-        assertEquals(BookEvent.StartReadingSession(latestBook), events.single())
-    }
-
-    @Test
     fun home_updatesWhenReadingBooksArriveWithoutNavigation() {
         val latestBook = sampleBook(BookState.Reading)
         var state by mutableStateOf(BookUiState())
@@ -100,37 +78,6 @@ class BookScreenTest {
     }
 
     @Test
-    fun home_activeReadingSessionShowsTimerAndStopDialog() {
-        val latestBook = sampleBook(BookState.Reading)
-        val session = ReadingSessionState(
-            bookId = latestBook.id,
-            bookTitle = latestBook.title,
-            pageFormat = latestBook.pageFormat,
-            startTime = Instant.now().minusSeconds(65),
-            startPage = latestBook.currentPage,
-            startProgressPercentage = latestBook.progressPercentage,
-            startProgressLabel = "Page 80",
-        )
-
-        composeRule.setContent {
-            TinkTheme(dynamicColor = false) {
-                BookScreen(
-                    state = BookUiState(
-                        readingBooks = listOf(latestBook),
-                        readingSession = session,
-                    ),
-                )
-            }
-        }
-
-        composeRule.onAllNodesWithTag("book_current_reading").assertCountEquals(0)
-        composeRule.onNodeWithTag("book_active_reading_session").assertIsDisplayed()
-        composeRule.onNodeWithTag("book_reading_session_duration").assertIsDisplayed()
-        composeRule.onNodeWithTag("book_active_reading_session_stop").performClick()
-        composeRule.onNodeWithText("Reading session").assertIsDisplayed()
-    }
-
-    @Test
     fun home_showsReadingContributionGraph() {
         val year = Year.now().value
 
@@ -148,60 +95,6 @@ class BookScreenTest {
         composeRule.onNodeWithTag("book_reading_contribution").assertIsDisplayed()
         composeRule.onNodeWithText("Reading records").assertIsDisplayed()
         composeRule.onNodeWithText("$year · 1 day").assertIsDisplayed()
-    }
-
-    @Test
-    fun notificationStopRequest_opensEditableStopDialogAndSavesEditedTimes() {
-        val events = mutableListOf<BookEvent>()
-        var consumed = false
-        val latestBook = sampleBook(BookState.Reading)
-        val session = ReadingSessionState(
-            bookId = latestBook.id,
-            bookTitle = latestBook.title,
-            pageFormat = latestBook.pageFormat,
-            startTime = Instant.parse("2026-06-17T11:00:00Z"),
-            startPage = latestBook.currentPage,
-            startProgressPercentage = latestBook.progressPercentage,
-            startProgressLabel = "Page 80",
-        )
-
-        composeRule.setContent {
-            TinkTheme(dynamicColor = false) {
-                BookScreen(
-                    state = BookUiState(
-                        readingBooks = listOf(latestBook),
-                        readingSession = session,
-                    ),
-                    onEvent = events::add,
-                    stopReadingSessionRequestId = 1,
-                    onStopReadingSessionRequestConsumed = { consumed = true },
-                )
-            }
-        }
-
-        composeRule.onNodeWithText("Reading session").assertIsDisplayed()
-        composeRule.onNodeWithTag("book_session_start_time").performTextClearance()
-        composeRule.onNodeWithTag("book_session_start_time").performTextInput("2026-06-17 20:00")
-        composeRule.onNodeWithTag("book_session_stop_time").performTextClearance()
-        composeRule.onNodeWithTag("book_session_stop_time").performTextInput("2026-06-17 20:30")
-        composeRule.onNodeWithTag("book_session_stop_page").performTextClearance()
-        composeRule.onNodeWithTag("book_session_stop_page").performTextInput("96")
-        composeRule.onNodeWithTag("book_stop_reading_session_save").performClick()
-
-        assertEquals(true, consumed)
-        assertEquals(
-            BookEvent.StopReadingSession(
-                startTime = LocalDateTime.parse("2026-06-17T20:00")
-                    .atZone(ZoneId.systemDefault())
-                    .toInstant(),
-                stopTime = LocalDateTime.parse("2026-06-17T20:30")
-                    .atZone(ZoneId.systemDefault())
-                    .toInstant(),
-                stopPage = 96,
-                stopProgressPercentage = null,
-            ),
-            events.single(),
-        )
     }
 
     @Test
@@ -401,7 +294,6 @@ class BookScreenTest {
                 pages = 200,
                 pageFormat = BookPageFormat.Page,
                 currentPage = null,
-                progressPercentage = null,
             ),
             events.single(),
         )
@@ -426,10 +318,9 @@ class BookScreenTest {
         composeRule.onNodeWithTag("book_edit_progress").performClick()
         composeRule.onNodeWithTag("book_progress_page").performTextClearance()
         composeRule.onNodeWithTag("book_progress_page").performTextInput("100")
-        composeRule.onNodeWithTag("book_progress_save").performClick()
-        composeRule.onNodeWithText("Reading session").assertIsDisplayed()
         composeRule.onNodeWithTag("book_session_start_time").assertIsDisplayed()
-        composeRule.onNodeWithTag("book_stop_reading_session_save").performClick()
+        composeRule.onNodeWithTag("book_session_stop_time").assertIsDisplayed()
+        composeRule.onNodeWithTag("book_progress_save").performClick()
 
         val event = events.single() as BookEvent.UpdateReadingProgress
         assertEquals(2, event.bookId)
@@ -438,17 +329,8 @@ class BookScreenTest {
     }
 
     @Test
-    fun detail_activeReadingSessionShowsCardWithoutStopFab() {
+    fun detail_doesNotShowStartTimerFab() {
         val book = sampleBook(BookState.Reading)
-        val session = ReadingSessionState(
-            bookId = book.id,
-            bookTitle = book.title,
-            pageFormat = book.pageFormat,
-            startTime = Instant.now().minusSeconds(125),
-            startPage = book.currentPage,
-            startProgressPercentage = book.progressPercentage,
-            startProgressLabel = "Page 80",
-        )
 
         composeRule.setContent {
             TinkTheme(dynamicColor = false) {
@@ -456,15 +338,13 @@ class BookScreenTest {
                     state = BookUiState(
                         screen = BooksScreenState.Detail(book.id),
                         selectedBook = book,
-                        readingSession = session,
                     ),
                 )
             }
         }
 
-        composeRule.onNodeWithTag("book_active_reading_session").assertIsDisplayed()
         composeRule.onAllNodesWithTag("book_reading_session_fab").assertCountEquals(0)
-        composeRule.onAllNodesWithTag("book_active_reading_session_stop").assertCountEquals(1)
+        composeRule.onNodeWithTag("book_edit_progress").assertIsDisplayed()
     }
 
     @Test
@@ -620,7 +500,7 @@ class BookScreenTest {
     }
 
     @Test
-    fun archivedList_statusChipRequestsFiltering() {
+    fun archivedList_defaultsToAbandonedAndCanSwitchStatus() {
         val events = mutableListOf<BookEvent>()
 
         composeRule.setContent {
@@ -630,8 +510,15 @@ class BookScreenTest {
                         screen = BooksScreenState.List(BookState.Archived),
                         archivedBooks = listOf(
                             sampleBook(BookState.Archived).copy(
+                                title = "Finished sample",
                                 archiveStatus = ArchiveStatus.Done,
                                 archivedDate = "2026-02-01",
+                            ),
+                            sampleBook(BookState.Archived).copy(
+                                id = 3,
+                                title = "Abandoned sample",
+                                archiveStatus = ArchiveStatus.Abandon,
+                                archivedDate = "2026-02-02",
                             )
                         ),
                     ),
@@ -640,7 +527,9 @@ class BookScreenTest {
             }
         }
 
-        composeRule.onNodeWithTag("book_archive_status_abandoned").performClick()
+        composeRule.onNodeWithText("Abandoned sample").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Finished sample").assertCountEquals(0)
+        composeRule.onNodeWithTag("book_archive_status_abandon").performClick()
 
         assertEquals(BookEvent.SelectArchiveStatus(ArchiveStatus.Abandon), events.single())
     }

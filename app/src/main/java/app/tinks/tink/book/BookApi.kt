@@ -3,6 +3,7 @@ package app.tinks.tink.book
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlin.math.roundToInt
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -37,11 +38,17 @@ interface BookApi {
         @Query("category") category: String? = null,
     ): List<BookDto>
 
-    @GET("book/archived")
-    suspend fun getArchived(
+    @GET("book/abandon")
+    suspend fun getAbandon(
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 50,
-        @Query("status") status: String? = null,
+        @Query("category") category: String? = null,
+    ): List<BookDto>
+
+    @GET("book/done")
+    suspend fun getDone(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 50,
         @Query("category") category: String? = null,
     ): List<BookDto>
 
@@ -66,11 +73,11 @@ interface BookApi {
         @Body payload: BookStartReadingRequest,
     ): BookDto
 
-    @POST("book/{bookId}/archive")
-    suspend fun archiveBook(
-        @Path("bookId") bookId: Long,
-        @Body payload: BookArchiveRequest,
-    ): BookDto
+    @POST("book/{bookId}/abandon")
+    suspend fun abandonBook(@Path("bookId") bookId: Long): BookDto
+
+    @POST("book/{bookId}/done")
+    suspend fun markBookDone(@Path("bookId") bookId: Long): BookDto
 
     @GET("book/{bookId}/notes")
     suspend fun getNotes(
@@ -111,8 +118,6 @@ data class BookSearchResultDto(
     val isbn: String? = null,
     val description: String? = null,
     val rating: Double? = null,
-    @SerialName("amazon_link")
-    val amazonLink: String? = null,
     val pages: Int? = null,
     @SerialName("publish_year")
     val publishYear: Int? = null,
@@ -129,8 +134,6 @@ data class BookDto(
     val isbn: String? = null,
     val description: String? = null,
     val rating: Double? = null,
-    @SerialName("amazon_link")
-    val amazonLink: String? = null,
     val pages: Int? = null,
     @SerialName("publish_year")
     val publishYear: Int? = null,
@@ -141,10 +144,6 @@ data class BookDto(
     val pageFormat: String? = null,
     @SerialName("current_page")
     val currentPage: Int? = null,
-    @SerialName("progress_percentage")
-    val progressPercentage: Double? = null,
-    @SerialName("archive_status")
-    val archiveStatus: String? = null,
     @SerialName("archived_date")
     val archivedDate: String? = null,
     @SerialName("created_at")
@@ -163,8 +162,6 @@ data class BookCreateRequest(
     val isbn: String? = null,
     val description: String? = null,
     val rating: Double? = null,
-    @SerialName("amazon_link")
-    val amazonLink: String? = null,
     val pages: Int? = null,
     @SerialName("page_format")
     val pageFormat: String? = null,
@@ -183,8 +180,6 @@ data class BookUpdateRequest(
     val isbn: String? = null,
     val description: String? = null,
     val rating: Double? = null,
-    @SerialName("amazon_link")
-    val amazonLink: String? = null,
     val pages: Int? = null,
     @SerialName("page_format")
     val pageFormat: String? = null,
@@ -194,10 +189,6 @@ data class BookUpdateRequest(
     val platform: String? = null,
     @SerialName("current_page")
     val currentPage: Int? = null,
-    @SerialName("progress_percentage")
-    val progressPercentage: Double? = null,
-    @SerialName("archive_status")
-    val archiveStatus: String? = null,
     @SerialName("archived_date")
     val archivedDate: String? = null,
 )
@@ -207,17 +198,8 @@ data class BookStartReadingRequest(
     val platform: String,
     @SerialName("current_page")
     val currentPage: Int? = null,
-    @SerialName("progress_percentage")
-    val progressPercentage: Double? = null,
     @SerialName("page_format")
     val pageFormat: String? = null,
-)
-
-@Serializable
-data class BookArchiveRequest(
-    val status: String,
-    @SerialName("archived_date")
-    val archivedDate: String? = null,
 )
 
 @Serializable
@@ -255,7 +237,7 @@ data class BookNoteUpdateRequest(
 enum class BookState(val wireValue: String, val label: String) {
     Wish("wish", "Wishlist"),
     Reading("reading", "Reading"),
-    Archived("archived", "Archived"),
+    Archived("abandon", "Abandoned"),
 }
 
 @Serializable
@@ -292,7 +274,6 @@ data class Book(
     val isbn: String?,
     val description: String?,
     val rating: Double?,
-    val amazonLink: String?,
     val pages: Int?,
     val publishYear: Int?,
     val state: BookState,
@@ -323,44 +304,45 @@ data class BookDraft(
     val isbn: String? = null,
     val description: String? = null,
     val rating: Double? = null,
-    val amazonLink: String? = null,
     val pages: Int? = null,
     val pageFormat: BookPageFormat = BookPageFormat.Page,
     val publishYear: Int? = null,
     val category: String? = null,
 )
 
-fun BookDto.toDomain(): Book = Book(
-    id = id,
-    title = title,
-    publisher = publisher,
-    author = author,
-    coverUrl = coverUrl,
-    isbn = isbn,
-    description = description,
-    rating = rating,
-    amazonLink = amazonLink,
-    pages = pages,
-    publishYear = publishYear,
-    state = when (state) {
-        "wish" -> BookState.Wish
-        "archived" -> BookState.Archived
-        else -> BookState.Reading
-    },
-    platform = platform,
-    pageFormat = BookPageFormat.fromWire(pageFormat),
-    currentPage = currentPage,
-    progressPercentage = progressPercentage,
-    archiveStatus = when (archiveStatus) {
-        "abandon" -> ArchiveStatus.Abandon
-        "done" -> ArchiveStatus.Done
-        else -> null
-    },
-    archivedDate = archivedDate,
-    category = category,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-)
+fun BookDto.toDomain(): Book {
+    val format = BookPageFormat.fromWire(pageFormat)
+    return Book(
+        id = id,
+        title = title,
+        publisher = publisher,
+        author = author,
+        coverUrl = coverUrl,
+        isbn = isbn,
+        description = description,
+        rating = rating,
+        pages = pages,
+        publishYear = publishYear,
+        state = when (state) {
+            "wish" -> BookState.Wish
+            "done", "abandon" -> BookState.Archived
+            else -> BookState.Reading
+        },
+        platform = platform,
+        pageFormat = format,
+        currentPage = currentPage,
+        progressPercentage = currentPage.toProgressPercentage(format, pages),
+        archiveStatus = when (state) {
+            "abandon" -> ArchiveStatus.Abandon
+            "done" -> ArchiveStatus.Done
+            else -> null
+        },
+        archivedDate = archivedDate,
+        category = category,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+}
 
 fun BookNoteDto.toDomain(): BookNote = BookNote(
     id = id,
@@ -378,7 +360,6 @@ fun BookDraft.toCreateRequest(): BookCreateRequest = BookCreateRequest(
     isbn = isbn,
     description = description,
     rating = rating,
-    amazonLink = amazonLink,
     pages = pages,
     pageFormat = pageFormat.takeUnless { it == BookPageFormat.Page }?.wireValue,
     publishYear = publishYear,
@@ -393,7 +374,24 @@ fun BookSearchResultDto.toDraft(): BookDraft = BookDraft(
     isbn = isbn,
     description = description,
     rating = rating,
-    amazonLink = amazonLink,
     pages = pages,
     publishYear = publishYear,
 )
+
+fun Double.toBookProgressUnits(format: BookPageFormat): Int =
+    when (format) {
+        BookPageFormat.Page -> toInt()
+        BookPageFormat.Percent100 -> roundToInt()
+        BookPageFormat.Percent1000 -> (this * 10).roundToInt()
+        BookPageFormat.Percent10000 -> (this * 100).roundToInt()
+    }
+
+private fun Int?.toProgressPercentage(format: BookPageFormat, pages: Int?): Double? =
+    when (format) {
+        BookPageFormat.Page -> this?.let { page ->
+            pages?.takeIf { it > 0 }?.let { totalPages -> page * 100.0 / totalPages }
+        }
+        BookPageFormat.Percent100 -> this?.toDouble()
+        BookPageFormat.Percent1000 -> this?.div(10.0)
+        BookPageFormat.Percent10000 -> this?.div(100.0)
+    }
