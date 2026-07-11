@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.book.BookViewModelTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-06-29T12:14:48.057Z" hostname="runnervmmklqx" time="0.088">
+<testsuite name="app.tinks.tink.book.BookViewModelTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:53.533Z" hostname="runnervm5mmn9" time="0.101">
   <properties/>
-  <testcase name="addSearchResultToWishlist_marksToggleCheckedAndShowsToast" classname="app.tinks.tink.book.BookViewModelTest" time="0.042"/>
-  <testcase name="updatingReadingProgress_logsTimeEntryAndUpdatesBook" classname="app.tinks.tink.book.BookViewModelTest" time="0.015"/>
-  <testcase name="navigatingBackFromSearchResults_returnsHomeAndClearsSearch" classname="app.tinks.tink.book.BookViewModelTest" time="0.006"/>
-  <testcase name="init_loadsThreeShelves" classname="app.tinks.tink.book.BookViewModelTest" time="0.002"/>
-  <testcase name="submitSearch_populatesSearchResults" classname="app.tinks.tink.book.BookViewModelTest" time="0.003"/>
+  <testcase name="addSearchResultToWishlist_marksToggleCheckedAndShowsToast" classname="app.tinks.tink.book.BookViewModelTest" time="0.046"/>
+  <testcase name="updatingReadingProgress_logsTimeEntryAndUpdatesBook" classname="app.tinks.tink.book.BookViewModelTest" time="0.018"/>
+  <testcase name="navigatingBackFromSearchResults_returnsHomeAndClearsSearch" classname="app.tinks.tink.book.BookViewModelTest" time="0.013"/>
+  <testcase name="init_loadsThreeShelves" classname="app.tinks.tink.book.BookViewModelTest" time="0.003"/>
+  <testcase name="submitSearch_populatesSearchResults" classname="app.tinks.tink.book.BookViewModelTest" time="0.005"/>
   <testcase name="listAndDetailNavigation_canReturnToPreviousScreens" classname="app.tinks.tink.book.BookViewModelTest" time="0.005"/>
   <testcase name="init_loadsCurrentYearReadingRecordDates" classname="app.tinks.tink.book.BookViewModelTest" time="0.003"/>
-  <testcase name="stoppingReadingSession_logsTimeEntryAndClearsSession" classname="app.tinks.tink.book.BookViewModelTest" time="0.004"/>
   <testcase name="selectingCategory_filtersTheOpenShelf" classname="app.tinks.tink.book.BookViewModelTest" time="0.003"/>
-  <testcase name="addSearchResultToReading_marksToggleCheckedAndShowsToast" classname="app.tinks.tink.book.BookViewModelTest" time="0.004"/>
+  <testcase name="addSearchResultToReading_marksToggleCheckedAndShowsToast" classname="app.tinks.tink.book.BookViewModelTest" time="0.005"/>
   <system-out><![CDATA[safeApiCall: calling api
-safeApiCall: calling api
 safeApiCall: calling api
 safeApiCall: calling api
 ]]></system-out>

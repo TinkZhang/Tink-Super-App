@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.time.TimeViewModelTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-06-29T12:14:51.990Z" hostname="runnervmmklqx" time="0.032">
+<testsuite name="app.tinks.tink.time.TimeViewModelTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:57.578Z" hostname="runnervm5mmn9" time="0.04">
   <properties/>
-  <testcase name="saveEntry_usesPrefixedTitleAndRefreshesDashboard" classname="app.tinks.tink.time.TimeViewModelTest" time="0.017"/>
+  <testcase name="saveEntry_usesPrefixedTitleAndRefreshesDashboard" classname="app.tinks.tink.time.TimeViewModelTest" time="0.024"/>
   <testcase name="applyLabel_prefixesTitleAndReplacesExistingKnownLabel" classname="app.tinks.tink.time.TimeViewModelTest" time="0.003"/>
   <testcase name="init_usesWorkingAsDefaultTypeAndLoadsLabels" classname="app.tinks.tink.time.TimeViewModelTest" time="0.002"/>
-  <testcase name="dashboard_filtersEntriesToSelectedDateRangeOnClient" classname="app.tinks.tink.time.TimeViewModelTest" time="0.004"/>
+  <testcase name="dashboard_filtersEntriesToSelectedDateRangeOnClient" classname="app.tinks.tink.time.TimeViewModelTest" time="0.005"/>
   <testcase name="saveLabel_addsLabelToState" classname="app.tinks.tink.time.TimeViewModelTest" time="0.005"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

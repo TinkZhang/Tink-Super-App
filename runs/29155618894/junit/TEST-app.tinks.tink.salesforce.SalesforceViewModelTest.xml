@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.salesforce.SalesforceViewModelTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:56.265Z" hostname="runnervm5mmn9" time="0.104">
+  <properties/>
+  <testcase name="practice_recordsLocalAnswerAndPostsOnlyWhenFinished" classname="app.tinks.tink.salesforce.SalesforceViewModelTest" time="0.036"/>
+  <testcase name="practiceDone_marksQuestionMasteredAndSyncsAtFinish" classname="app.tinks.tink.salesforce.SalesforceViewModelTest" time="0.006"/>
+  <testcase name="examPostsAttemptOnlyAfterSixtyFiveAnswers" classname="app.tinks.tink.salesforce.SalesforceViewModelTest" time="0.061"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

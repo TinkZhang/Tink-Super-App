@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.time.TimeRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-29T12:14:50.813Z" hostname="runnervmmklqx" time="0.043">
+<testsuite name="app.tinks.tink.time.TimeRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:56.500Z" hostname="runnervm5mmn9" time="0.03">
   <properties/>
-  <testcase name="createTimeEntry_postsPayload" classname="app.tinks.tink.time.TimeRepositoryTest" time="0.007"/>
-  <testcase name="timeLabelCrud_callsLabelEndpoints" classname="app.tinks.tink.time.TimeRepositoryTest" time="0.021"/>
-  <testcase name="getTimeDashboard_usesSelectedDateRangeForStatisticsAndEntries" classname="app.tinks.tink.time.TimeRepositoryTest" time="0.015"/>
+  <testcase name="createTimeEntry_postsPayload" classname="app.tinks.tink.time.TimeRepositoryTest" time="0.008"/>
+  <testcase name="timeLabelCrud_callsLabelEndpoints" classname="app.tinks.tink.time.TimeRepositoryTest" time="0.012"/>
+  <testcase name="getTimeDashboard_usesSelectedDateRangeForStatisticsAndEntries" classname="app.tinks.tink.time.TimeRepositoryTest" time="0.009"/>
   <system-out><![CDATA[safeApiCall: calling api
 safeApiCall: calling api
 safeApiCall: calling api

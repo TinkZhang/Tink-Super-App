@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.merriam.MerriamRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-29T12:14:50.228Z" hostname="runnervmmklqx" time="0.009">
+<testsuite name="app.tinks.tink.merriam.MerriamRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:55.723Z" hostname="runnervm5mmn9" time="0.023">
   <properties/>
-  <testcase name="addMerriamRecords_emitsLoadingThenSuccess_andCallsApi" classname="app.tinks.tink.merriam.MerriamRepositoryTest" time="0.005"/>
+  <testcase name="addMerriamRecords_emitsLoadingThenSuccess_andCallsApi" classname="app.tinks.tink.merriam.MerriamRepositoryTest" time="0.019"/>
   <testcase name="getMerriamStat_emitsLoadingThenSuccess" classname="app.tinks.tink.merriam.MerriamRepositoryTest" time="0.003"/>
   <testcase name="getMerriamStat_emitsLoadingThenError_whenApiThrows" classname="app.tinks.tink.merriam.MerriamRepositoryTest" time="0.001"/>
   <system-out><![CDATA[safeApiCall: calling api

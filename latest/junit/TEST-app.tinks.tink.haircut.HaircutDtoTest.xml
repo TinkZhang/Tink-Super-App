@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.haircut.HaircutDtoTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-06-29T12:14:48.880Z" hostname="runnervmmklqx" time="0.006">
+<testsuite name="app.tinks.tink.haircut.HaircutDtoTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:54.354Z" hostname="runnervm5mmn9" time="0.006">
   <properties/>
-  <testcase name="toDomain_mapsApiFields" classname="app.tinks.tink.haircut.HaircutDtoTest" time="0.005"/>
+  <testcase name="toDomain_mapsApiFields" classname="app.tinks.tink.haircut.HaircutDtoTest" time="0.006"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

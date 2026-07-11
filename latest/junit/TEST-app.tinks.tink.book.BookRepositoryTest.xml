@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.book.BookRepositoryTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-06-29T12:14:43.707Z" hostname="runnervmmklqx" time="0.284">
+<testsuite name="app.tinks.tink.book.BookRepositoryTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:49.801Z" hostname="runnervm5mmn9" time="0.285">
   <properties/>
-  <testcase name="searchBooks_keepsResultWithoutSourceId" classname="app.tinks.tink.book.BookRepositoryTest" time="0.208"/>
-  <testcase name="getBooks_passesSelectedCategoryToApi" classname="app.tinks.tink.book.BookRepositoryTest" time="0.035"/>
-  <testcase name="addToReading_createsWishlistEntryThenStartsReading" classname="app.tinks.tink.book.BookRepositoryTest" time="0.014"/>
-  <testcase name="searchBooks_usesBackendSearchAndMapsResult" classname="app.tinks.tink.book.BookRepositoryTest" time="0.003"/>
-  <testcase name="searchBooks_mapsWrappedBackendSearchResults" classname="app.tinks.tink.book.BookRepositoryTest" time="0.006"/>
-  <testcase name="searchBooks_mapsRawGoogleBookItems" classname="app.tinks.tink.book.BookRepositoryTest" time="0.013"/>
-  <testcase name="addToReading_keepsDraftPageFormat" classname="app.tinks.tink.book.BookRepositoryTest" time="0.003"/>
+  <testcase name="searchBooks_keepsResultWithoutSourceId" classname="app.tinks.tink.book.BookRepositoryTest" time="0.21"/>
+  <testcase name="getBooks_finalShelfLoadsAbandonedAndDoneBooks" classname="app.tinks.tink.book.BookRepositoryTest" time="0.04"/>
+  <testcase name="getBooks_passesSelectedCategoryToApi" classname="app.tinks.tink.book.BookRepositoryTest" time="0.004"/>
+  <testcase name="addToReading_createsWishlistEntryThenStartsReading" classname="app.tinks.tink.book.BookRepositoryTest" time="0.007"/>
+  <testcase name="searchBooks_usesBackendSearchAndMapsResult" classname="app.tinks.tink.book.BookRepositoryTest" time="0.004"/>
+  <testcase name="searchBooks_mapsWrappedBackendSearchResults" classname="app.tinks.tink.book.BookRepositoryTest" time="0.005"/>
+  <testcase name="searchBooks_mapsRawGoogleBookItems" classname="app.tinks.tink.book.BookRepositoryTest" time="0.011"/>
+  <testcase name="addToReading_keepsDraftPageFormat" classname="app.tinks.tink.book.BookRepositoryTest" time="0.004"/>
   <system-out><![CDATA[safeApiCall: calling api
+safeApiCall: calling api
 safeApiCall: calling api
 safeApiCall: calling api
 safeApiCall: calling api

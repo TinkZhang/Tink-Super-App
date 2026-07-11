@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.lottery.LotteryDtoTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:55.127Z" hostname="runnervm5mmn9" time="0.011">
+  <properties/>
+  <testcase name="draftToCreateRequest_validatesAndNormalizesIssueAndNumbers" classname="app.tinks.tink.lottery.LotteryDtoTest" time="0.005"/>
+  <testcase name="historyDto_mapsBackendFieldsToDomain" classname="app.tinks.tink.lottery.LotteryDtoTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
