@@ -53,7 +53,6 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import app.tinks.tink.book.BookScreen
 import app.tinks.tink.diary.DiaryScreen
-import app.tinks.tink.geography.GeographyScreen
 import app.tinks.tink.haircut.HaircutScreen
 import app.tinks.tink.home.HomeScreen
 import app.tinks.tink.leetkeeper.LeetKeeperScreen
@@ -65,7 +64,6 @@ import app.tinks.tink.navigation.ScreenA
 import app.tinks.tink.navigation.ScreenB
 import app.tinks.tink.navigation.ScreenBooks
 import app.tinks.tink.navigation.ScreenDiaryLoom
-import app.tinks.tink.navigation.ScreenGeography
 import app.tinks.tink.navigation.ScreenHair
 import app.tinks.tink.navigation.ScreenLearntZi
 import app.tinks.tink.navigation.ScreenLeeter
@@ -371,7 +369,6 @@ fun MyApp(
                         )
                         is ScreenLotteryHistoryStats -> LotteryHistoryStatsScreen(hiltViewModel())
                         is ScreenSalesforce -> SalesforceScreen(hiltViewModel())
-                        is ScreenGeography -> GeographyScreen()
                         is ScreenSecureWeb -> SecureWebScreen()
                         is ScreenStoryList -> StoryListScreen(
                             hiltViewModel(),
@@ -404,7 +401,6 @@ private fun MyNavKey.drawerTestTag(): String = when (this) {
     ScreenSalesforce -> "drawer_destination_salesforce"
     ScreenLotteryHistoryStats -> "drawer_destination_lottery_history_stats"
     ScreenSettings -> "drawer_destination_settings"
-    ScreenGeography -> "drawer_destination_geography"
     ScreenSecureWeb -> "drawer_destination_secure_web"
     ScreenLearntZi -> "drawer_destination_learnt_zi"
     ScreenStoryList -> "drawer_destination_story_list"
