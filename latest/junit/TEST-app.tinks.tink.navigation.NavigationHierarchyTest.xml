@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.navigation.NavigationHierarchyTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:56.207Z" hostname="runnervm5mmn9" time="0.055">
+<testsuite name="app.tinks.tink.navigation.NavigationHierarchyTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-07-13T15:33:30.750Z" hostname="runnervm5mmn9" time="0.047">
   <properties/>
-  <testcase name="topDestination_mapsWeightHistoryToWeight" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.043"/>
+  <testcase name="topDestination_mapsWeightHistoryToWeight" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.036"/>
   <testcase name="topDestination_mapsLotteryHistoryStatsToLottery" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.003"/>
   <testcase name="topDestination_returnsSelf_forTopLevelDestinations" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.007"/>
-  <testcase name="topDestination_mapsStoryFlowToZi" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.0"/>
+  <testcase name="topDestination_mapsStoryFlowToZi" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.haircut.HaircutViewModelTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:55.043Z" hostname="runnervm5mmn9" time="0.025">
+<testsuite name="app.tinks.tink.haircut.HaircutViewModelTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-07-13T15:33:29.458Z" hostname="runnervm5mmn9" time="0.029">
   <properties/>
-  <testcase name="addHaircutFabClick_showsDialogAndDismissHidesIt" classname="app.tinks.tink.haircut.HaircutViewModelTest" time="0.009"/>
+  <testcase name="addHaircutFabClick_showsDialogAndDismissHidesIt" classname="app.tinks.tink.haircut.HaircutViewModelTest" time="0.011"/>
   <testcase name="submitHaircut_postsAndRefreshesHistory" classname="app.tinks.tink.haircut.HaircutViewModelTest" time="0.01"/>
-  <testcase name="deleteHaircut_deletesAndRefreshesHistory" classname="app.tinks.tink.haircut.HaircutViewModelTest" time="0.003"/>
+  <testcase name="deleteHaircut_deletesAndRefreshesHistory" classname="app.tinks.tink.haircut.HaircutViewModelTest" time="0.005"/>
   <testcase name="init_loadsHistoryAndCalculatesDaysSinceLatestHaircut" classname="app.tinks.tink.haircut.HaircutViewModelTest" time="0.003"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

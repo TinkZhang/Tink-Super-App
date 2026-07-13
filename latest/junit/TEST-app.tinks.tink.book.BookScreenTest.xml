@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.book.BookScreenTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:50.115Z" hostname="runnervm5mmn9" time="3.415">
+<testsuite name="app.tinks.tink.book.BookScreenTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2026-07-13T15:33:25.460Z" hostname="runnervm5mmn9" time="3.268">
   <properties/>
-  <testcase name="archivedList_defaultsToAbandonedAndCanSwitchStatus" classname="app.tinks.tink.book.BookScreenTest" time="0.324"/>
-  <testcase name="detailProgress_promptsForReadingTimeBeforeSaving" classname="app.tinks.tink.book.BookScreenTest" time="0.462"/>
-  <testcase name="search_displaysErrorMessage" classname="app.tinks.tink.book.BookScreenTest" time="0.161"/>
-  <testcase name="searchResultButtons_emitToggleEventsForCheckedAndUncheckedStates" classname="app.tinks.tink.book.BookScreenTest" time="0.135"/>
-  <testcase name="yearlySummary_showsTitleListWithoutAuthors" classname="app.tinks.tink.book.BookScreenTest" time="0.136"/>
-  <testcase name="secondaryShelf_displaysBackArrowAndRequestsNavigationBack" classname="app.tinks.tink.book.BookScreenTest" time="0.112"/>
-  <testcase name="home_opensDoneArchiveListFromSummary" classname="app.tinks.tink.book.BookScreenTest" time="0.254"/>
-  <testcase name="platformChip_isShownForReadingBooks" classname="app.tinks.tink.book.BookScreenTest" time="0.113"/>
-  <testcase name="home_opensReadingShelfFromIconSummary" classname="app.tinks.tink.book.BookScreenTest" time="0.148"/>
-  <testcase name="home_showsReadingContributionGraph" classname="app.tinks.tink.book.BookScreenTest" time="0.137"/>
-  <testcase name="platformChip_isHiddenForWishlistBooks" classname="app.tinks.tink.book.BookScreenTest" time="0.116"/>
-  <testcase name="detailEdit_savesMetadataWithoutProgressFields" classname="app.tinks.tink.book.BookScreenTest" time="0.26"/>
-  <testcase name="home_opensYearlyReadingSummary" classname="app.tinks.tink.book.BookScreenTest" time="0.134"/>
-  <testcase name="shelf_categoryChipRequestsFiltering" classname="app.tinks.tink.book.BookScreenTest" time="0.112"/>
-  <testcase name="search_displaysEmptyResultMessage" classname="app.tinks.tink.book.BookScreenTest" time="0.087"/>
-  <testcase name="detail_displaysLoadingShellBeforeBookArrives" classname="app.tinks.tink.book.BookScreenTest" time="0.085"/>
-  <testcase name="readingProgress_prefersCurrentPageOverStalePercentage" classname="app.tinks.tink.book.BookScreenTest" time="0.093"/>
-  <testcase name="detail_doesNotShowStartTimerFab" classname="app.tinks.tink.book.BookScreenTest" time="0.101"/>
-  <testcase name="home_updatesWhenReadingBooksArriveWithoutNavigation" classname="app.tinks.tink.book.BookScreenTest" time="0.226"/>
-  <testcase name="search_displaysBackendResults" classname="app.tinks.tink.book.BookScreenTest" time="0.099"/>
-  <testcase name="searchResultLongPress_copiesTitleToClipboard" classname="app.tinks.tink.book.BookScreenTest" time="0.104"/>
+  <testcase name="archivedList_defaultsToAbandonedAndCanSwitchStatus" classname="app.tinks.tink.book.BookScreenTest" time="0.34"/>
+  <testcase name="detailProgress_promptsForReadingTimeBeforeSaving" classname="app.tinks.tink.book.BookScreenTest" time="0.471"/>
+  <testcase name="search_displaysErrorMessage" classname="app.tinks.tink.book.BookScreenTest" time="0.151"/>
+  <testcase name="searchResultButtons_emitToggleEventsForCheckedAndUncheckedStates" classname="app.tinks.tink.book.BookScreenTest" time="0.115"/>
+  <testcase name="yearlySummary_showsTitleListWithoutAuthors" classname="app.tinks.tink.book.BookScreenTest" time="0.127"/>
+  <testcase name="secondaryShelf_displaysBackArrowAndRequestsNavigationBack" classname="app.tinks.tink.book.BookScreenTest" time="0.105"/>
+  <testcase name="home_opensDoneArchiveListFromSummary" classname="app.tinks.tink.book.BookScreenTest" time="0.235"/>
+  <testcase name="platformChip_isShownForReadingBooks" classname="app.tinks.tink.book.BookScreenTest" time="0.111"/>
+  <testcase name="home_opensReadingShelfFromIconSummary" classname="app.tinks.tink.book.BookScreenTest" time="0.135"/>
+  <testcase name="home_showsReadingContributionGraph" classname="app.tinks.tink.book.BookScreenTest" time="0.13"/>
+  <testcase name="platformChip_isHiddenForWishlistBooks" classname="app.tinks.tink.book.BookScreenTest" time="0.115"/>
+  <testcase name="detailEdit_savesMetadataWithoutProgressFields" classname="app.tinks.tink.book.BookScreenTest" time="0.253"/>
+  <testcase name="home_opensYearlyReadingSummary" classname="app.tinks.tink.book.BookScreenTest" time="0.125"/>
+  <testcase name="shelf_categoryChipRequestsFiltering" classname="app.tinks.tink.book.BookScreenTest" time="0.084"/>
+  <testcase name="search_displaysEmptyResultMessage" classname="app.tinks.tink.book.BookScreenTest" time="0.097"/>
+  <testcase name="detail_displaysLoadingShellBeforeBookArrives" classname="app.tinks.tink.book.BookScreenTest" time="0.083"/>
+  <testcase name="readingProgress_prefersCurrentPageOverStalePercentage" classname="app.tinks.tink.book.BookScreenTest" time="0.09"/>
+  <testcase name="detail_doesNotShowStartTimerFab" classname="app.tinks.tink.book.BookScreenTest" time="0.099"/>
+  <testcase name="home_updatesWhenReadingBooksArriveWithoutNavigation" classname="app.tinks.tink.book.BookScreenTest" time="0.189"/>
+  <testcase name="search_displaysBackendResults" classname="app.tinks.tink.book.BookScreenTest" time="0.085"/>
+  <testcase name="searchResultLongPress_copiesTitleToClipboard" classname="app.tinks.tink.book.BookScreenTest" time="0.11"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

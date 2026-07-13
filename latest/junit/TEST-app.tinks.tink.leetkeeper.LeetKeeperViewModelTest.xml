@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-07-11T14:12:55.101Z" hostname="runnervm5mmn9" time="0.025">
+<testsuite name="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-07-13T15:33:29.530Z" hostname="runnervm5mmn9" time="0.026">
   <properties/>
-  <testcase name="startSelectedPlan_postsLanguageAndShowsOngoingTab" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.012"/>
+  <testcase name="startSelectedPlan_postsLanguageAndShowsOngoingTab" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.014"/>
   <testcase name="init_loadsPublicAndOngoingPlans" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.002"/>
-  <testcase name="confirmCompletion_keepsSheetForInvalidDuration" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.005"/>
+  <testcase name="confirmCompletion_keepsSheetForInvalidDuration" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.004"/>
   <testcase name="confirmCompletion_marksProblemDoneAndClearsSheet" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.003"/>
-  <testcase name="selectPublicPlan_loadsPlanDetail" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.003"/>
+  <testcase name="selectPublicPlan_loadsPlanDetail" classname="app.tinks.tink.leetkeeper.LeetKeeperViewModelTest" time="0.002"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

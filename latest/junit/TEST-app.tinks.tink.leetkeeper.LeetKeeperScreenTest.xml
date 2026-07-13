@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.leetkeeper.LeetKeeperScreenTest" tests="4" skipped="0" failures="1" errors="0" timestamp="2026-07-11T14:12:39.687Z" hostname="runnervm5mmn9" time="9.669">
+<testsuite name="app.tinks.tink.leetkeeper.LeetKeeperScreenTest" tests="4" skipped="0" failures="1" errors="0" timestamp="2026-07-13T15:33:15.118Z" hostname="runnervm5mmn9" time="9.552">
   <properties/>
-  <testcase name="completionSheetConfirm_dispatchesConfirmEvent" classname="app.tinks.tink.leetkeeper.LeetKeeperScreenTest" time="8.409"/>
-  <testcase name="problemDetail_rendersLongHtmlBody" classname="app.tinks.tink.leetkeeper.LeetKeeperScreenTest" time="0.506"/>
-  <testcase name="publicPlanClick_dispatchesSelectEvent" classname="app.tinks.tink.leetkeeper.LeetKeeperScreenTest" time="0.162"/>
-  <testcase name="dashboard_rendersOngoingPlanAndProblems" classname="app.tinks.tink.leetkeeper.LeetKeeperScreenTest" time="0.172">
+  <testcase name="completionSheetConfirm_dispatchesConfirmEvent" classname="app.tinks.tink.leetkeeper.LeetKeeperScreenTest" time="8.291"/>
+  <testcase name="problemDetail_rendersLongHtmlBody" classname="app.tinks.tink.leetkeeper.LeetKeeperScreenTest" time="0.508"/>
+  <testcase name="publicPlanClick_dispatchesSelectEvent" classname="app.tinks.tink.leetkeeper.LeetKeeperScreenTest" time="0.176"/>
+  <testcase name="dashboard_rendersOngoingPlanAndProblems" classname="app.tinks.tink.leetkeeper.LeetKeeperScreenTest" time="0.158">
     <failure message="java.lang.AssertionError: Assert failed: The component with Text + InputText + EditableText contains 'LeetKeeper' (ignoreCase: false) is not displayed!" type="java.lang.AssertionError">java.lang.AssertionError: Assert failed: The component with Text + InputText + EditableText contains 'LeetKeeper' (ignoreCase: false) is not displayed!
 	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
 	at app.tinks.tink.leetkeeper.LeetKeeperScreenTest.dashboard_rendersOngoingPlanAndProblems(LeetKeeperScreenTest.kt:31)
