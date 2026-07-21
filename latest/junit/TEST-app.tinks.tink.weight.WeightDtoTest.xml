@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.weight.WeightDtoTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-07-13T15:33:32.219Z" hostname="runnervm5mmn9" time="0.002">
+<testsuite name="app.tinks.tink.weight.WeightDtoTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-07-21T16:51:47.750Z" hostname="runnervm3jd5f" time="0.002">
   <properties/>
   <testcase name="toDomain_usesEpochForInvalidTimestamp" classname="app.tinks.tink.weight.WeightDtoTest" time="0.002"/>
   <testcase name="toDomain_parsesIsoTimestampToEpochMillis" classname="app.tinks.tink.weight.WeightDtoTest" time="0.0"/>

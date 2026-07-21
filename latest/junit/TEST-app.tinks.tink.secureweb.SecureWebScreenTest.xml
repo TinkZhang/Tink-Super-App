@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.secureweb.SecureWebScreenTest" tests="3" skipped="0" failures="1" errors="0" timestamp="2026-07-13T15:33:24.679Z" hostname="runnervm5mmn9" time="0.446">
+<testsuite name="app.tinks.tink.secureweb.SecureWebScreenTest" tests="3" skipped="0" failures="1" errors="0" timestamp="2026-07-21T16:51:40.219Z" hostname="runnervm3jd5f" time="0.377">
   <properties/>
-  <testcase name="screen_requestsAuthenticationOnLaunch" classname="app.tinks.tink.secureweb.SecureWebScreenTest" time="0.146">
+  <testcase name="screen_requestsAuthenticationOnLaunch" classname="app.tinks.tink.secureweb.SecureWebScreenTest" time="0.125">
     <failure message="java.lang.AssertionError: expected:&lt;1&gt; but was:&lt;2&gt;" type="java.lang.AssertionError">java.lang.AssertionError: expected:&lt;1&gt; but was:&lt;2&gt;
 	at org.junit.Assert.fail(Assert.java:89)
 	at org.junit.Assert.failNotEquals(Assert.java:835)
@@ -69,8 +69,8 @@
 	at java.base/java.lang.Thread.run(Thread.java:1583)
 </failure>
   </testcase>
-  <testcase name="screen_requestsAuthenticationAgainWhenLifecycleResumes" classname="app.tinks.tink.secureweb.SecureWebScreenTest" time="0.179"/>
-  <testcase name="screen_showsWebContentAfterSuccessfulAuthentication" classname="app.tinks.tink.secureweb.SecureWebScreenTest" time="0.114"/>
+  <testcase name="screen_requestsAuthenticationAgainWhenLifecycleResumes" classname="app.tinks.tink.secureweb.SecureWebScreenTest" time="0.151"/>
+  <testcase name="screen_showsWebContentAfterSuccessfulAuthentication" classname="app.tinks.tink.secureweb.SecureWebScreenTest" time="0.096"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

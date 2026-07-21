@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.book.BookRepositoryTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-07-21T16:51:40.605Z" hostname="runnervm3jd5f" time="0.307">
+  <properties/>
+  <testcase name="searchBooks_keepsResultWithoutSourceId" classname="app.tinks.tink.book.BookRepositoryTest" time="0.235"/>
+  <testcase name="getBooks_finalShelfLoadsAbandonedAndDoneBooks" classname="app.tinks.tink.book.BookRepositoryTest" time="0.021"/>
+  <testcase name="getBooks_passesSelectedCategoryToApi" classname="app.tinks.tink.book.BookRepositoryTest" time="0.004"/>
+  <testcase name="addToReading_createsWishlistEntryThenStartsReading" classname="app.tinks.tink.book.BookRepositoryTest" time="0.018"/>
+  <testcase name="searchBooks_usesBackendSearchAndMapsResult" classname="app.tinks.tink.book.BookRepositoryTest" time="0.004"/>
+  <testcase name="searchBooks_mapsWrappedBackendSearchResults" classname="app.tinks.tink.book.BookRepositoryTest" time="0.004"/>
+  <testcase name="searchBooks_mapsRawGoogleBookItems" classname="app.tinks.tink.book.BookRepositoryTest" time="0.012"/>
+  <testcase name="addToReading_keepsDraftPageFormat" classname="app.tinks.tink.book.BookRepositoryTest" time="0.009"/>
+  <system-out><![CDATA[safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

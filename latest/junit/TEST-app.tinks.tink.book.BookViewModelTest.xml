@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.book.BookViewModelTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-07-13T15:33:28.732Z" hostname="runnervm5mmn9" time="0.089">
+<testsuite name="app.tinks.tink.book.BookViewModelTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-07-21T16:51:44.311Z" hostname="runnervm3jd5f" time="0.114">
   <properties/>
-  <testcase name="addSearchResultToWishlist_marksToggleCheckedAndShowsToast" classname="app.tinks.tink.book.BookViewModelTest" time="0.051"/>
-  <testcase name="updatingReadingProgress_logsTimeEntryAndUpdatesBook" classname="app.tinks.tink.book.BookViewModelTest" time="0.013"/>
-  <testcase name="navigatingBackFromSearchResults_returnsHomeAndClearsSearch" classname="app.tinks.tink.book.BookViewModelTest" time="0.006"/>
+  <testcase name="addSearchResultToWishlist_marksToggleCheckedAndShowsToast" classname="app.tinks.tink.book.BookViewModelTest" time="0.061"/>
+  <testcase name="updatingReadingProgress_logsTimeEntryAndUpdatesBook" classname="app.tinks.tink.book.BookViewModelTest" time="0.021"/>
+  <testcase name="updatingRating_updatesBookAndDetailState" classname="app.tinks.tink.book.BookViewModelTest" time="0.006"/>
+  <testcase name="navigatingBackFromSearchResults_returnsHomeAndClearsSearch" classname="app.tinks.tink.book.BookViewModelTest" time="0.007"/>
   <testcase name="init_loadsThreeShelves" classname="app.tinks.tink.book.BookViewModelTest" time="0.002"/>
   <testcase name="submitSearch_populatesSearchResults" classname="app.tinks.tink.book.BookViewModelTest" time="0.003"/>
   <testcase name="listAndDetailNavigation_canReturnToPreviousScreens" classname="app.tinks.tink.book.BookViewModelTest" time="0.004"/>
   <testcase name="init_loadsCurrentYearReadingRecordDates" classname="app.tinks.tink.book.BookViewModelTest" time="0.003"/>
-  <testcase name="selectingCategory_filtersTheOpenShelf" classname="app.tinks.tink.book.BookViewModelTest" time="0.002"/>
-  <testcase name="addSearchResultToReading_marksToggleCheckedAndShowsToast" classname="app.tinks.tink.book.BookViewModelTest" time="0.005"/>
+  <testcase name="selectingCategory_filtersTheOpenShelf" classname="app.tinks.tink.book.BookViewModelTest" time="0.003"/>
+  <testcase name="addSearchResultToReading_marksToggleCheckedAndShowsToast" classname="app.tinks.tink.book.BookViewModelTest" time="0.003"/>
   <system-out><![CDATA[safeApiCall: calling api
+safeApiCall: calling api
 safeApiCall: calling api
 safeApiCall: calling api
 ]]></system-out>

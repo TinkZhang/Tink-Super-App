@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.lottery.LotteryRepositoryTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-07-21T16:51:45.229Z" hostname="runnervm3jd5f" time="0.029">
+  <properties/>
+  <testcase name="createLottery_postsPayload" classname="app.tinks.tink.lottery.LotteryRepositoryTest" time="0.01"/>
+  <testcase name="deleteLottery_callsDeleteEndpoint" classname="app.tinks.tink.lottery.LotteryRepositoryTest" time="0.006"/>
+  <testcase name="getLotteryHistory_emitsLoadingThenSortedHistory" classname="app.tinks.tink.lottery.LotteryRepositoryTest" time="0.005"/>
+  <testcase name="checkLottery_callsCheckEndpoint" classname="app.tinks.tink.lottery.LotteryRepositoryTest" time="0.007"/>
+  <system-out><![CDATA[safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall: calling api
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

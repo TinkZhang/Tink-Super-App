@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.time.TimeViewModelTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-07-21T16:51:47.714Z" hostname="runnervm3jd5f" time="0.035">
+  <properties/>
+  <testcase name="saveEntry_usesPrefixedTitleAndRefreshesDashboard" classname="app.tinks.tink.time.TimeViewModelTest" time="0.021"/>
+  <testcase name="applyLabel_prefixesTitleAndReplacesExistingKnownLabel" classname="app.tinks.tink.time.TimeViewModelTest" time="0.003"/>
+  <testcase name="init_usesWorkingAsDefaultTypeAndLoadsLabels" classname="app.tinks.tink.time.TimeViewModelTest" time="0.002"/>
+  <testcase name="dashboard_filtersEntriesToSelectedDateRangeOnClient" classname="app.tinks.tink.time.TimeViewModelTest" time="0.005"/>
+  <testcase name="saveLabel_addsLabelToState" classname="app.tinks.tink.time.TimeViewModelTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
