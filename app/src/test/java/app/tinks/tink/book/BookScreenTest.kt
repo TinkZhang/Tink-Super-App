@@ -348,6 +348,33 @@ class BookScreenTest {
     }
 
     @Test
+    fun doneDetail_allowsRatingTheBook() {
+        val events = mutableListOf<BookEvent>()
+        val book = sampleBook(BookState.Archived).copy(
+            archiveStatus = ArchiveStatus.Done,
+            rating = 3.0,
+        )
+
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                BookScreen(
+                    state = BookUiState(
+                        screen = BooksScreenState.Detail(book.id),
+                        selectedBook = book,
+                    ),
+                    onEvent = events::add,
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("book_done_rating").assertIsDisplayed()
+        composeRule.onNodeWithText("3.0 / 5").assertIsDisplayed()
+        composeRule.onNodeWithTag("book_rating_4").performClick()
+
+        assertEquals(BookEvent.UpdateRating(book.id, 4.0), events.single())
+    }
+
+    @Test
     fun detail_displaysLoadingShellBeforeBookArrives() {
         val events = mutableListOf<BookEvent>()
 
@@ -500,14 +527,13 @@ class BookScreenTest {
     }
 
     @Test
-    fun archivedList_defaultsToAbandonedAndCanSwitchStatus() {
-        val events = mutableListOf<BookEvent>()
-
+    fun doneList_showsOnlyDoneBooksWithoutStatusTabs() {
         composeRule.setContent {
             TinkTheme(dynamicColor = false) {
                 BookScreen(
                     state = BookUiState(
                         screen = BooksScreenState.List(BookState.Archived),
+                        selectedArchiveStatus = ArchiveStatus.Done,
                         archivedBooks = listOf(
                             sampleBook(BookState.Archived).copy(
                                 title = "Finished sample",
@@ -522,15 +548,13 @@ class BookScreenTest {
                             )
                         ),
                     ),
-                    onEvent = events::add,
                 )
             }
         }
 
-        composeRule.onNodeWithText("Abandoned sample").assertIsDisplayed()
-        composeRule.onAllNodesWithText("Finished sample").assertCountEquals(0)
-        composeRule.onNodeWithTag("book_archive_status_abandon").performClick()
-
-        assertEquals(BookEvent.SelectArchiveStatus(ArchiveStatus.Abandon), events.single())
+        composeRule.onNodeWithText("Finished sample").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Abandoned sample").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("book_archive_status_done").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("book_archive_status_abandon").assertCountEquals(0)
     }
 }

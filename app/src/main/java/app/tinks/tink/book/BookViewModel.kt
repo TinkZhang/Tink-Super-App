@@ -69,7 +69,7 @@ sealed interface BookEvent {
     data class UncheckDraftReading(val draft: BookDraft) : BookEvent
     data class MoveToReading(val book: Book) : BookEvent
     data class SelectCategory(val category: String?) : BookEvent
-    data class SelectArchiveStatus(val status: ArchiveStatus?) : BookEvent
+    data class UpdateRating(val bookId: Long, val rating: Double) : BookEvent
     data class Archive(val bookId: Long, val status: ArchiveStatus = ArchiveStatus.Done) : BookEvent
     data class DeleteBook(val bookId: Long) : BookEvent
     data class SaveBook(
@@ -205,7 +205,7 @@ class BookViewModel @Inject constructor(
             is BookEvent.UncheckDraftReading -> uncheckDraftReading(event.draft)
             is BookEvent.MoveToReading -> moveToReading(event.book)
             is BookEvent.SelectCategory -> selectCategory(event.category)
-            is BookEvent.SelectArchiveStatus -> _state.update { it.copy(selectedArchiveStatus = event.status) }
+            is BookEvent.UpdateRating -> updateRating(event.bookId, event.rating)
             is BookEvent.Archive -> archive(event.bookId, event.status)
             is BookEvent.DeleteBook -> deleteBook(event.bookId)
             is BookEvent.SaveBook -> saveBook(event)
@@ -506,6 +506,30 @@ class BookViewModel @Inject constructor(
         }
     }
 
+    private fun updateRating(bookId: Long, rating: Double) {
+        val previousRating = _state.value.selectedBook
+            ?.takeIf { it.id == bookId }
+            ?.rating
+        val normalizedRating = rating.coerceIn(0.0, 5.0)
+        mutationJob?.cancel()
+        _state.update { it.withBookRating(bookId, normalizedRating) }
+        mutationJob = repository.updateBook(
+            bookId,
+            BookUpdateRequest(rating = normalizedRating),
+        ).onEach { result ->
+            when (result) {
+                ApiResult.Loading -> Unit
+                is ApiResult.Success -> _state.update { it.withUpdatedBook(result.data) }
+                is ApiResult.Error -> {
+                    _state.update { it.withBookRating(bookId, previousRating) }
+                    AppSnackbarBus.showApiFailure {
+                        updateRating(bookId, normalizedRating)
+                    }
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
+
     private fun updateReadingProgress(event: BookEvent.UpdateReadingProgress) {
         val currentBook = _state.value.selectedBook?.takeIf { it.id == event.bookId }
             ?: _state.value.findBook(event.bookId)
@@ -527,7 +551,7 @@ class BookViewModel @Inject constructor(
         mutate({
             timeRepository.createTimeEntry(payload)
         }) {
-            repository.updateBook(
+            saveReadingProgress(
                 event.bookId,
                 BookUpdateRequest(
                     currentPage = if (currentBook.pageFormat.usesPages) {
@@ -535,11 +559,33 @@ class BookViewModel @Inject constructor(
                     } else {
                         event.stopProgressPercentage?.toBookProgressUnits(currentBook.pageFormat)
                     },
-                )
-            ).launchIn(viewModelScope)
-            openDetail(event.bookId)
-            refreshAll()
+                ),
+            )
         }
+    }
+
+    private fun saveReadingProgress(
+        bookId: Long,
+        payload: BookUpdateRequest,
+    ) {
+        mutationJob = repository.updateBook(bookId, payload)
+            .onEach { result ->
+                when (result) {
+                    ApiResult.Loading -> _state.update { it.copy(isLoading = true) }
+                    is ApiResult.Success -> {
+                        _state.update {
+                            it.copy(
+                                selectedBook = result.data,
+                                isLoading = false,
+                            )
+                        }
+                        loadDetailNotes(bookId)
+                        refreshAll()
+                    }
+                    is ApiResult.Error -> failLoading { saveReadingProgress(bookId, payload) }
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun saveNote(event: BookEvent.SaveNote) {
@@ -652,6 +698,22 @@ private fun BookUiState.findBook(bookId: Long): Book? =
     readingBooks.firstOrNull { it.id == bookId }
         ?: wishlistBooks.firstOrNull { it.id == bookId }
         ?: archivedBooks.firstOrNull { it.id == bookId }
+
+private fun BookUiState.withBookRating(bookId: Long, rating: Double?): BookUiState =
+    copy(
+        selectedBook = selectedBook?.let { if (it.id == bookId) it.copy(rating = rating) else it },
+        readingBooks = readingBooks.map { if (it.id == bookId) it.copy(rating = rating) else it },
+        wishlistBooks = wishlistBooks.map { if (it.id == bookId) it.copy(rating = rating) else it },
+        archivedBooks = archivedBooks.map { if (it.id == bookId) it.copy(rating = rating) else it },
+    )
+
+private fun BookUiState.withUpdatedBook(book: Book): BookUiState =
+    copy(
+        selectedBook = selectedBook?.let { if (it.id == book.id) book else it },
+        readingBooks = readingBooks.map { if (it.id == book.id) book else it },
+        wishlistBooks = wishlistBooks.map { if (it.id == book.id) book else it },
+        archivedBooks = archivedBooks.map { if (it.id == book.id) book else it },
+    )
 
 private const val READING_TIME_TYPE = 2
 

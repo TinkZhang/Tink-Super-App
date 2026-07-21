@@ -9,6 +9,8 @@ import android.graphics.Bitmap
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -58,6 +60,7 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.PhoneAndroid
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Badge
@@ -138,6 +141,7 @@ import java.time.ZoneId
 import java.time.Year
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import kotlin.math.roundToInt
 import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -263,10 +267,8 @@ private fun ReadKeeperDestination(
             },
             categories = state.categories,
             selectedCategory = state.selectedCategory,
-            selectedArchiveStatus = state.selectedArchiveStatus,
             emptyText = "No ${screen.state.listTitle(state.selectedArchiveStatus).lowercase()} books",
             onCategorySelected = { onEvent(BookEvent.SelectCategory(it)) },
-            onArchiveStatusSelected = { onEvent(BookEvent.SelectArchiveStatus(it)) },
             onEvent = onEvent,
         )
         BooksScreenState.Search -> BookSearch(state, onEvent)
@@ -674,10 +676,8 @@ private fun BookList(
     books: List<Book>,
     categories: List<String>,
     selectedCategory: String?,
-    selectedArchiveStatus: ArchiveStatus?,
     emptyText: String,
     onCategorySelected: (String?) -> Unit,
-    onArchiveStatusSelected: (ArchiveStatus?) -> Unit,
     onEvent: (BookEvent) -> Unit,
 ) {
     LazyColumn(
@@ -687,14 +687,6 @@ private fun BookList(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (state == BookState.Archived) {
-            item {
-                ArchiveStatusFilters(
-                    selectedStatus = selectedArchiveStatus,
-                    onStatusSelected = onArchiveStatusSelected,
-                )
-            }
-        }
         item {
             BookCategoryFilters(
                 categories = categories,
@@ -747,45 +739,6 @@ private fun BookCategoryFilters(
                 onClick = { onCategorySelected(category) },
                 label = { Text(category) },
                 modifier = Modifier.testTag("book_category_$category"),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ArchiveStatusFilters(
-    selectedStatus: ArchiveStatus?,
-    onStatusSelected: (ArchiveStatus?) -> Unit,
-) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        item {
-            FilterChip(
-                selected = selectedStatus == ArchiveStatus.Done,
-                onClick = { onStatusSelected(ArchiveStatus.Done) },
-                label = { Text("Done") },
-                leadingIcon = {
-                    Icon(
-                        Icons.Outlined.CheckCircle,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                },
-                modifier = Modifier.testTag("book_archive_status_done"),
-            )
-        }
-        item {
-            FilterChip(
-                selected = selectedStatus == ArchiveStatus.Abandon,
-                onClick = { onStatusSelected(ArchiveStatus.Abandon) },
-                label = { Text("Abandoned") },
-                leadingIcon = {
-                    Icon(
-                        Icons.Filled.Archive,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                },
-                modifier = Modifier.testTag("book_archive_status_abandon"),
             )
         }
     }
@@ -1782,8 +1735,18 @@ private fun BookDetail(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             item { BookDetailHero(book) }
+            if (book.archiveStatus == ArchiveStatus.Done) {
+                item {
+                    DoneBookRating(
+                        rating = book.rating,
+                        onRatingSelected = { rating ->
+                            onEvent(BookEvent.UpdateRating(book.id, rating))
+                        },
+                    )
+                }
+            }
             if (book.state != BookState.Wish) {
-                item { ProgressLine(book) }
+                item { ProgressLine(book, animateChanges = true) }
             }
             if (book.state == BookState.Wish) {
                 book.description?.takeIf { it.isNotBlank() }?.let { description ->
@@ -1918,8 +1881,55 @@ private fun BookDetailHero(book: Book) {
             BookDetailMetadata("Page type", if (book.pageFormat.usesPages) "Pages" else book.pageFormat.label)
             BookDetailMetadata("Publish year", book.publishYear?.toString())
             BookDetailMetadata("ISBN", book.isbn)
-            BookDetailMetadata("Rating", book.rating?.let { String.format(Locale.US, "%.1f", it) })
+            if (book.archiveStatus != ArchiveStatus.Done) {
+                BookDetailMetadata("Rating", book.rating?.let { String.format(Locale.US, "%.1f", it) })
+            }
         }
+    }
+}
+
+@Composable
+private fun DoneBookRating(
+    rating: Double?,
+    onRatingSelected: (Double) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("book_done_rating"),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        DetailSectionTitle("Your rating")
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            (1..5).forEach { star ->
+                val selected = star <= (rating ?: 0.0)
+                IconButton(
+                    onClick = { onRatingSelected(star.toDouble()) },
+                    modifier = Modifier
+                        .size(44.dp)
+                        .testTag("book_rating_$star"),
+                ) {
+                    Icon(
+                        imageVector = if (selected) Icons.Filled.Star else Icons.Outlined.Star,
+                        contentDescription = "Rate $star stars",
+                        tint = if (selected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.size(28.dp),
+                    )
+                }
+            }
+        }
+        Text(
+            text = rating?.let { String.format(Locale.US, "%.1f / 5", it) } ?: "Not rated",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -2264,7 +2274,7 @@ private fun ProgressTimeDialog(
     onDismiss: () -> Unit,
     onSave: (Instant, Instant, Int?, Double?) -> Unit,
 ) {
-    var pageText by remember(book.id) { mutableStateOf(book.currentPage?.toString().orEmpty()) }
+    var pageText by remember(book.id) { mutableStateOf("") }
     var progressText by remember(book.id) {
         mutableStateOf(book.progressPercentage?.formatPercentInput(book.pageFormat).orEmpty())
     }
@@ -2298,6 +2308,11 @@ private fun ProgressTimeDialog(
                         if (book.pageFormat.usesPages) pageText.toIntOrNull() else null,
                         if (book.pageFormat.usesPages) null else progressText.toDoubleOrNull()?.coerceIn(0.0, 100.0),
                     )
+                },
+                enabled = if (book.pageFormat.usesPages) {
+                    pageText.toIntOrNull() != null
+                } else {
+                    progressText.toDoubleOrNull() != null
                 },
                 modifier = Modifier.testTag("book_progress_save"),
             ) { Text("Save") }
@@ -2335,7 +2350,6 @@ private fun ProgressTimeDialog(
                         startTimeText = it
                     },
                     label = { Text("Start time") },
-                    supportingText = { Text("yyyy-MM-dd HH:mm") },
                     singleLine = true,
                     modifier = Modifier.testTag("book_session_start_time"),
                 )
@@ -2343,7 +2357,6 @@ private fun ProgressTimeDialog(
                     value = stopTimeText,
                     onValueChange = { stopTimeText = it },
                     label = { Text("End time") },
-                    supportingText = { Text("yyyy-MM-dd HH:mm") },
                     singleLine = true,
                     modifier = Modifier.testTag("book_session_stop_time"),
                 )
@@ -2463,26 +2476,55 @@ private fun NoteDialog(
 }
 
 @Composable
-private fun ProgressLine(book: Book) {
-    val progress = (book.progressPercentageForDisplay() ?: 0.0).coerceIn(0.0, 100.0)
+private fun ProgressLine(
+    book: Book,
+    animateChanges: Boolean = false,
+) {
+    val targetProgress = (book.progressPercentageForDisplay() ?: 0.0).coerceIn(0.0, 100.0)
+    val animatesPage = book.pageFormat.usesPages && book.currentPage != null
+    val targetValue = if (animatesPage) book.currentPage.toFloat() else targetProgress.toFloat()
+    val animatedValue = if (animateChanges) {
+        val value by animateFloatAsState(
+            targetValue = targetValue,
+            animationSpec = tween(durationMillis = PROGRESS_ANIMATION_DURATION_MILLIS),
+            label = "book_progress",
+        )
+        value
+    } else {
+        targetValue
+    }
+    val displayedPage = animatedValue.roundToInt().takeIf { animatesPage }
+    val displayedProgress = if (animatesPage) {
+        book.pages
+            ?.takeIf { it > 0 }
+            ?.let { totalPages -> animatedValue * 100.0 / totalPages }
+            ?: targetProgress
+    } else {
+        animatedValue.toDouble()
+    }.coerceIn(0.0, 100.0)
+
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         LinearProgressIndicator(
-            progress = { (progress / 100.0).toFloat() },
+            progress = { (displayedProgress / 100.0).toFloat() },
             modifier = Modifier.fillMaxWidth(),
         )
         Text(
             text = if (book.pageFormat.usesPages) {
                 listOfNotNull(
-                    book.pageProgressLabel(),
-                    "${progress.toInt()}%",
+                    displayedPage?.let { page ->
+                        book.pages?.let { "$page / $it pages" } ?: "Page $page"
+                    } ?: book.pageProgressLabel(),
+                    "${displayedProgress.toInt()}%",
                 ).joinToString(" · ")
             } else {
-                progress.formatPercentLabel(book.pageFormat)
+                displayedProgress.formatPercentLabel(book.pageFormat)
             },
             style = MaterialTheme.typography.labelSmall,
         )
     }
 }
+
+private const val PROGRESS_ANIMATION_DURATION_MILLIS = 2_000
 
 private fun Book.progressPercentageForDisplay(): Double? =
     if (pageFormat.usesPages) {

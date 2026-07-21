@@ -186,6 +186,22 @@ class BookViewModelTest {
         assertEquals(stopTime.toString(), payload.end)
         assertEquals("Currently reading Page 80 - Page 100", payload.title)
         assertEquals(100, repository.updatePayloads.last().currentPage)
+        assertEquals(100, viewModel.uiState.value.selectedBook?.currentPage)
+    }
+
+    @Test
+    fun updatingRating_updatesBookAndDetailState() = runTest {
+        val repository = FakeRepository()
+        val viewModel = BookViewModel(repository, FakeTimeRepository())
+        val bookId = sampleBook(BookState.Reading).id
+
+        viewModel.onEvent(BookEvent.OpenDetail(bookId))
+        advanceUntilIdle()
+        viewModel.onEvent(BookEvent.UpdateRating(bookId, 4.0))
+        advanceUntilIdle()
+
+        assertEquals(4.0, repository.updatePayloads.last().rating)
+        assertEquals(4.0, viewModel.uiState.value.selectedBook?.rating)
     }
 
     private class FakeRepository : BookRepository(NoopBookApi) {
@@ -207,7 +223,14 @@ class BookViewModelTest {
 
         override fun updateBook(bookId: Long, payload: BookUpdateRequest): Flow<ApiResult<Book>> {
             updatePayloads.add(payload)
-            return flowOf(ApiResult.Success(sampleBook(BookState.Reading)))
+            return flowOf(
+                ApiResult.Success(
+                    sampleBook(BookState.Reading).copy(
+                        currentPage = payload.currentPage ?: sampleBook(BookState.Reading).currentPage,
+                        rating = payload.rating ?: sampleBook(BookState.Reading).rating,
+                    )
+                )
+            )
         }
 
         override fun addToWishlist(draft: BookDraft): Flow<ApiResult<Book>> {

@@ -4,18 +4,21 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalSize
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.LinearProgressIndicator
+import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -32,10 +35,8 @@ import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.glance.unit.ColorProvider
 import app.tinks.tink.BuildConfig
 import app.tinks.tink.MainActivity
-import app.tinks.tink.R
 import app.tinks.tink.book.Book
 import app.tinks.tink.book.BookDto
 import app.tinks.tink.book.BookPageFormat
@@ -50,10 +51,14 @@ import java.net.URL
 import java.util.Locale
 
 class ReadKeeperWidget : GlanceAppWidget() {
+    override val sizeMode: SizeMode = SizeMode.Exact
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val state = ReadKeeperWidgetLoader.load(context.applicationContext)
         provideContent {
-            ReadKeeperWidgetContent(state)
+            GlanceTheme {
+                ReadKeeperWidgetContent(state)
+            }
         }
     }
 }
@@ -67,9 +72,10 @@ private fun ReadKeeperWidgetContent(state: ReadKeeperWidgetState) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(ColorProvider(Color(0xFFF3F7F0)))
+            .cornerRadius(24.dp)
+            .background(GlanceTheme.colors.widgetBackground)
             .clickable(actionStartActivity<MainActivity>())
-            .padding(14.dp),
+            .padding(16.dp),
         verticalAlignment = Alignment.Vertical.CenterVertically,
     ) {
         when (state) {
@@ -82,57 +88,51 @@ private fun ReadKeeperWidgetContent(state: ReadKeeperWidgetState) {
 
 @Composable
 private fun LatestBookContent(state: ReadKeeperWidgetState.Loaded) {
+    val availableSize = LocalSize.current
+    val coverHeight = (availableSize.height - 32.dp).coerceAtLeast(1.dp)
+    val coverWidth = coverHeight * state.coverAspectRatio
+
     Row(
-        modifier = GlanceModifier.fillMaxWidth(),
+        modifier = GlanceModifier.fillMaxSize(),
         verticalAlignment = Alignment.Vertical.CenterVertically,
     ) {
-        Image(
-            provider = state.cover ?: ImageProvider(R.drawable.ic_readkeeperlogo),
-            contentDescription = state.book.title,
-            contentScale = ContentScale.Fit,
-            modifier = GlanceModifier
-                .width(48.dp)
-                .height(72.dp),
-        )
-        Spacer(GlanceModifier.width(10.dp))
-        Column(modifier = GlanceModifier.defaultWeight()) {
-            Row(
-                modifier = GlanceModifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Vertical.CenterVertically,
-            ) {
-                Image(
-                    provider = ImageProvider(R.drawable.ic_readkeeperlogo),
-                    contentDescription = "ReadKeeper",
-                    contentScale = ContentScale.Fit,
-                    modifier = GlanceModifier.size(16.dp),
-                )
-                Spacer(GlanceModifier.width(6.dp))
-                Text(
-                    text = state.book.title,
-                    style = TextStyle(
-                        color = ColorProvider(Color(0xFF111827)),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                    ),
-                    maxLines = 2,
-                    modifier = GlanceModifier.defaultWeight(),
-                )
-            }
-            Spacer(GlanceModifier.height(6.dp))
+        state.cover?.let { cover ->
+            Image(
+                provider = cover,
+                contentDescription = state.book.title,
+                contentScale = ContentScale.Fit,
+                modifier = GlanceModifier.size(coverWidth, coverHeight),
+            )
+            Spacer(GlanceModifier.width(16.dp))
+        }
+        Column(
+            modifier = GlanceModifier.defaultWeight(),
+            verticalAlignment = Alignment.Vertical.CenterVertically,
+        ) {
+            Text(
+                text = state.book.title,
+                style = TextStyle(
+                    color = GlanceTheme.colors.onSurface,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                maxLines = 2,
+            )
+            Spacer(GlanceModifier.height(8.dp))
             Text(
                 text = state.progressLabel,
                 style = TextStyle(
-                    color = ColorProvider(Color(0xFF4B5563)),
-                    fontSize = 12.sp,
+                    color = GlanceTheme.colors.onSurfaceVariant,
+                    fontSize = 16.sp,
                 ),
                 maxLines = 1,
             )
-            Spacer(GlanceModifier.height(8.dp))
+            Spacer(GlanceModifier.height(12.dp))
             LinearProgressIndicator(
                 progress = state.progressFraction,
                 modifier = GlanceModifier.fillMaxWidth(),
-                color = ColorProvider(Color(0xFF2E7D32)),
-                backgroundColor = ColorProvider(Color(0xFFDDE7D8)),
+                color = GlanceTheme.colors.primary,
+                backgroundColor = GlanceTheme.colors.primaryContainer,
             )
         }
     }
@@ -143,8 +143,8 @@ private fun EmptyWidgetContent() {
     Text(
         text = "No reading book yet",
         style = TextStyle(
-            color = ColorProvider(Color(0xFF111827)),
-            fontSize = 18.sp,
+            color = GlanceTheme.colors.onSurface,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
         ),
         maxLines = 2,
@@ -152,7 +152,7 @@ private fun EmptyWidgetContent() {
     Spacer(GlanceModifier.height(6.dp))
     Text(
         text = "Open ReadKeeper to start one.",
-        style = TextStyle(color = ColorProvider(Color(0xFF4B5563)), fontSize = 12.sp),
+        style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 16.sp),
         maxLines = 2,
     )
 }
@@ -162,8 +162,8 @@ private fun ErrorWidgetContent() {
     Text(
         text = "Unable to load reading book",
         style = TextStyle(
-            color = ColorProvider(Color(0xFF111827)),
-            fontSize = 16.sp,
+            color = GlanceTheme.colors.onSurface,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
         ),
         maxLines = 2,
@@ -171,7 +171,7 @@ private fun ErrorWidgetContent() {
     Spacer(GlanceModifier.height(6.dp))
     Text(
         text = "Tap to open ReadKeeper.",
-        style = TextStyle(color = ColorProvider(Color(0xFF4B5563)), fontSize = 12.sp),
+        style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 16.sp),
         maxLines = 2,
     )
 }
@@ -182,6 +182,7 @@ private sealed interface ReadKeeperWidgetState {
     data class Loaded(
         val book: Book,
         val cover: ImageProvider?,
+        val coverAspectRatio: Float,
         val progressLabel: String,
         val progressFraction: Float,
     ) : ReadKeeperWidgetState
@@ -195,11 +196,15 @@ private object ReadKeeperWidgetLoader {
     suspend fun load(context: Context): ReadKeeperWidgetState = withContext(Dispatchers.IO) {
         runCatching {
             val book = fetchLatestReadingBook(context) ?: return@withContext ReadKeeperWidgetState.Empty
+            val coverBitmap = book.coverUrl?.let { coverUrl ->
+                runCatching { downloadCover(coverUrl) }.getOrNull()
+            }
             ReadKeeperWidgetState.Loaded(
                 book = book,
-                cover = book.coverUrl?.let { coverUrl ->
-                    runCatching { downloadCover(coverUrl) }.getOrNull()
-                }?.let { ImageProvider(it) },
+                cover = coverBitmap?.let { ImageProvider(it) },
+                coverAspectRatio = coverBitmap?.let { bitmap ->
+                    bitmap.width.toFloat() / bitmap.height.coerceAtLeast(1)
+                } ?: DEFAULT_COVER_ASPECT_RATIO,
                 progressLabel = book.widgetProgressLabel(),
                 progressFraction = ((book.widgetProgressPercent() ?: 0.0) / 100.0).toFloat()
                     .coerceIn(0f, 1f),
@@ -208,6 +213,8 @@ private object ReadKeeperWidgetLoader {
             ReadKeeperWidgetState.Error
         }
     }
+
+    private const val DEFAULT_COVER_ASPECT_RATIO = 2f / 3f
 
     private fun fetchLatestReadingBook(context: Context): Book? {
         val url = latestReadingBookUrl(context)
