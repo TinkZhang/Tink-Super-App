@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.db.DatabaseMigrationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-07-26T15:07:12.302Z" hostname="runnervmvrwv9" time="0.222">
+  <properties/>
+  <testcase name="bundledVersionThreeDatabase_migratesToReadKeeperOfflineSchema" classname="app.tinks.tink.db.DatabaseMigrationTest" time="0.218"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

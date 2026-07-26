@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.navigation.NavigationHierarchyTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-07-21T16:51:46.364Z" hostname="runnervm3jd5f" time="0.053">
+<testsuite name="app.tinks.tink.navigation.NavigationHierarchyTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-07-26T15:07:14.575Z" hostname="runnervmvrwv9" time="0.04">
   <properties/>
-  <testcase name="topDestination_mapsWeightHistoryToWeight" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.042"/>
-  <testcase name="topDestination_mapsLotteryHistoryStatsToLottery" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.003"/>
-  <testcase name="topDestination_returnsSelf_forTopLevelDestinations" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.007"/>
-  <testcase name="topDestination_mapsStoryFlowToZi" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.001"/>
+  <testcase name="topDestination_mapsWeightHistoryToWeight" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.032"/>
+  <testcase name="topDestination_mapsLotteryHistoryStatsToLottery" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.002"/>
+  <testcase name="topDestination_returnsSelf_forTopLevelDestinations" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.005"/>
+  <testcase name="topDestination_mapsStoryFlowToZi" classname="app.tinks.tink.navigation.NavigationHierarchyTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.diary.DiaryStateTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-21T16:51:44.426Z" hostname="runnervm3jd5f" time="0.02">
+<testsuite name="app.tinks.tink.diary.DiaryStateTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-26T15:07:12.527Z" hostname="runnervmvrwv9" time="0.016">
   <properties/>
   <testcase name="contributionDates_usesDailyEntriesInContributionYear" classname="app.tinks.tink.diary.DiaryStateTest" time="0.006"/>
-  <testcase name="weekStartAndLabel_useMondayFirstWeek" classname="app.tinks.tink.diary.DiaryStateTest" time="0.012"/>
+  <testcase name="weekStartAndLabel_useMondayFirstWeek" classname="app.tinks.tink.diary.DiaryStateTest" time="0.009"/>
   <testcase name="dateRangeForType_weekStartsOnMonday" classname="app.tinks.tink.diary.DiaryStateTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

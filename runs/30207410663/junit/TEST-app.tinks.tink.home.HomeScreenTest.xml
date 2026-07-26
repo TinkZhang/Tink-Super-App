@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.tinks.tink.home.HomeScreenTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-07-26T15:07:13.238Z" hostname="runnervmvrwv9" time="0.176">
+  <properties/>
+  <testcase name="readKeeperCell_usesOneFullWidthCardWithOnlyProgressAction" classname="app.tinks.tink.home.HomeScreenTest" time="0.172"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

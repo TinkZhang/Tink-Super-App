@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="app.tinks.tink.book.BookRepositoryTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-07-21T16:51:40.605Z" hostname="runnervm3jd5f" time="0.307">
+<testsuite name="app.tinks.tink.book.BookRepositoryTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-07-26T15:07:08.361Z" hostname="runnervmvrwv9" time="0.351">
   <properties/>
-  <testcase name="searchBooks_keepsResultWithoutSourceId" classname="app.tinks.tink.book.BookRepositoryTest" time="0.235"/>
-  <testcase name="getBooks_finalShelfLoadsAbandonedAndDoneBooks" classname="app.tinks.tink.book.BookRepositoryTest" time="0.021"/>
+  <testcase name="searchBooks_keepsResultWithoutSourceId" classname="app.tinks.tink.book.BookRepositoryTest" time="0.197"/>
+  <testcase name="getBooks_whenOffline_emitsCachedReadingShelfWithoutAnError" classname="app.tinks.tink.book.BookRepositoryTest" time="0.04"/>
+  <testcase name="queueReadingProgress_updatesCacheAndPersistsTheCompleteOfflineWrite" classname="app.tinks.tink.book.BookRepositoryTest" time="0.025"/>
+  <testcase name="bookDto_mapsReadingDuration" classname="app.tinks.tink.book.BookRepositoryTest" time="0.0"/>
+  <testcase name="bookNoteDto_keepsCreatedDate" classname="app.tinks.tink.book.BookRepositoryTest" time="0.003"/>
+  <testcase name="getBooks_finalShelfLoadsAbandonedAndDoneBooks" classname="app.tinks.tink.book.BookRepositoryTest" time="0.006"/>
   <testcase name="getBooks_passesSelectedCategoryToApi" classname="app.tinks.tink.book.BookRepositoryTest" time="0.004"/>
-  <testcase name="addToReading_createsWishlistEntryThenStartsReading" classname="app.tinks.tink.book.BookRepositoryTest" time="0.018"/>
-  <testcase name="searchBooks_usesBackendSearchAndMapsResult" classname="app.tinks.tink.book.BookRepositoryTest" time="0.004"/>
-  <testcase name="searchBooks_mapsWrappedBackendSearchResults" classname="app.tinks.tink.book.BookRepositoryTest" time="0.004"/>
-  <testcase name="searchBooks_mapsRawGoogleBookItems" classname="app.tinks.tink.book.BookRepositoryTest" time="0.012"/>
-  <testcase name="addToReading_keepsDraftPageFormat" classname="app.tinks.tink.book.BookRepositoryTest" time="0.009"/>
+  <testcase name="syncPendingProgress_updatesBookAndTimeThenClearsPendingState" classname="app.tinks.tink.book.BookRepositoryTest" time="0.018"/>
+  <testcase name="addToReading_createsWishlistEntryThenStartsReading" classname="app.tinks.tink.book.BookRepositoryTest" time="0.015"/>
+  <testcase name="searchBooks_usesBackendSearchAndMapsResult" classname="app.tinks.tink.book.BookRepositoryTest" time="0.006"/>
+  <testcase name="searchBooks_mapsWrappedBackendSearchResults" classname="app.tinks.tink.book.BookRepositoryTest" time="0.006"/>
+  <testcase name="searchBooks_mapsRawGoogleBookItems" classname="app.tinks.tink.book.BookRepositoryTest" time="0.021"/>
+  <testcase name="addToReading_keepsDraftPageFormat" classname="app.tinks.tink.book.BookRepositoryTest" time="0.005"/>
   <system-out><![CDATA[safeApiCall: calling api
+safeApiCall: calling api
+safeApiCall caught exception: offline
 safeApiCall: calling api
 safeApiCall: calling api
 safeApiCall: calling api
