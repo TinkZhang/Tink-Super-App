@@ -89,10 +89,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -118,6 +121,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntRect
@@ -141,7 +145,6 @@ import java.time.ZoneId
 import java.time.Year
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import kotlin.math.roundToInt
 import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -856,7 +859,11 @@ private fun ColumnScope.ArchivedListCardInfo(book: Book) {
             )
         }
         Text(
-            book.archiveProgressLabel(),
+            if (book.archiveStatus == ArchiveStatus.Done) {
+                book.readingDurationLabel()
+            } else {
+                book.archiveProgressLabel()
+            },
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -1528,6 +1535,9 @@ private fun Book.archiveProgressLabel(): String =
         ?: progressPercentageForDisplay()?.let { "${it.toInt()}%" }
         ?: ""
 
+private fun Book.readingDurationLabel(): String =
+    String.format(Locale.US, "%.1f h", readingDurationMinutes / 60.0)
+
 private fun archiveStatusIcon(status: ArchiveStatus?): ImageVector =
     if (status == ArchiveStatus.Done) Icons.Outlined.CheckCircle else Icons.Filled.Archive
 
@@ -1730,7 +1740,8 @@ private fun BookDetail(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
+                .testTag("book_detail_list"),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
@@ -1746,7 +1757,19 @@ private fun BookDetail(
                 }
             }
             if (book.state != BookState.Wish) {
-                item { ProgressLine(book, animateChanges = true) }
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ProgressLine(book, animateChanges = true)
+                        if (book.archiveStatus == ArchiveStatus.Done) {
+                            Text(
+                                text = "Reading time · ${book.readingDurationLabel()}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.testTag("book_done_reading_duration"),
+                            )
+                        }
+                    }
+                }
             }
             if (book.state == BookState.Wish) {
                 book.description?.takeIf { it.isNotBlank() }?.let { description ->
@@ -1901,8 +1924,9 @@ private fun DoneBookRating(
     ) {
         DetailSectionTitle("Your rating")
         Row(
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             (1..5).forEach { star ->
                 val selected = star <= (rating ?: 0.0)
@@ -1929,6 +1953,8 @@ private fun DoneBookRating(
             text = rating?.let { String.format(Locale.US, "%.1f / 5", it) } ?: "Not rated",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -2098,6 +2124,7 @@ private fun BookMetadataSection(book: Book) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NotesList(
     notes: List<BookNote>,
@@ -2119,31 +2146,56 @@ private fun NotesList(
                 item { Text("No notes yet", style = MaterialTheme.typography.bodyLarge) }
             }
             items(notes, key = { it.id }) { note ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { editingNote = note }
-                ) {
-                    ListItem(
-                        headlineContent = { Text(note.content) },
-                        supportingContent = {
-                            Text(
-                                listOfNotNull(
-                                    note.page?.let { "Page $it" },
-                                    note.progressPercentage?.let { "${it.toInt()}%" }).joinToString(
-                                    " · "
-                                )
+                val dismissState = rememberSwipeToDismissBoxState()
+                LaunchedEffect(dismissState.currentValue) {
+                    if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                        onEvent(BookEvent.DeleteNote(note.id))
+                    }
+                }
+                SwipeToDismissBox(
+                    state = dismissState,
+                    enableDismissFromStartToEnd = false,
+                    backgroundContent = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.errorContainer)
+                                .padding(horizontal = 24.dp)
+                                .testTag("book_delete_note_${note.id}"),
+                            contentAlignment = Alignment.CenterEnd,
+                        ) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = "Delete note",
+                                tint = MaterialTheme.colorScheme.onErrorContainer,
                             )
-                        },
-                        trailingContent = {
-                            IconButton(
-                                onClick = { onEvent(BookEvent.DeleteNote(note.id)) },
-                                modifier = Modifier.testTag("book_delete_note_${note.id}"),
-                            ) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Delete note")
-                            }
                         }
-                    )
+                    },
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { editingNote = note }
+                    ) {
+                        ListItem(
+                            headlineContent = { Text(note.content) },
+                            supportingContent = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                ) {
+                                    Text(
+                                        listOfNotNull(
+                                            note.page?.let { "Page $it" },
+                                            note.progressPercentage?.let { "${it.toInt()}%" },
+                                        ).joinToString(" · ")
+                                    )
+                                    Text(note.createdAt.take(10))
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }

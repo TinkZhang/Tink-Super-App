@@ -2,7 +2,6 @@ package app.tinks.tink.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.tinks.tink.book.BookPageFormat
 import app.tinks.tink.ui.components.AppSnackbarBus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +16,6 @@ sealed interface HomeEvent {
     data object Refresh : HomeEvent
     data class CompleteMerriamWords(val count: Int) : HomeEvent
     data object AddWeight : HomeEvent
-    data object ToggleReadKeeperSession : HomeEvent
     data object OpenReadKeeperProgress : HomeEvent
     data object DismissReadKeeperProgress : HomeEvent
     data class UpdateReadKeeperProgressInput(val value: String) : HomeEvent
@@ -69,11 +67,6 @@ class HomeViewModel @Inject constructor(
                     AppSnackbarBus.showMessage("No cached weight yet")
                 }
             }
-            HomeEvent.ToggleReadKeeperSession -> launchAction {
-                if (!repository.toggleReadKeeperSession()) {
-                    AppSnackbarBus.showMessage("No reading book cached yet")
-                }
-            }
             HomeEvent.OpenReadKeeperProgress -> openReadKeeperProgress()
             HomeEvent.DismissReadKeeperProgress -> progressDialogState.update {
                 it.copy(showReadKeeperProgressDialog = false, readKeeperProgressInput = "")
@@ -101,10 +94,7 @@ class HomeViewModel @Inject constructor(
         progressDialogState.update {
             it.copy(
                 showReadKeeperProgressDialog = true,
-                readKeeperProgressInput = when {
-                    book.pageFormat.usesPages -> book.currentPage?.toString().orEmpty()
-                    else -> book.progressPercentage?.formatHomeProgressInput(book.pageFormat).orEmpty()
-                },
+                readKeeperProgressInput = "",
             )
         }
     }
@@ -152,6 +142,3 @@ private fun String.filterProgressInput(): String =
     filterIndexed { index, char ->
         char.isDigit() || (char == '.' && index > 0 && !take(index).contains('.'))
     }
-
-private fun Double.formatHomeProgressInput(pageFormat: BookPageFormat): String =
-    "%.${pageFormat.precision}f".format(this)

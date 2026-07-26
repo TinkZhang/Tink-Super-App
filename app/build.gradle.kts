@@ -136,6 +136,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.hilt.common)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.ui.graphics)

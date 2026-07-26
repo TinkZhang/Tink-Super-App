@@ -9,6 +9,9 @@ import app.tinks.tink.diary.DiaryDateTimeConverters
 import app.tinks.tink.diary.DiaryEntity
 import app.tinks.tink.diary.DiaryTypeConverters
 import app.tinks.tink.diary.DraftEntity
+import app.tinks.tink.book.BookDao
+import app.tinks.tink.book.BookEntity
+import app.tinks.tink.book.BookPendingProgressEntity
 import app.tinks.tink.home.HomeDao
 import app.tinks.tink.home.HomePendingActionEntity
 import app.tinks.tink.home.HomeSnapshotEntity
@@ -30,8 +33,10 @@ import app.tinks.tink.salesforce.SalesforceQuestionEntity
         DraftEntity::class,
         HomeSnapshotEntity::class,
         HomePendingActionEntity::class,
+        BookEntity::class,
+        BookPendingProgressEntity::class,
     ],
-    version = 5,
+    version = 6,
 )
 @TypeConverters(
     MerriamTypeConverters::class,
@@ -44,4 +49,5 @@ abstract class TinkDatabase : RoomDatabase() {
     abstract fun salesforceDao(): SalesforceDao
     abstract fun diaryDao(): DiaryDao
     abstract fun homeDao(): HomeDao
+    abstract fun bookDao(): BookDao
 }

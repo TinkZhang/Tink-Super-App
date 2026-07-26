@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.Serializable
 import androidx.navigation3.runtime.NavKey
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.util.Locale
@@ -548,27 +549,33 @@ class BookViewModel @Inject constructor(
             title = "${currentBook.title} ${currentBook.currentProgressLabel()} - $stopProgressLabel",
             description = "ReadKeeper reading progress update",
         )
-        mutate({
-            timeRepository.createTimeEntry(payload)
-        }) {
-            saveReadingProgress(
-                event.bookId,
-                BookUpdateRequest(
-                    currentPage = if (currentBook.pageFormat.usesPages) {
-                        event.stopPage
-                    } else {
-                        event.stopProgressPercentage?.toBookProgressUnits(currentBook.pageFormat)
-                    },
-                ),
-            )
-        }
+        saveReadingProgress(
+            bookId = event.bookId,
+            currentPage = if (currentBook.pageFormat.usesPages) {
+                event.stopPage
+            } else {
+                event.stopProgressPercentage?.toBookProgressUnits(currentBook.pageFormat)
+            },
+            readingDurationMinutes = currentBook.readingDurationMinutes +
+                Duration.between(startTime, stopTime).seconds
+                    .coerceAtLeast(1)
+                    .let { seconds -> ((seconds + 59) / 60).toInt() },
+            timeEntry = payload,
+        )
     }
 
     private fun saveReadingProgress(
         bookId: Long,
-        payload: BookUpdateRequest,
+        currentPage: Int?,
+        readingDurationMinutes: Int,
+        timeEntry: TimeUpsertRequest,
     ) {
-        mutationJob = repository.updateBook(bookId, payload)
+        mutationJob = repository.queueReadingProgress(
+            bookId = bookId,
+            currentPage = currentPage,
+            readingDurationMinutes = readingDurationMinutes,
+            timeEntry = timeEntry,
+        )
             .onEach { result ->
                 when (result) {
                     ApiResult.Loading -> _state.update { it.copy(isLoading = true) }
@@ -582,7 +589,14 @@ class BookViewModel @Inject constructor(
                         loadDetailNotes(bookId)
                         refreshAll()
                     }
-                    is ApiResult.Error -> failLoading { saveReadingProgress(bookId, payload) }
+                    is ApiResult.Error -> failLoading {
+                        saveReadingProgress(
+                            bookId = bookId,
+                            currentPage = currentPage,
+                            readingDurationMinutes = readingDurationMinutes,
+                            timeEntry = timeEntry,
+                        )
+                    }
                 }
             }
             .launchIn(viewModelScope)

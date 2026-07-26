@@ -95,9 +95,6 @@ fun HomeDashboardScreenshotPreview() {
                         currentPage = 120,
                         progressPercentage = null,
                         pages = 360,
-                        sessionStartedAt = null,
-                        sessionStartPage = null,
-                        sessionStartProgressPercentage = null,
                     ),
                     haircutDays = 42,
                     weightValue = 141.2,
@@ -290,7 +287,6 @@ fun BookReadingTrackerScreenshotPreview() {
                         isbn = "9780441478125",
                         description = null,
                         rating = 4.3,
-                        amazonLink = null,
                         pages = 304,
                         publishYear = 1969,
                         state = BookState.Reading,
@@ -377,10 +373,33 @@ fun BookArchivedCardScreenshotPreview() {
                     progressPercentage = 100.0,
                     archiveStatus = ArchiveStatus.Done,
                     archivedDate = "2026-04-21",
+                    readingDurationMinutes = 135,
                 ),
                 onEvent = {},
             )
         }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 400, heightDp = 900)
+@Composable
+fun BookDoneDetailScreenshotPreview() {
+    val book = listCardSample(
+        state = BookState.Archived,
+        currentPage = 304,
+        progressPercentage = 100.0,
+        archiveStatus = ArchiveStatus.Done,
+        archivedDate = "2026-04-21",
+        readingDurationMinutes = 135,
+    )
+    TinkTheme(dynamicColor = false) {
+        BookScreen(
+            state = BookUiState(
+                screen = BooksScreenState.Detail(book.id),
+                selectedBook = book,
+            ),
+        )
     }
 }
 
@@ -446,6 +465,7 @@ private fun listCardSample(
     archiveStatus: ArchiveStatus? = null,
     archivedDate: String? = null,
     category: String? = null,
+    readingDurationMinutes: Int = 0,
 ) = Book(
     id = 1,
     title = "The Left Hand of Darkness",
@@ -455,7 +475,6 @@ private fun listCardSample(
     isbn = "9780441478125",
     description = null,
     rating = 4.3,
-    amazonLink = null,
     pages = 304,
     publishYear = 1969,
     state = state,
@@ -463,6 +482,7 @@ private fun listCardSample(
     pageFormat = BookPageFormat.Page,
     currentPage = currentPage,
     progressPercentage = progressPercentage,
+    readingDurationMinutes = readingDurationMinutes,
     archiveStatus = archiveStatus,
     archivedDate = archivedDate,
     category = category,

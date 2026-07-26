@@ -1,8 +1,7 @@
 package app.tinks.tink.widget
 
+import android.appwidget.AppWidgetManager
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,19 +34,19 @@ import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import app.tinks.tink.BuildConfig
 import app.tinks.tink.MainActivity
 import app.tinks.tink.book.Book
-import app.tinks.tink.book.BookDto
+import app.tinks.tink.book.BookCoverCache
+import app.tinks.tink.book.BookDao
 import app.tinks.tink.book.BookPageFormat
+import app.tinks.tink.book.ReadKeeperSyncScheduler
 import app.tinks.tink.book.toDomain
-import app.tinks.tink.settings.ApiEnvironment
-import app.tinks.tink.settings.AppEnvironmentRepository
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.Locale
 
 class ReadKeeperWidget : GlanceAppWidget() {
@@ -65,6 +64,20 @@ class ReadKeeperWidget : GlanceAppWidget() {
 
 class ReadKeeperWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = ReadKeeperWidget()
+
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray,
+    ) {
+        super.onUpdate(context, appWidgetManager, appWidgetIds)
+        ReadKeeperSyncScheduler.enqueue(context)
+    }
+
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        ReadKeeperSyncScheduler.enqueue(context)
+    }
 }
 
 @Composable
@@ -189,16 +202,15 @@ private sealed interface ReadKeeperWidgetState {
 }
 
 private object ReadKeeperWidgetLoader {
-    private const val DEBUG_API_OVERRIDE_PREFS = "debug_api_base_url_override"
-    private const val KEY_DEBUG_API_BASE_URL = "base_url"
-    private val json = Json { ignoreUnknownKeys = true }
-
     suspend fun load(context: Context): ReadKeeperWidgetState = withContext(Dispatchers.IO) {
         runCatching {
-            val book = fetchLatestReadingBook(context) ?: return@withContext ReadKeeperWidgetState.Empty
-            val coverBitmap = book.coverUrl?.let { coverUrl ->
-                runCatching { downloadCover(coverUrl) }.getOrNull()
-            }
+            val entryPoint = EntryPointAccessors.fromApplication(
+                context,
+                ReadKeeperWidgetEntryPoint::class.java,
+            )
+            val book = entryPoint.bookDao().getLatestReadingBook()?.toDomain()
+                ?: return@withContext ReadKeeperWidgetState.Empty
+            val coverBitmap = entryPoint.bookCoverCache().bitmap(book.coverUrl)
             ReadKeeperWidgetState.Loaded(
                 book = book,
                 cover = coverBitmap?.let { ImageProvider(it) },
@@ -215,61 +227,14 @@ private object ReadKeeperWidgetLoader {
     }
 
     private const val DEFAULT_COVER_ASPECT_RATIO = 2f / 3f
-
-    private fun fetchLatestReadingBook(context: Context): Book? {
-        val url = latestReadingBookUrl(context)
-        val connection = (url.openConnection() as HttpURLConnection).apply {
-            connectTimeout = 8_000
-            readTimeout = 8_000
-            requestMethod = "GET"
-        }
-        return try {
-            if (connection.responseCode !in 200..299) return null
-            val body = connection.inputStream.bufferedReader().use { it.readText() }
-            json.decodeFromString<List<BookDto>>(body).firstOrNull()?.toDomain()
-        } finally {
-            connection.disconnect()
-        }
-    }
-
-    private fun latestReadingBookUrl(context: Context): URL {
-        val baseUrl = widgetApiBaseUrl(context)
-        val shouldUseDevApi =
-            AppEnvironmentRepository(context).currentEnvironment() == ApiEnvironment.Dev &&
-                baseUrl.host == "api.tinks.app" &&
-                !baseUrl.path.startsWith("/dev/")
-        val pathPrefix = if (shouldUseDevApi) "dev/" else ""
-        return URL("${baseUrl.toString().ensureTrailingSlash()}${pathPrefix}book/reading?page=0&size=1")
-    }
-
-    private fun widgetApiBaseUrl(context: Context): URL {
-        val debugOverride = if (BuildConfig.DEBUG) {
-            context.getSharedPreferences(DEBUG_API_OVERRIDE_PREFS, Context.MODE_PRIVATE)
-                .getString(KEY_DEBUG_API_BASE_URL, null)
-                ?.takeIf { it.isNotBlank() }
-        } else {
-            null
-        }
-        return URL((debugOverride ?: BuildConfig.TINK_API_BASE_URL).ensureTrailingSlash())
-    }
-
-    private fun downloadCover(url: String): Bitmap? {
-        val connection = (URL(url).openConnection() as HttpURLConnection).apply {
-            connectTimeout = 8_000
-            readTimeout = 8_000
-            requestMethod = "GET"
-        }
-        return try {
-            if (connection.responseCode !in 200..299) return null
-            connection.inputStream.use(BitmapFactory::decodeStream)
-        } finally {
-            connection.disconnect()
-        }
-    }
 }
 
-private fun String.ensureTrailingSlash(): String =
-    if (endsWith("/")) this else "$this/"
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface ReadKeeperWidgetEntryPoint {
+    fun bookDao(): BookDao
+    fun bookCoverCache(): BookCoverCache
+}
 
 private fun Book.widgetProgressPercent(): Double? =
     if (pageFormat.usesPages) {

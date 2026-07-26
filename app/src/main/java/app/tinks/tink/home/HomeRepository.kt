@@ -1,11 +1,11 @@
 package app.tinks.tink.home
 
 import app.tinks.tink.book.Book
-import app.tinks.tink.book.BookApi
+import app.tinks.tink.book.BookDao
 import app.tinks.tink.book.BookPageFormat
-import app.tinks.tink.book.BookUpdateRequest
+import app.tinks.tink.book.BookRepository
 import app.tinks.tink.book.toBookProgressUnits
-import app.tinks.tink.book.toDomain as toBookDomain
+import app.tinks.tink.book.toDomain
 import app.tinks.tink.haircut.HaircutApi
 import app.tinks.tink.haircut.toDomain as toHaircutDomain
 import app.tinks.tink.merriam.db.MerriamDao
@@ -20,7 +20,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -49,13 +50,7 @@ data class HomeReadKeeperBook(
     val currentPage: Int?,
     val progressPercentage: Double?,
     val pages: Int?,
-    val sessionStartedAt: Long?,
-    val sessionStartPage: Int?,
-    val sessionStartProgressPercentage: Double?,
 ) {
-    val hasActiveSession: Boolean
-        get() = sessionStartedAt != null
-
     val progressTargetLabel: String
         get() = if (pageFormat.usesPages) "Page" else "Progress %"
 }
@@ -63,15 +58,21 @@ data class HomeReadKeeperBook(
 @Singleton
 open class HomeRepository @Inject constructor(
     private val homeDao: HomeDao,
+    private val bookDao: BookDao,
+    private val bookRepository: BookRepository,
     private val merriamDao: MerriamDao,
     private val merriamApi: MerriamApi,
-    private val bookApi: BookApi,
     private val timeApi: TimeApi,
     private val haircutApi: HaircutApi,
     private val weightApi: WeightApi,
 ) {
     open fun observeSnapshot(): Flow<HomeSnapshot> =
-        homeDao.observeSnapshot().map { it.toHomeSnapshot() }
+        combine(
+            homeDao.observeSnapshot(),
+            bookDao.observeLatestReadingBook(),
+        ) { snapshot, readingBook ->
+            snapshot.toHomeSnapshot(readingBook?.toDomain())
+        }
 
     open suspend fun refreshHome() = withContext(Dispatchers.IO) {
         ensureSnapshot()
@@ -113,60 +114,21 @@ open class HomeRepository @Inject constructor(
         true
     }
 
-    open suspend fun toggleReadKeeperSession(): Boolean = withContext(Dispatchers.IO) {
-        val snapshot = ensureSnapshot()
-        val book = snapshot.toHomeSnapshot().readKeeperBook ?: return@withContext false
-        if (book.hasActiveSession) {
-            val stopTime = System.currentTimeMillis()
-            homeDao.insertPendingAction(
-                HomePendingActionEntity(
-                    type = HOME_ACTION_BOOK_SESSION,
-                    bookId = book.id,
-                    startTimeMillis = book.sessionStartedAt,
-                    endTimeMillis = stopTime,
-                    textValue = book.title,
-                )
-            )
-            updateSnapshot {
-                it.copy(
-                    readKeeperSessionStartedAt = null,
-                    readKeeperSessionStartPage = null,
-                    readKeeperSessionStartProgressPercentage = null,
-                )
-            }
-            syncPendingActions()
-        } else {
-            updateSnapshot {
-                it.copy(
-                    readKeeperSessionStartedAt = System.currentTimeMillis(),
-                    readKeeperSessionStartPage = book.currentPage,
-                    readKeeperSessionStartProgressPercentage = book.progressPercentage,
-                )
-            }
-        }
-        true
-    }
-
     open suspend fun updateReadKeeperProgress(page: Int?, progressPercentage: Double?): Boolean =
         withContext(Dispatchers.IO) {
-            val snapshot = ensureSnapshot()
-            val bookId = snapshot.readKeeperBookId ?: return@withContext false
-            updateSnapshot {
-                it.copy(
-                    readKeeperCurrentPage = page ?: it.readKeeperCurrentPage,
-                    readKeeperProgressPercentage = progressPercentage ?: it.readKeeperProgressPercentage,
-                )
+            val book = bookDao.getLatestReadingBook()?.toDomain() ?: return@withContext false
+            val currentPage = if (book.pageFormat.usesPages) {
+                page
+            } else {
+                progressPercentage?.toBookProgressUnits(book.pageFormat)
             }
-            homeDao.insertPendingAction(
-                HomePendingActionEntity(
-                    type = HOME_ACTION_BOOK_PROGRESS,
-                    bookId = bookId,
-                    pageValue = page,
-                    progressValue = progressPercentage,
-                )
-            )
-            syncPendingActions()
-            true
+            val result = bookRepository.queueReadingProgress(
+                bookId = book.id,
+                currentPage = currentPage,
+                readingDurationMinutes = book.readingDurationMinutes,
+                timeEntry = null,
+            ).first { it !is app.tinks.tink.network.ApiResult.Loading }
+            result is app.tinks.tink.network.ApiResult.Success
         }
 
     open suspend fun syncPendingActions() = withContext(Dispatchers.IO) {
@@ -201,19 +163,19 @@ open class HomeRepository @Inject constructor(
             }
             HOME_ACTION_BOOK_PROGRESS -> {
                 val bookId = action.bookId ?: return
-                val snapshot = ensureSnapshot()
-                val pageFormat = BookPageFormat.fromWire(snapshot.readKeeperPageFormat)
-                val updated = bookApi.updateBook(
-                    bookId,
-                    BookUpdateRequest(
-                        currentPage = if (pageFormat.usesPages) {
-                            action.pageValue
-                        } else {
-                            action.progressValue?.toBookProgressUnits(pageFormat)
-                        },
-                    )
-                ).toBookDomain()
-                updateSnapshot { it.withReadKeeperBook(updated) }
+                val book = bookDao.getBook(bookId)?.toDomain() ?: return
+                val currentPage = if (book.pageFormat.usesPages) {
+                    action.pageValue
+                } else {
+                    action.progressValue?.toBookProgressUnits(book.pageFormat)
+                }
+                val result = bookRepository.queueReadingProgress(
+                    bookId = bookId,
+                    currentPage = currentPage,
+                    readingDurationMinutes = book.readingDurationMinutes,
+                    timeEntry = null,
+                ).first { it !is app.tinks.tink.network.ApiResult.Loading }
+                check(result is app.tinks.tink.network.ApiResult.Success)
             }
             HOME_ACTION_BOOK_SESSION -> {
                 val start = action.startTimeMillis ?: return
@@ -238,27 +200,7 @@ open class HomeRepository @Inject constructor(
     }
 
     private suspend fun refreshReadKeeper() {
-        val latestBook = bookApi.getReading(size = 1)
-            .map { it.toBookDomain() }
-            .firstOrNull()
-        updateSnapshot { snapshot ->
-            if (latestBook == null) {
-                snapshot.copy(
-                    readKeeperBookId = null,
-                    readKeeperTitle = null,
-                    readKeeperCoverUrl = null,
-                    readKeeperPageFormat = null,
-                    readKeeperCurrentPage = null,
-                    readKeeperProgressPercentage = null,
-                    readKeeperPages = null,
-                    readKeeperSessionStartedAt = null,
-                    readKeeperSessionStartPage = null,
-                    readKeeperSessionStartProgressPercentage = null,
-                )
-            } else {
-                snapshot.withReadKeeperBook(latestBook)
-            }
-        }
+        bookRepository.refreshReadingBooks()
     }
 
     @OptIn(ExperimentalTime::class)
@@ -295,45 +237,27 @@ open class HomeRepository @Inject constructor(
         homeDao.upsertSnapshot(transform(current).copy(updatedAt = System.currentTimeMillis()))
     }
 
-    private fun HomeSnapshotEntity.withReadKeeperBook(book: Book): HomeSnapshotEntity =
-        copy(
-            readKeeperBookId = book.id,
-            readKeeperTitle = book.title,
-            readKeeperCoverUrl = book.coverUrl,
-            readKeeperPageFormat = book.pageFormat.wireValue,
-            readKeeperCurrentPage = book.currentPage,
-            readKeeperProgressPercentage = book.progressPercentage,
-            readKeeperPages = book.pages,
-            readKeeperSessionStartedAt = readKeeperSessionStartedAt?.takeIf { readKeeperBookId == book.id },
-            readKeeperSessionStartPage = readKeeperSessionStartPage?.takeIf { readKeeperBookId == book.id },
-            readKeeperSessionStartProgressPercentage = readKeeperSessionStartProgressPercentage
-                ?.takeIf { readKeeperBookId == book.id },
-        )
-
-    private fun HomeSnapshotEntity?.toHomeSnapshot(): HomeSnapshot {
-        if (this == null) return HomeSnapshot()
-        val readKeeper = readKeeperBookId?.let { bookId ->
-            HomeReadKeeperBook(
-                id = bookId,
-                title = readKeeperTitle.orEmpty(),
-                coverUrl = readKeeperCoverUrl,
-                pageFormat = BookPageFormat.fromWire(readKeeperPageFormat),
-                currentPage = readKeeperCurrentPage,
-                progressPercentage = readKeeperProgressPercentage,
-                pages = readKeeperPages,
-                sessionStartedAt = readKeeperSessionStartedAt,
-                sessionStartPage = readKeeperSessionStartPage,
-                sessionStartProgressPercentage = readKeeperSessionStartProgressPercentage,
-            )
-        }
+    private fun HomeSnapshotEntity?.toHomeSnapshot(book: Book?): HomeSnapshot {
+        if (this == null) return HomeSnapshot(readKeeperBook = book?.toHomeReadKeeperBook())
         return HomeSnapshot(
             merriamLatest = merriamLatest,
-            readKeeperBook = readKeeper,
+            readKeeperBook = book?.toHomeReadKeeperBook(),
             haircutDays = haircutDays,
             weightValue = weightValue,
             weightRecordedAt = weightRecordedAt,
         )
     }
+
+    private fun Book.toHomeReadKeeperBook(): HomeReadKeeperBook =
+        HomeReadKeeperBook(
+            id = id,
+            title = title,
+            coverUrl = coverUrl,
+            pageFormat = pageFormat,
+            currentPage = currentPage,
+            progressPercentage = progressPercentage,
+            pages = pages,
+        )
 }
 
 private const val READING_TIME_TYPE = 2

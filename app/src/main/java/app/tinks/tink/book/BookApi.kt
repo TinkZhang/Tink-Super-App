@@ -144,6 +144,8 @@ data class BookDto(
     val pageFormat: String? = null,
     @SerialName("current_page")
     val currentPage: Int? = null,
+    @SerialName("reading_duration_minutes")
+    val readingDurationMinutes: Int = 0,
     @SerialName("archived_date")
     val archivedDate: String? = null,
     @SerialName("created_at")
@@ -189,6 +191,8 @@ data class BookUpdateRequest(
     val platform: String? = null,
     @SerialName("current_page")
     val currentPage: Int? = null,
+    @SerialName("reading_duration_minutes")
+    val readingDurationMinutes: Int? = null,
     @SerialName("archived_date")
     val archivedDate: String? = null,
 )
@@ -281,6 +285,7 @@ data class Book(
     val pageFormat: BookPageFormat,
     val currentPage: Int?,
     val progressPercentage: Double?,
+    val readingDurationMinutes: Int = 0,
     val archiveStatus: ArchiveStatus?,
     val archivedDate: String?,
     val category: String? = null,
@@ -294,6 +299,8 @@ data class BookNote(
     val content: String,
     val page: Int?,
     val progressPercentage: Double?,
+    val createdAt: String,
+    val updatedAt: String?,
 )
 
 data class BookDraft(
@@ -332,6 +339,7 @@ fun BookDto.toDomain(): Book {
         pageFormat = format,
         currentPage = currentPage,
         progressPercentage = currentPage.toProgressPercentage(format, pages),
+        readingDurationMinutes = readingDurationMinutes,
         archiveStatus = when (state) {
             "abandon" -> ArchiveStatus.Abandon
             "done" -> ArchiveStatus.Done
@@ -350,6 +358,8 @@ fun BookNoteDto.toDomain(): BookNote = BookNote(
     content = content,
     page = page,
     progressPercentage = progressPercentage,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
 )
 
 fun BookDraft.toCreateRequest(): BookCreateRequest = BookCreateRequest(
@@ -386,7 +396,7 @@ fun Double.toBookProgressUnits(format: BookPageFormat): Int =
         BookPageFormat.Percent10000 -> (this * 100).roundToInt()
     }
 
-private fun Int?.toProgressPercentage(format: BookPageFormat, pages: Int?): Double? =
+internal fun Int?.toProgressPercentage(format: BookPageFormat, pages: Int?): Double? =
     when (format) {
         BookPageFormat.Page -> this?.let { page ->
             pages?.takeIf { it > 0 }?.let { totalPages -> page * 100.0 / totalPages }

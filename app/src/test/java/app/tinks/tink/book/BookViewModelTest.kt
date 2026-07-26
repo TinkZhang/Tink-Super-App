@@ -161,8 +161,7 @@ class BookViewModelTest {
     @Test
     fun updatingReadingProgress_logsTimeEntryAndUpdatesBook() = runTest {
         val repository = FakeRepository()
-        val timeRepository = FakeTimeRepository()
-        val viewModel = BookViewModel(repository, timeRepository)
+        val viewModel = BookViewModel(repository, FakeTimeRepository())
         val readingBookId = sampleBook(BookState.Reading).id
         val startTime = Instant.parse("2026-06-17T12:00:00Z")
         val stopTime = Instant.parse("2026-06-17T12:10:00Z")
@@ -180,13 +179,15 @@ class BookViewModelTest {
         )
         advanceUntilIdle()
 
-        val payload = timeRepository.createdEntries.single()
+        val payload = repository.queuedTimeEntries.single()
         assertEquals(2, payload.type)
         assertEquals(startTime.toString(), payload.start)
         assertEquals(stopTime.toString(), payload.end)
         assertEquals("Currently reading Page 80 - Page 100", payload.title)
         assertEquals(100, repository.updatePayloads.last().currentPage)
+        assertEquals(130, repository.updatePayloads.last().readingDurationMinutes)
         assertEquals(100, viewModel.uiState.value.selectedBook?.currentPage)
+        assertEquals(130, viewModel.uiState.value.selectedBook?.readingDurationMinutes)
     }
 
     @Test
@@ -209,6 +210,7 @@ class BookViewModelTest {
         val wishlistDrafts = mutableListOf<BookDraft>()
         val readingDrafts = mutableListOf<BookDraft>()
         val updatePayloads = mutableListOf<BookUpdateRequest>()
+        val queuedTimeEntries = mutableListOf<TimeUpsertRequest>()
 
         override fun getBooks(state: BookState, category: String?): Flow<ApiResult<List<Book>>> {
             requests.add(state to category)
@@ -228,8 +230,34 @@ class BookViewModelTest {
                     sampleBook(BookState.Reading).copy(
                         currentPage = payload.currentPage ?: sampleBook(BookState.Reading).currentPage,
                         rating = payload.rating ?: sampleBook(BookState.Reading).rating,
+                        readingDurationMinutes = payload.readingDurationMinutes
+                            ?: sampleBook(BookState.Reading).readingDurationMinutes,
                     )
                 )
+            )
+        }
+
+        override fun queueReadingProgress(
+            bookId: Long,
+            currentPage: Int?,
+            readingDurationMinutes: Int,
+            timeEntry: TimeUpsertRequest?,
+        ): Flow<ApiResult<Book>> {
+            updatePayloads.add(
+                BookUpdateRequest(
+                    currentPage = currentPage,
+                    readingDurationMinutes = readingDurationMinutes,
+                )
+            )
+            timeEntry?.let(queuedTimeEntries::add)
+            return flowOf(
+                ApiResult.Loading,
+                ApiResult.Success(
+                    sampleBook(BookState.Reading).copy(
+                        currentPage = currentPage,
+                        readingDurationMinutes = readingDurationMinutes,
+                    )
+                ),
             )
         }
 
@@ -260,18 +288,11 @@ class BookViewModelTest {
     private class FakeTimeRepository(
         private val entries: List<TimeEntry> = emptyList(),
     ) : TimeRepository(NoopTimeApi) {
-        val createdEntries = mutableListOf<TimeUpsertRequest>()
-
         override fun getTimeDashboard(
             startDate: LocalDate,
             endDate: LocalDate,
         ): Flow<ApiResult<TimeDashboard>> =
             flowOf(ApiResult.Success(TimeDashboard(statistics = emptyList(), entries = entries)))
-
-        override fun createTimeEntry(payload: TimeUpsertRequest): Flow<ApiResult<Unit>> {
-            createdEntries.add(payload)
-            return flowOf(ApiResult.Success(Unit))
-        }
     }
 }
 
@@ -360,6 +381,7 @@ internal fun sampleBook(state: BookState) = Book(
     pageFormat = BookPageFormat.Page,
     currentPage = 80,
     progressPercentage = 40.0,
+    readingDurationMinutes = 120,
     archiveStatus = null,
     archivedDate = null,
 )

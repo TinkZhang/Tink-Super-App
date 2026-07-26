@@ -20,6 +20,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.swipeLeft
 import androidx.test.core.app.ApplicationProvider
 import app.tinks.tink.ui.theme.TinkTheme
 import org.junit.Assert.assertEquals
@@ -370,6 +371,8 @@ class BookScreenTest {
         composeRule.onNodeWithTag("book_done_rating").assertIsDisplayed()
         composeRule.onNodeWithText("3.0 / 5").assertIsDisplayed()
         composeRule.onNodeWithTag("book_rating_4").performClick()
+        composeRule.onNodeWithTag("book_detail_list").performScrollToIndex(2)
+        composeRule.onNodeWithTag("book_done_reading_duration").assertIsDisplayed()
 
         assertEquals(BookEvent.UpdateRating(book.id, 4.0), events.single())
     }
@@ -553,8 +556,44 @@ class BookScreenTest {
         }
 
         composeRule.onNodeWithText("Finished sample").assertIsDisplayed()
+        composeRule.onNodeWithText("2.0 h").assertIsDisplayed()
+        composeRule.onAllNodesWithText("80 / 200 pages").assertCountEquals(0)
         composeRule.onAllNodesWithText("Abandoned sample").assertCountEquals(0)
         composeRule.onAllNodesWithTag("book_archive_status_done").assertCountEquals(0)
         composeRule.onAllNodesWithTag("book_archive_status_abandon").assertCountEquals(0)
+    }
+
+    @Test
+    fun notesList_showsDateAndDeletesWithEndToStartSwipe() {
+        val events = mutableListOf<BookEvent>()
+        val book = sampleBook(BookState.Reading)
+        val note = BookNote(
+            id = 7,
+            bookId = book.id,
+            content = "A useful observation",
+            page = 42,
+            progressPercentage = null,
+            createdAt = "2026-07-23T09:30:00Z",
+            updatedAt = null,
+        )
+
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                BookScreen(
+                    state = BookUiState(
+                        screen = BooksScreenState.Notes(book.id),
+                        selectedBook = book,
+                        notes = listOf(note),
+                    ),
+                    onEvent = events::add,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Page 42").assertIsDisplayed()
+        composeRule.onNodeWithText("2026-07-23").assertIsDisplayed()
+        composeRule.onNodeWithText(note.content).performTouchInput { swipeLeft() }
+
+        assertEquals(BookEvent.DeleteNote(note.id), events.single())
     }
 }

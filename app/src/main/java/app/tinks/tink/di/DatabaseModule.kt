@@ -145,6 +145,56 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `book_cache` (
+                  `id` INTEGER NOT NULL,
+                  `title` TEXT NOT NULL,
+                  `publisher` TEXT,
+                  `author` TEXT,
+                  `coverUrl` TEXT,
+                  `isbn` TEXT,
+                  `description` TEXT,
+                  `rating` REAL,
+                  `pages` INTEGER,
+                  `publishYear` INTEGER,
+                  `state` TEXT NOT NULL,
+                  `platform` TEXT,
+                  `pageFormat` TEXT NOT NULL,
+                  `currentPage` INTEGER,
+                  `readingDurationMinutes` INTEGER NOT NULL,
+                  `archivedDate` TEXT,
+                  `category` TEXT,
+                  `createdAt` TEXT,
+                  `updatedAt` TEXT,
+                  `hasPendingProgress` INTEGER NOT NULL,
+                  PRIMARY KEY(`id`)
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `book_pending_progress` (
+                  `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                  `bookId` INTEGER NOT NULL,
+                  `currentPage` INTEGER,
+                  `readingDurationMinutes` INTEGER NOT NULL,
+                  `timeType` INTEGER,
+                  `timeStart` TEXT,
+                  `timeEnd` TEXT,
+                  `timeTitle` TEXT,
+                  `timeDescription` TEXT,
+                  `bookSynced` INTEGER NOT NULL,
+                  `timeSynced` INTEGER NOT NULL,
+                  `createdAt` INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): TinkDatabase {
@@ -154,7 +204,13 @@ object DatabaseModule {
             "tink.db"
         )
             .createFromAsset("database/tink.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+            .addMigrations(
+                MIGRATION_1_2,
+                MIGRATION_2_3,
+                MIGRATION_3_4,
+                MIGRATION_4_5,
+                MIGRATION_5_6,
+            )
             .build()
     }
 
@@ -169,4 +225,7 @@ object DatabaseModule {
 
     @Provides
     fun provideHomeDao(db: TinkDatabase) = db.homeDao()
+
+    @Provides
+    fun provideBookDao(db: TinkDatabase) = db.bookDao()
 }

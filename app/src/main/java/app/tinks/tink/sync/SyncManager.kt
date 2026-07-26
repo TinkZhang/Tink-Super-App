@@ -1,6 +1,7 @@
 package app.tinks.tink.sync
 
 import app.tinks.tink.home.HomeRepository
+import app.tinks.tink.book.ReadKeeperSyncScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -11,12 +12,14 @@ import javax.inject.Singleton
 @Singleton
 class SyncManager @Inject constructor(
     private val homeRepository: HomeRepository,
+    private val readKeeperSyncScheduler: ReadKeeperSyncScheduler,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun startObservingNetwork() = Unit
 
     fun initialSync() {
+        readKeeperSyncScheduler.enqueue()
         scope.launch {
             homeRepository.syncPendingActions()
         }

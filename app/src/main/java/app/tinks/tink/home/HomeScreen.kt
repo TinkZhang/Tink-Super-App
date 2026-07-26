@@ -11,10 +11,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,6 +32,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -101,7 +104,13 @@ internal fun HomeScreen(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(cells, key = { it }) { cell ->
+        items(
+            items = cells,
+            key = { it },
+            span = { cell ->
+                if (cell == HomeCell.ReadKeeper) GridItemSpan(maxLineSpan) else GridItemSpan(1)
+            },
+        ) { cell ->
             when (cell) {
                 HomeCell.Merriam -> MerriamHomeCell(
                     enabled = state.snapshot.merriamLatest != null,
@@ -110,7 +119,6 @@ internal fun HomeScreen(
                 HomeCell.Time -> TimeHomeCell(onAddTime)
                 HomeCell.ReadKeeper -> ReadKeeperHomeCell(
                     book = state.snapshot.readKeeperBook,
-                    onToggleSession = { onEvent(HomeEvent.ToggleReadKeeperSession) },
                     onUpdate = { onEvent(HomeEvent.OpenReadKeeperProgress) },
                 )
                 HomeCell.DiaryLoom -> DiaryLoomHomeCell(onNewDiary)
@@ -168,7 +176,6 @@ private fun TimeHomeCell(onAddTime: () -> Unit) {
 @Composable
 private fun ReadKeeperHomeCell(
     book: HomeReadKeeperBook?,
-    onToggleSession: () -> Unit,
     onUpdate: () -> Unit,
 ) {
     HomeCellCard(
@@ -182,50 +189,71 @@ private fun ReadKeeperHomeCell(
         },
         testTag = "home_readkeeper_cell",
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 86.dp)
-                .clip(RoundedCornerShape(8.dp)),
-            contentAlignment = Alignment.Center,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (book?.coverUrl.isNullOrBlank()) {
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_readkeeperlogo),
-                            contentDescription = book?.title ?: "ReadKeeper",
-                            modifier = Modifier.size(40.dp),
-                        )
+            Box(
+                modifier = Modifier
+                    .width(72.dp)
+                    .height(108.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (book?.coverUrl.isNullOrBlank()) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Image(
+                                painter = painterResource(R.drawable.ic_readkeeperlogo),
+                                contentDescription = book?.title ?: "ReadKeeper",
+                                modifier = Modifier.size(36.dp),
+                            )
+                        }
                     }
+                } else {
+                    AsyncImage(
+                        model = book.coverUrl,
+                        contentDescription = book.title,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize(),
+                    )
                 }
-            } else {
-                AsyncImage(
-                    model = book.coverUrl,
-                    contentDescription = book.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = book?.title ?: "No reading book cached",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilledTonalButton(
-                onClick = onToggleSession,
-                enabled = book != null,
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(if (book?.hasActiveSession == true) "Stop" else "Start")
-            }
-            OutlinedButton(
-                onClick = onUpdate,
-                enabled = book != null,
-                modifier = Modifier.weight(1f),
-            ) {
-                Text("Update")
+                if (book != null) {
+                    val progress = book.homeProgressPercent()
+                    Text(
+                        text = book.homeProgressLabel(progress),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    LinearProgressIndicator(
+                        progress = { ((progress ?: 0.0) / 100.0).toFloat().coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                OutlinedButton(
+                    onClick = onUpdate,
+                    enabled = book != null,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Update progress")
+                }
             }
         }
     }
@@ -408,9 +436,6 @@ private fun HomeScreenPreview() {
                         currentPage = 120,
                         progressPercentage = null,
                         pages = 360,
-                        sessionStartedAt = null,
-                        sessionStartPage = null,
-                        sessionStartProgressPercentage = null,
                     ),
                     haircutDays = 42,
                     weightValue = 141.2,
@@ -420,3 +445,24 @@ private fun HomeScreenPreview() {
         )
     }
 }
+
+private fun HomeReadKeeperBook.homeProgressPercent(): Double? =
+    if (pageFormat.usesPages) {
+        currentPage?.let { current ->
+            pages?.takeIf { it > 0 }?.let { total -> current * 100.0 / total }
+        } ?: progressPercentage
+    } else {
+        progressPercentage
+    }
+
+private fun HomeReadKeeperBook.homeProgressLabel(progress: Double?): String =
+    if (pageFormat.usesPages) {
+        val pagesLabel = currentPage?.let { current ->
+            pages?.let { total -> "$current / $total pages" } ?: "Page $current"
+        }
+        listOfNotNull(pagesLabel, progress?.let { "${it.toInt()}%" })
+            .joinToString(" · ")
+            .ifBlank { "Not started" }
+    } else {
+        progress?.let { "%.${pageFormat.precision}f%%".format(it) } ?: "Not started"
+    }

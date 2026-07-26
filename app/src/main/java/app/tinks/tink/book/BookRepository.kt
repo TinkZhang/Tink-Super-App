@@ -2,10 +2,14 @@ package app.tinks.tink.book
 
 import app.tinks.tink.network.ApiResult
 import app.tinks.tink.network.safeApiCall
+import app.tinks.tink.time.TimeApi
+import app.tinks.tink.time.TimeUpsertRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -16,6 +20,7 @@ import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,18 +32,33 @@ private val bookSearchJson = Json {
 @Singleton
 open class BookRepository @Inject constructor(
     private val bookApi: BookApi,
+    private val bookDao: BookDao?,
+    private val timeApi: TimeApi?,
+    private val syncScheduler: ReadKeeperSyncScheduler?,
+    private val coverCache: BookCoverCache?,
+    private val widgetUpdater: ReadKeeperWidgetUpdater?,
 ) {
+    private val syncMutex = Mutex()
+
+    constructor(bookApi: BookApi) : this(bookApi, null, null, null, null, null)
+
     open fun getBooks(state: BookState, category: String? = null): Flow<ApiResult<List<Book>>> = flow {
         emit(ApiResult.Loading)
-        emit(
-            safeApiCall {
-                when (state) {
-                    BookState.Wish -> bookApi.getWishlist(category = category)
-                    BookState.Reading -> bookApi.getReading(category = category)
-                    BookState.Archived -> bookApi.getAbandon(category = category) + bookApi.getDone(category = category)
-                }.map { it.toDomain() }
+        val cached = bookDao
+            ?.getBooks(state.cacheStates())
+            .orEmpty()
+            .map { it.toDomain() }
+            .filterByCategory(category)
+        if (cached.isNotEmpty()) emit(ApiResult.Success(cached))
+
+        when (val remote = safeApiCall { fetchRemoteBooks(state, category) }) {
+            is ApiResult.Success -> {
+                cacheBooks(state, remote.data)
+                emit(ApiResult.Success(remote.data))
             }
-        )
+            is ApiResult.Error -> if (cached.isEmpty()) emit(remote)
+            ApiResult.Loading -> Unit
+        }
     }.flowOn(Dispatchers.IO)
 
     open fun getCategories(): Flow<ApiResult<List<String>>> = flow {
@@ -48,12 +68,23 @@ open class BookRepository @Inject constructor(
 
     open fun getBook(bookId: Long): Flow<ApiResult<Book>> = flow {
         emit(ApiResult.Loading)
-        emit(safeApiCall { bookApi.getBook(bookId).toDomain() })
+        val cached = bookDao?.getBook(bookId)?.toDomain()
+        if (cached != null) emit(ApiResult.Success(cached))
+        when (val remote = safeApiCall { bookApi.getBook(bookId).toDomain() }) {
+            is ApiResult.Success -> {
+                cacheRemoteBook(remote.data)
+                emit(ApiResult.Success(remote.data))
+            }
+            is ApiResult.Error -> if (cached == null) emit(remote)
+            ApiResult.Loading -> Unit
+        }
     }.flowOn(Dispatchers.IO)
 
     open fun addToWishlist(draft: BookDraft): Flow<ApiResult<Book>> = flow {
         emit(ApiResult.Loading)
-        emit(safeApiCall { bookApi.createWishlistBook(draft.toCreateRequest()).toDomain() })
+        val result = safeApiCall { bookApi.createWishlistBook(draft.toCreateRequest()).toDomain() }
+        if (result is ApiResult.Success) cacheRemoteBook(result.data)
+        emit(result)
     }.flowOn(Dispatchers.IO)
 
     open fun addToReading(
@@ -64,7 +95,7 @@ open class BookRepository @Inject constructor(
         emit(
             safeApiCall {
                 val created = bookApi.createWishlistBook(draft.toCreateRequest())
-                bookApi.startReading(
+                val book = bookApi.startReading(
                     bookId = created.id,
                     payload = BookStartReadingRequest(
                         platform = platform,
@@ -72,6 +103,8 @@ open class BookRepository @Inject constructor(
                         pageFormat = draft.pageFormat.takeUnless { it == BookPageFormat.Page }?.wireValue,
                     )
                 ).toDomain()
+                cacheRemoteBook(book)
+                book
             }
         )
     }.flowOn(Dispatchers.IO)
@@ -85,7 +118,7 @@ open class BookRepository @Inject constructor(
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
-                bookApi.startReading(
+                val book = bookApi.startReading(
                     bookId = bookId,
                     payload = BookStartReadingRequest(
                         platform = platform,
@@ -93,13 +126,81 @@ open class BookRepository @Inject constructor(
                         pageFormat = pageFormat.takeUnless { it == BookPageFormat.Page }?.wireValue,
                     )
                 ).toDomain()
+                cacheRemoteBook(book)
+                book
             }
         )
     }.flowOn(Dispatchers.IO)
 
     open fun updateBook(bookId: Long, payload: BookUpdateRequest): Flow<ApiResult<Book>> = flow {
         emit(ApiResult.Loading)
-        emit(safeApiCall { bookApi.updateBook(bookId, payload).toDomain() })
+        val result = safeApiCall { bookApi.updateBook(bookId, payload).toDomain() }
+        if (result is ApiResult.Success) cacheRemoteBook(result.data)
+        emit(result)
+    }.flowOn(Dispatchers.IO)
+
+    open fun queueReadingProgress(
+        bookId: Long,
+        currentPage: Int?,
+        readingDurationMinutes: Int,
+        timeEntry: TimeUpsertRequest?,
+    ): Flow<ApiResult<Book>> = flow {
+        emit(ApiResult.Loading)
+        val dao = bookDao
+        if (dao == null) {
+            val result = safeApiCall {
+                timeEntry?.let { requireNotNull(timeApi).createTimeEntry(it) }
+                bookApi.updateBook(
+                    bookId,
+                    BookUpdateRequest(
+                        currentPage = currentPage,
+                        readingDurationMinutes = readingDurationMinutes,
+                    ),
+                ).toDomain()
+            }
+            emit(result)
+            return@flow
+        }
+
+        val cached = dao.getBook(bookId)?.toDomain()
+            ?: runCatching { bookApi.getBook(bookId).toDomain() }
+                .getOrNull()
+                ?.also { cacheRemoteBook(it) }
+        if (cached == null) {
+            emit(ApiResult.Error("No cached book available"))
+            return@flow
+        }
+
+        val updatedAt = Instant.now().toString()
+        dao.enqueueProgress(
+            bookId = bookId,
+            currentPage = currentPage,
+            readingDurationMinutes = readingDurationMinutes,
+            updatedAt = updatedAt,
+            action = BookPendingProgressEntity(
+                bookId = bookId,
+                currentPage = currentPage,
+                readingDurationMinutes = readingDurationMinutes,
+                timeType = timeEntry?.type,
+                timeStart = timeEntry?.start,
+                timeEnd = timeEntry?.end,
+                timeTitle = timeEntry?.title,
+                timeDescription = timeEntry?.description,
+                timeSynced = timeEntry == null,
+            ),
+        )
+        syncScheduler?.enqueue()
+        updateWidget()
+        emit(
+            ApiResult.Success(
+                cached.copy(
+                    currentPage = currentPage,
+                    progressPercentage = currentPage.toProgressPercentage(cached.pageFormat, cached.pages),
+                    readingDurationMinutes = readingDurationMinutes,
+                    updatedAt = updatedAt,
+                )
+            )
+        )
     }.flowOn(Dispatchers.IO)
 
     open fun archiveBook(
@@ -109,17 +210,24 @@ open class BookRepository @Inject constructor(
         emit(ApiResult.Loading)
         emit(
             safeApiCall {
-                when (status) {
+                val book = when (status) {
                     ArchiveStatus.Abandon -> bookApi.abandonBook(bookId)
                     ArchiveStatus.Done -> bookApi.markBookDone(bookId)
                 }.toDomain()
+                cacheRemoteBook(book)
+                book
             }
         )
     }.flowOn(Dispatchers.IO)
 
     open fun deleteBook(bookId: Long): Flow<ApiResult<Unit>> = flow {
         emit(ApiResult.Loading)
-        emit(safeApiCall { bookApi.deleteBook(bookId) })
+        val result = safeApiCall { bookApi.deleteBook(bookId) }
+        if (result is ApiResult.Success) {
+            bookDao?.deleteBookAndPendingProgress(bookId)
+            updateWidget()
+        }
+        emit(result)
     }.flowOn(Dispatchers.IO)
 
     open fun getNotes(bookId: Long): Flow<ApiResult<List<BookNote>>> = flow {
@@ -177,7 +285,113 @@ open class BookRepository @Inject constructor(
             }
         )
     }.flowOn(Dispatchers.IO)
+
+    open suspend fun syncPendingProgress() = syncMutex.withLock {
+        drainPendingProgress()
+    }
+
+    open suspend fun synchronize() = syncMutex.withLock {
+        drainPendingProgress()
+        refreshAllBooks()
+        // Pick up progress added while the refresh was running.
+        drainPendingProgress()
+    }
+
+    private suspend fun drainPendingProgress() {
+        val dao = bookDao ?: return
+        val api = timeApi ?: return
+        dao.getPendingProgress().forEach { queued ->
+            var action = queued
+            if (!action.bookSynced) {
+                bookApi.updateBook(
+                    action.bookId,
+                    BookUpdateRequest(
+                        currentPage = action.currentPage,
+                        readingDurationMinutes = action.readingDurationMinutes,
+                    ),
+                )
+                dao.markBookSynced(action.id)
+                action = action.copy(bookSynced = true)
+            }
+            if (!action.timeSynced) {
+                api.createTimeEntry(
+                    TimeUpsertRequest(
+                        type = requireNotNull(action.timeType),
+                        start = requireNotNull(action.timeStart),
+                        end = requireNotNull(action.timeEnd),
+                        title = requireNotNull(action.timeTitle),
+                        description = action.timeDescription,
+                    )
+                )
+                dao.markTimeSynced(action.id)
+            }
+            dao.deletePendingProgress(action.id)
+            if (dao.pendingProgressCount(action.bookId) == 0) {
+                dao.clearPendingProgress(action.bookId)
+            }
+        }
+    }
+
+    open suspend fun refreshAllBooks() {
+        cacheBooks(BookState.Wish, fetchRemoteBooks(BookState.Wish, null))
+        cacheBooks(BookState.Reading, fetchRemoteBooks(BookState.Reading, null))
+        cacheBooks(BookState.Archived, fetchRemoteBooks(BookState.Archived, null))
+    }
+
+    open suspend fun refreshReadingBooks() {
+        cacheBooks(BookState.Reading, fetchRemoteBooks(BookState.Reading, null))
+    }
+
+    private suspend fun fetchRemoteBooks(state: BookState, category: String?): List<Book> =
+        when (state) {
+            BookState.Wish -> bookApi.getWishlist(category = category)
+            BookState.Reading -> bookApi.getReading(category = category)
+            BookState.Archived -> bookApi.getAbandon(category = category) + bookApi.getDone(category = category)
+        }.map { it.toDomain() }
+
+    private suspend fun cacheBooks(state: BookState, books: List<Book>) {
+        bookDao?.replaceRemoteBooks(
+            states = state.cacheStates(),
+            books = books.map { it.toEntity() },
+        )
+        if (state == BookState.Reading) {
+            cacheCover(bookDao?.getLatestReadingBook()?.coverUrl)
+            updateWidget()
+        }
+    }
+
+    private suspend fun cacheRemoteBook(book: Book) {
+        val dao = bookDao ?: return
+        val local = dao.getBook(book.id)
+        val remote = if (local?.hasPendingProgress == true) {
+            book.toEntity(hasPendingProgress = true).copy(
+                currentPage = local.currentPage,
+                readingDurationMinutes = local.readingDurationMinutes,
+                updatedAt = local.updatedAt,
+            )
+        } else {
+            book.toEntity()
+        }
+        dao.upsertBook(remote)
+        if (local?.state == BookState.Reading.wireValue || remote.state == BookState.Reading.wireValue) {
+            cacheCover(remote.coverUrl)
+            updateWidget()
+        }
+    }
+
+    private fun cacheCover(url: String?) {
+        coverCache?.cacheInBackground(url) {
+            updateWidget()
+        }
+    }
+
+    private suspend fun updateWidget() {
+        runCatching { widgetUpdater?.update() }
+    }
 }
+
+private fun List<Book>.filterByCategory(category: String?): List<Book> =
+    category?.let { selected -> filter { it.category == selected } } ?: this
 
 private fun JsonElement.toSearchResults(): List<BookSearchResultDto> {
     val results = when (this) {

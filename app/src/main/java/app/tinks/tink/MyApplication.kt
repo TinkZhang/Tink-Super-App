@@ -1,6 +1,8 @@
 package app.tinks.tink
 
 import android.app.Application
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -8,14 +10,26 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import app.tinks.tink.sync.SyncManager
 import app.tinks.tink.sync.WeightSyncWorker
+import app.tinks.tink.book.ReadKeeperSyncScheduler
 import dagger.hilt.android.HiltAndroidApp
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
-class MyApplication : Application() {
+class MyApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var syncManager: SyncManager
+
+    @Inject
+    lateinit var readKeeperSyncScheduler: ReadKeeperSyncScheduler
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 
     override fun onCreate() {
         super.onCreate()
@@ -23,6 +37,7 @@ class MyApplication : Application() {
         syncManager.startObservingNetwork()
         syncManager.initialSync()
         schedulePeriodicSync()
+        readKeeperSyncScheduler.schedulePeriodic()
     }
 
     private fun schedulePeriodicSync() {
