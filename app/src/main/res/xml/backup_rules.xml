@@ -6,6 +6,8 @@
    See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
+    <exclude domain="file" path="yt/" />
+    <exclude domain="database" path="yt-downloads.db" />
     <!--
    <include domain="sharedpref" path="."/>
    <exclude domain="sharedpref" path="device.xml"/>

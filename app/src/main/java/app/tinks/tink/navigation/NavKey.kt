@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
 
@@ -116,8 +117,13 @@ data class ScreenStoryDetail(val storyId: String) : MyNavKey {
     override val icon = Icons.Filled.Bookmark
 }
 
+data object ScreenYt : MyNavKey {
+    override val label = "YT"
+    override val icon = Icons.Filled.Download
+}
+
 val allTopDestinations = listOf(
     ScreenA, ScreenB, ScreenWeight, ScreenHair,
     ScreenLeeter, ScreenZi, ScreenMerriam, ScreenTime, ScreenBooks, ScreenDiaryLoom, ScreenLottery, ScreenSalesforce,
-    ScreenSecureWeb
+    ScreenSecureWeb, ScreenYt
 )

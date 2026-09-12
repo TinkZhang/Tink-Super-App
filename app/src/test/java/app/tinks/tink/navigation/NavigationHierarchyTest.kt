@@ -12,6 +12,8 @@ class NavigationHierarchyTest {
         assertEquals(ScreenDiaryLoom, ScreenDiaryLoom.topDestination())
         assertEquals(ScreenLeeter, ScreenLeeter.topDestination())
         assertEquals(ScreenSecureWeb, ScreenSecureWeb.topDestination())
+        assertEquals(ScreenYt, ScreenYt.topDestination())
+        org.junit.Assert.assertTrue(allTopDestinations.contains(ScreenYt))
     }
 
     @Test

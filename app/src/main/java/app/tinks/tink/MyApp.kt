@@ -79,6 +79,8 @@ import app.tinks.tink.navigation.ScreenTime
 import app.tinks.tink.navigation.ScreenWeight
 import app.tinks.tink.navigation.ScreenWeightHistory
 import app.tinks.tink.navigation.ScreenZi
+import app.tinks.tink.navigation.ScreenYt
+import app.tinks.tink.yt.YtScreen
 import app.tinks.tink.navigation.allTopDestinations
 import app.tinks.tink.navigation.topDestination
 import app.tinks.tink.salesforce.SalesforceScreen
@@ -370,6 +372,7 @@ fun MyApp(
                         is ScreenLotteryHistoryStats -> LotteryHistoryStatsScreen(hiltViewModel())
                         is ScreenSalesforce -> SalesforceScreen(hiltViewModel())
                         is ScreenSecureWeb -> SecureWebScreen()
+                        is ScreenYt -> YtScreen(hiltViewModel())
                         is ScreenStoryList -> StoryListScreen(
                             hiltViewModel(),
                             onStoryClick = { story ->
@@ -402,6 +405,7 @@ private fun MyNavKey.drawerTestTag(): String = when (this) {
     ScreenLotteryHistoryStats -> "drawer_destination_lottery_history_stats"
     ScreenSettings -> "drawer_destination_settings"
     ScreenSecureWeb -> "drawer_destination_secure_web"
+    ScreenYt -> "drawer_destination_yt"
     ScreenLearntZi -> "drawer_destination_learnt_zi"
     ScreenStoryList -> "drawer_destination_story_list"
     is ScreenStoryDetail -> "drawer_destination_story_detail"

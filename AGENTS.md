@@ -16,13 +16,22 @@ Official Google Android skills are available under `.agent/skills/android/`. Whe
 
 ## Feature Test Policy
 
+### UI test execution is opt-in
+
+- Run UI tests only when the user explicitly asks for them. Otherwise, DO NOT run UI tests.
+- This applies locally and in CI to Robolectric Compose/UI tests, screenshot tests and baseline generation, instrumented UI tests, and Appium.
+- Implementing a feature, building, installing, launching, fixing or pushing the app does not authorize UI tests.
+- You may author UI tests without running them. Non-UI tests and build/install/launch operations remain allowed.
+- Use explicit non-UI test selection. Do not run unfiltered `testDebugUnitTest`, coverage tasks that depend on it, or UI CI workflows unless UI tests were requested.
+- This takes precedence over all UI-test execution guidance below and in referenced skills/playbooks.
+
 When implementing a feature, update tests at the same time as the production code:
 
 - Unit tests: cover DTO/domain mapping, repository request/response behavior, UI state transformation, and view model state transitions.
 - Robolectric Compose UI tests: cover user-visible screen behavior, callbacks, empty/loading/error states, and navigation events that do not require a real device.
 - Screenshot tests: add or update Compose Preview Screenshot Testing baselines for changed screens, important states, and reusable feature UI components.
 - Navigation tests: when adding or changing destinations, cover top-level destination mapping and back-stack behavior with pure Kotlin tests where possible.
-- CI/reporting: keep `.github/workflows/android.yml` running `testDebugUnitTest`, `jacocoDebugUnitTestReport`, and `validateDebugScreenshotTest`, and keep publishing the HTML reports to GitHub Pages.
+- CI/reporting: non-UI checks may run by default. Mixed suites, UI tests, screenshot checks, and Appium dispatch must be gated on an explicit user request. Publish reports for checks that were authorized and run.
 - Black-box Appium handoff: Android CI owns building and uploading the debug APK artifact (`tink-android-debug-apk`). `tink-test` should download this artifact and must not checkout or build the Android project for Appium runs.
 
 If a test category is not applicable, write the reason in the PR/Linear update. Avoid skipping a category silently.
@@ -31,25 +40,25 @@ For screenshot tests, use the GitHub Actions runner as the source of truth for b
 
 ## Verification
 
-Run the local unit, Robolectric, and Compose behavior tests when Java is available:
+Only when the user explicitly requests UI tests, run the mixed unit/Robolectric/Compose suite:
 
 ```sh
 ./gradlew testDebugUnitTest
 ```
 
-Run local unit test coverage:
+Only within an explicit UI-test request, run coverage (which depends on the mixed suite):
 
 ```sh
 ./gradlew jacocoDebugUnitTestReport
 ```
 
-Run instrumented tests when an emulator or device is available:
+Only when explicitly requested, run instrumented UI tests:
 
 ```sh
 ./gradlew connectedDebugAndroidTest
 ```
 
-Run Compose Preview Screenshot Testing:
+Only when explicitly requested, run Compose Preview Screenshot Testing:
 
 ```sh
 ./gradlew updateDebugScreenshotTest
@@ -64,7 +73,7 @@ Build the local debug APK used by black-box Appium tests:
 scripts/build-appium-debug-apk.sh
 ```
 
-After building the APK, run the black-box Appium suites from `../tink-test` before pushing UI or navigation changes that affect covered flows:
+Only when the user explicitly requests UI tests, run the Appium suites from `../tink-test`:
 
 ```sh
 scripts/run_android_appium_local.sh --suite e2e

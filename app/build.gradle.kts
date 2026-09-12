@@ -66,6 +66,9 @@ android {
         compose = true
         buildConfig = true
     }
+    packaging {
+        jniLibs.useLegacyPackaging = true
+    }
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
     testOptions {
         unitTests {
@@ -126,6 +129,8 @@ tasks.register<JacocoReport>("jacocoDebugUnitTestReport") {
 }
 
 dependencies {
+    implementation(libs.youtubedl.android)
+    implementation(libs.youtubedl.ffmpeg)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
