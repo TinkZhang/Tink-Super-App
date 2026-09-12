@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -35,6 +37,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tinks.tink.navigation.ScreenRandom
+import app.tinks.tink.navigation.ScreenRandomPlay
+import app.tinks.tink.navigation.ScreenRandomWheelEditor
+import app.tinks.tink.random.RandomAudio
+import app.tinks.tink.random.RandomSettingsScreen
+import app.tinks.tink.random.RandomPlayRoute
+import app.tinks.tink.random.RandomWheelEditor
+import app.tinks.tink.random.RandomViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -104,9 +119,34 @@ fun MyApp(
     openAddFromQuickSettings: Boolean = false,
     onQuickSettingsRequestConsumed: () -> Unit = {},
 ) {
-    val backStack = remember { mutableStateListOf<MyNavKey>(ScreenA) }
+    var savedRandomPage by rememberSaveable { mutableStateOf<String?>(null) }
+    val backStack = remember {
+        mutableStateListOf<MyNavKey>().apply {
+            if (savedRandomPage == null) add(ScreenA) else {
+                add(ScreenRandom)
+                if (savedRandomPage == "play") add(ScreenRandomPlay)
+                if (savedRandomPage == "editor") add(ScreenRandomWheelEditor)
+            }
+        }
+    }
     val currentKey = backStack.lastOrNull()
     val currentTopDestination = currentKey?.topDestination()
+    SideEffect {
+        savedRandomPage = when (currentKey) {
+            ScreenRandom -> "settings"
+            ScreenRandomPlay -> "play"
+            ScreenRandomWheelEditor -> "editor"
+            else -> null
+        }
+    }
+    val randomViewModel = hiltViewModel<RandomViewModel>()
+    val randomSettings by randomViewModel.settings.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val randomAudio = if (currentTopDestination == ScreenRandom) {
+        val audio = remember { RandomAudio(context.applicationContext) }
+        DisposableEffect(audio) { onDispose { audio.close() } }
+        audio
+    } else null
     var pendingQuickAddRequestId by remember { mutableStateOf<Int?>(null) }
     var handledQuickAddRequestId by remember { mutableStateOf<Int?>(null) }
     var homeQuickAddRequestCounter by remember { mutableStateOf(0) }
@@ -228,15 +268,16 @@ fun MyApp(
             }
         },
         drawerState = drawerState,
-        gesturesEnabled = currentKey !is ScreenSecureWeb
+        gesturesEnabled = currentKey !is ScreenSecureWeb && currentKey != ScreenRandomPlay
     ) {
         Scaffold(
             modifier = modifier.fillMaxSize(),
+            contentWindowInsets = if (currentKey == ScreenRandomPlay || currentKey == ScreenRandomWheelEditor) WindowInsets(0, 0, 0, 0) else androidx.compose.material3.ScaffoldDefaults.contentWindowInsets,
             snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState)
+                if (currentKey != ScreenRandomPlay) SnackbarHost(hostState = snackbarHostState)
             },
             topBar = {
-                if (currentKey !is ScreenBooks && currentKey !is ScreenDiaryLoom) {
+                if (currentKey !is ScreenBooks && currentKey !is ScreenDiaryLoom && currentKey != ScreenRandomPlay && currentKey != ScreenRandomWheelEditor) {
                     TopAppBar(
                     title = {
                         if (currentKey is ScreenLeeter) {
@@ -312,11 +353,25 @@ fun MyApp(
                 backStack = backStack,
                 modifier = Modifier
                     .padding(paddingValues)
+                    .then(if (currentTopDestination == ScreenRandom) Modifier.consumeWindowInsets(paddingValues) else Modifier)
                     .fillMaxSize(),
                 onBack = { navigateBack() },
             ) { key ->
                 NavEntry(key) {
                     when (key) {
+                        ScreenRandom -> RandomSettingsScreen(
+                            settings = randomSettings,
+                            onChange = randomViewModel::update,
+                            onEditWheel = { backStack.add(ScreenRandomWheelEditor) },
+                            onPlay = { randomViewModel.preparePlay(); backStack.add(ScreenRandomPlay) },
+                            speechUnavailable = randomAudio?.speechUnavailable == true,
+                        )
+                        ScreenRandomPlay -> RandomPlayRoute(randomViewModel, randomAudio, currentKey == ScreenRandomPlay)
+                        ScreenRandomWheelEditor -> RandomWheelEditor(
+                            settings = randomSettings,
+                            onSave = { randomViewModel.update(it); navigateBack() },
+                            onCancel = { navigateBack() },
+                        )
                         is ScreenA -> HomeScreen(
                             hiltViewModel(),
                             onAddTime = openTimeAddFromHome,
@@ -388,6 +443,9 @@ fun MyApp(
 }
 
 private fun MyNavKey.drawerTestTag(): String = when (this) {
+    ScreenRandom -> "drawer_destination_random"
+    ScreenRandomPlay -> "random_play_destination"
+    ScreenRandomWheelEditor -> "random_wheel_editor_destination"
     ScreenA -> "drawer_destination_home"
     ScreenB, ScreenWeight -> "drawer_destination_weight"
     ScreenHair -> "drawer_destination_hair"

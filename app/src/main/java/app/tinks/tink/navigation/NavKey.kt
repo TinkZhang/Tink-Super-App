@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Casino
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
 
@@ -119,5 +120,20 @@ data class ScreenStoryDetail(val storyId: String) : MyNavKey {
 val allTopDestinations = listOf(
     ScreenA, ScreenB, ScreenWeight, ScreenHair,
     ScreenLeeter, ScreenZi, ScreenMerriam, ScreenTime, ScreenBooks, ScreenDiaryLoom, ScreenLottery, ScreenSalesforce,
-    ScreenSecureWeb
+    ScreenSecureWeb, ScreenRandom
 )
+
+data object ScreenRandom : MyNavKey {
+    override val label = "随机"
+    override val icon = Icons.Filled.Casino
+}
+
+data object ScreenRandomPlay : MyNavKey {
+    override val label = "随机"
+    override val icon = Icons.Filled.Casino
+}
+
+data object ScreenRandomWheelEditor : MyNavKey {
+    override val label = "编辑转盘"
+    override val icon = Icons.Filled.Casino
+}
