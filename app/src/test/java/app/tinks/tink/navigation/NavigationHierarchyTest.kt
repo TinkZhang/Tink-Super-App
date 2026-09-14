@@ -4,6 +4,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class NavigationHierarchyTest {
+    @Test
+    fun randomChildrenBelongToRandom_andOnlySettingsAppearInDrawer() {
+        assertEquals(ScreenRandom, ScreenRandomPlay.topDestination())
+        assertEquals(ScreenRandom, ScreenRandomWheelEditor.topDestination())
+        assertEquals(listOf(ScreenRandom), allTopDestinations.filter { it.topDestination() == ScreenRandom })
+    }
 
     @Test
     fun topDestination_returnsSelf_forTopLevelDestinations() {

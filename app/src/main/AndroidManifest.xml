@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.RUN_USER_INITIATED_JOBS" />
 
     <queries>
+        <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
         <package android:name="com.positron_it.zlib" />
     </queries>
 
@@ -41,6 +42,7 @@
 
         <activity
             android:name=".MainActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true"
             android:theme="@style/Theme.Tink">
             <intent-filter>

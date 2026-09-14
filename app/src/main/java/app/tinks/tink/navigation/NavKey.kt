@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Casino
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
 
@@ -125,5 +126,20 @@ data object ScreenYt : MyNavKey {
 val allTopDestinations = listOf(
     ScreenA, ScreenB, ScreenWeight, ScreenHair,
     ScreenLeeter, ScreenZi, ScreenMerriam, ScreenTime, ScreenBooks, ScreenDiaryLoom, ScreenLottery, ScreenSalesforce,
-    ScreenSecureWeb, ScreenYt
+    ScreenSecureWeb, ScreenRandom, ScreenYt
 )
+
+data object ScreenRandom : MyNavKey {
+    override val label = "随机"
+    override val icon = Icons.Filled.Casino
+}
+
+data object ScreenRandomPlay : MyNavKey {
+    override val label = "随机"
+    override val icon = Icons.Filled.Casino
+}
+
+data object ScreenRandomWheelEditor : MyNavKey {
+    override val label = "编辑转盘"
+    override val icon = Icons.Filled.Casino
+}
