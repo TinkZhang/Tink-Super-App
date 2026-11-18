@@ -94,6 +94,21 @@ class LotteryViewModelTest {
     }
 
     @Test
+    fun dashboard_usesNewestDrawRegardlessOfRevealStatus() {
+        val latestDraw = Instant.parse("2026-06-03T12:30:00Z")
+        val newest = sampleTicket(id = 3, revealTime = latestDraw, checked = true)
+        val older = sampleTicket(id = 4, revealTime = latestDraw.minusSeconds(1), checked = true)
+        val sameDraw = sampleTicket(id = 2, revealTime = latestDraw, checked = true)
+
+        listOf(true, false).forEach { olderChecked ->
+            val state = LotteryState(tickets = listOf(older.copy(checked = olderChecked), sameDraw, newest))
+            val uiState = state.toUiState(now = latestDraw.plusSeconds(1))
+            assertEquals(newest, uiState.activeTicket?.ticket)
+            assertEquals(listOf(3, 2, 4), uiState.historyTickets.map { it.ticket.id })
+        }
+    }
+
+    @Test
     fun stateStats_mergeHistoryAndStats() {
         val state = LotteryState(
             tickets = listOf(

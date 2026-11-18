@@ -74,17 +74,13 @@ data class LotteryState(
     val isSaving: Boolean = false,
 ) {
     fun toUiState(now: Instant = Instant.now()): LotteryUiState {
-        val ticketStates = tickets
-            .sortedWith(compareBy<LotteryTicket> { it.checked }.thenBy { it.revealTime }.thenBy { it.id })
-            .map { it.toUiState(now) }
-        val activeTicket = ticketStates.firstOrNull { it.status != LotteryTicketStatus.Revealed }
-            ?: ticketStates.firstOrNull()
+        val ticketStates = tickets.sortedWith(newestLotteryFirst).map { it.toUiState(now) }
 
         return LotteryUiState(
             isLoading = isLoading,
-            activeTicket = activeTicket,
-            historyTickets = tickets.sortedByDescending { it.revealTime }.map { it.toUiState(now) },
-            stats = tickets.toStats(now),
+            activeTicket = ticketStates.firstOrNull(),
+            historyTickets = ticketStates,
+            stats = ticketStates.toStats(),
             draft = draft,
             luckyOutcome = luckyOutcome,
             isSaving = isSaving,
@@ -236,11 +232,9 @@ private fun LotteryTicket.toUiState(now: Instant): LotteryTicketUiState {
     )
 }
 
-private fun List<LotteryTicket>.toStats(now: Instant): LotteryStatsUiState {
-    val ticketStates = map { it.toUiState(now) }
-    val winningTickets = ticketStates.count { it.matchSummary?.isWinning == true }
-    val distribution = ticketStates
-        .mapNotNull { it.matchSummary?.prizeTier }
+private fun List<LotteryTicketUiState>.toStats(): LotteryStatsUiState {
+    val winningTickets = count { it.matchSummary?.isWinning == true }
+    val distribution = mapNotNull { it.matchSummary?.prizeTier }
         .groupingBy { it }
         .eachCount()
         .toList()
@@ -248,8 +242,8 @@ private fun List<LotteryTicket>.toStats(now: Instant): LotteryStatsUiState {
 
     return LotteryStatsUiState(
         totalTickets = size,
-        pendingTickets = ticketStates.count { it.status == LotteryTicketStatus.Pending },
-        revealedTickets = ticketStates.count { it.status == LotteryTicketStatus.Revealed },
+        pendingTickets = count { it.status == LotteryTicketStatus.Pending },
+        revealedTickets = count { it.status == LotteryTicketStatus.Revealed },
         winningTickets = winningTickets,
         bestPrizeTier = distribution.minByOrNull { prizeRank(it.first) }?.first ?: "暂无",
         prizeDistribution = distribution,

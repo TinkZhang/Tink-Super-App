@@ -3,6 +3,7 @@ package app.tinks.tink.lottery
 import android.app.Application
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -112,19 +113,34 @@ class LotteryScreenTest {
     }
 
     @Test
-    fun historyStats_rendersStatsAndDeleteAction() {
+    fun historyStats_rendersTicketAndWinningNumbersAndDeleteAction() {
         val events = mutableListOf<LotteryEvent>()
+
+        val outcome = sampleOutcome()
+        val result = outcome.result.copy(numbers = LotteryNumbers(listOf(2, 3, 4, 5, 6), listOf(7, 8)))
+        val ticket = sampleTicketUiState(status = LotteryTicketStatus.Revealed).copy(
+            ticket = outcome.lottery.copy(result = result),
+        )
 
         composeRule.setContent {
             TinkTheme(dynamicColor = false) {
                 LotteryHistoryStatsScreen(
-                    state = sampleUiState(),
+                    state = sampleUiState(active = ticket),
                     onEvent = { events.add(it) },
                 )
             }
         }
 
         composeRule.onNodeWithTag("lottery_stats_panel").assertIsDisplayed()
+        composeRule.onNodeWithTag("lottery_history_stats_screen")
+            .performScrollToNode(hasTestTag("lottery_ticket_card_1"))
+        composeRule.onNodeWithText("My numbers").assertIsDisplayed()
+        composeRule.onNodeWithTag("lottery_history_stats_screen")
+            .performScrollToNode(hasText("Winning numbers"))
+        composeRule.onNodeWithText("Winning numbers").assertIsDisplayed()
+        (2..8).forEach { number ->
+            composeRule.onNodeWithText(number.toString().padStart(2, '0')).assertExists()
+        }
         composeRule.onNodeWithTag("lottery_history_stats_screen")
             .performScrollToNode(hasTestTag("lottery_ticket_card_1"))
         composeRule.onNodeWithContentDescription("Delete lottery").performClick()

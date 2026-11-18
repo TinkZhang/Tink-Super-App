@@ -28,6 +28,31 @@ class LotteryRepositoryTest {
     }
 
     @Test
+    fun getLotteryHistory_loadsMissingResultsOncePerCheckedIssueAndKeepsTicketsOnFailure() = runTest {
+        val api = FakeLotteryApi(
+            history = mutableListOf(
+                sampleHistoryDto(id = 1, checked = true),
+                sampleHistoryDto(id = 2, checked = true),
+                sampleHistoryDto(id = 3, issueId = "unavailable", checked = true),
+                sampleHistoryDto(id = 4, issueId = "pending"),
+                sampleHistoryDto(id = 5, issueId = "embedded", checked = true, result = sampleResultDto("embedded")),
+            )
+        )
+        val repository = LotteryRepository(api)
+
+        val response = repository.getLotteryHistory().toList().last() as ApiResult.Success
+        val tickets = response.data.associateBy { it.id }
+
+        assertEquals(setOf(1, 2, 3, 4, 5), tickets.keys)
+        assertEquals(setOf("21126", "unavailable"), api.requestedResults.toSet())
+        assertEquals(2, api.requestedResults.size)
+        assertEquals(sampleResultDto().toDomain(), tickets.getValue(1).result)
+        assertEquals(tickets.getValue(1).result, tickets.getValue(2).result)
+        assertEquals(null, tickets.getValue(3).result)
+        assertEquals(sampleResultDto("embedded").toDomain(), tickets.getValue(5).result)
+    }
+
+    @Test
     fun createLottery_postsPayload() = runTest {
         val api = FakeLotteryApi()
         val repository = LotteryRepository(api)
@@ -76,6 +101,7 @@ class LotteryRepositoryTest {
         val createdPayloads = mutableListOf<LotteryCreateRequest>()
         val checkedIds = mutableListOf<Int>()
         val deletedIds = mutableListOf<Int>()
+        val requestedResults = mutableListOf<String>()
 
         override suspend fun getLotteryHistory(): List<LotteryHistoryDto> = history
 
@@ -114,8 +140,11 @@ class LotteryRepositoryTest {
             )
         }
 
-        override suspend fun getLotteryResult(issueId: String): LotteryResultDto =
-            sampleResultDto(issueId = issueId)
+        override suspend fun getLotteryResult(issueId: String): LotteryResultDto {
+            requestedResults.add(issueId)
+            check(issueId != "unavailable") { "Missing draw result" }
+            return sampleResultDto(issueId = issueId)
+        }
     }
 }
 

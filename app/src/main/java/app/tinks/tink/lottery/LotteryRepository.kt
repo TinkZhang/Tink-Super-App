@@ -3,6 +3,8 @@ package app.tinks.tink.lottery
 import app.tinks.tink.network.ApiResult
 import app.tinks.tink.network.safeApiCall
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -19,10 +21,31 @@ open class LotteryRepository @Inject constructor(
             safeApiCall {
                 api.getLotteryHistory()
                     .map { it.toDomain() }
-                    .sortedWith(compareByDescending<LotteryTicket> { it.revealTime }.thenByDescending { it.id })
+                    .sortedWith(newestLotteryFirst)
+                    .withWinningNumbers()
             }
         )
     }.flowOn(Dispatchers.IO)
+
+    private suspend fun List<LotteryTicket>.withWinningNumbers(): List<LotteryTicket> {
+        val resultsByIssue = mapNotNull { it.result }.associateBy { it.issueId }.toMutableMap()
+        val missingIssues = filter { it.checked && it.issueId !in resultsByIssue }
+            .map { it.issueId }
+            .distinct()
+
+        for (issueId in missingIssues) {
+            val result = safeApiCall { api.getLotteryResult(issueId).toDomain() }
+            currentCoroutineContext().ensureActive()
+            if (result is ApiResult.Success) resultsByIssue[issueId] = result.data
+        }
+        return map { ticket ->
+            if (ticket.checked && ticket.result == null) {
+                ticket.copy(result = resultsByIssue[ticket.issueId])
+            } else {
+                ticket
+            }
+        }
+    }
 
     open fun createLottery(request: LotteryCreateRequest): Flow<ApiResult<LotteryTicket>> = flow {
         emit(ApiResult.Loading)

@@ -156,6 +156,11 @@ internal fun LotteryHistoryStatsScreen(
     state: LotteryUiState,
     onEvent: (LotteryEvent) -> Unit = {},
 ) {
+    state.luckyOutcome?.let { outcome ->
+        LotteryResultHero(outcome, onDone = { onEvent(LotteryEvent.DismissHero) })
+        return
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -199,6 +204,7 @@ internal fun LotteryHistoryStatsScreen(
                 LotteryHistoryItem(
                     ticket = ticket,
                     onDelete = { onEvent(LotteryEvent.DeleteLottery(ticket.ticket.id)) },
+                    onReveal = { onEvent(LotteryEvent.CheckLottery(ticket.ticket.id)) },
                 )
             }
         }
@@ -327,18 +333,21 @@ private fun LotteryActiveTicketCard(
             }
 
             if (ticket.canReveal) {
-                Button(
-                    onClick = onReveal,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("lottery_reveal_button_${ticket.ticket.id}"),
-                ) {
-                    Icon(Icons.Filled.Celebration, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("开奖")
-                }
+                LotteryRevealButton(ticket.ticket.id, onReveal)
             }
         }
+    }
+}
+
+@Composable
+private fun LotteryRevealButton(ticketId: Int, onReveal: () -> Unit) {
+    Button(
+        onClick = onReveal,
+        modifier = Modifier.fillMaxWidth().testTag("lottery_reveal_button_$ticketId"),
+    ) {
+        Icon(Icons.Filled.Celebration, contentDescription = null)
+        Spacer(Modifier.width(8.dp))
+        Text("开奖")
     }
 }
 
@@ -808,6 +817,7 @@ private fun StatPill(label: String, value: String, modifier: Modifier = Modifier
 private fun LotteryHistoryItem(
     ticket: LotteryTicketUiState,
     onDelete: () -> Unit,
+    onReveal: () -> Unit,
 ) {
     ElevatedCard(
         modifier = Modifier
@@ -826,7 +836,6 @@ private fun LotteryHistoryItem(
                 Column {
                     Text(ticket.revealTimeText)
                     Text(ticket.matchSummary?.prizeTier ?: statusText(ticket.status))
-                    CompactNumbersRow(ticket.ticket.numbers)
                 }
             },
             leadingContent = {
@@ -841,18 +850,19 @@ private fun LotteryHistoryItem(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             )
         )
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            LotteryNumbersBlock(ticket.ticket.numbers, label = "My numbers")
+            ticket.ticket.result?.let { result ->
+                LotteryNumbersBlock(result.numbers, label = "Winning numbers")
+            }
+            if (ticket.canReveal) {
+                LotteryRevealButton(ticket.ticket.id, onReveal)
+            }
+        }
     }
-}
-
-@Composable
-private fun CompactNumbersRow(numbers: LotteryNumbers) {
-    Text(
-        text = numbers.front.joinToString(" ") { it.toString().padStart(2, '0') } +
-            " + " +
-            numbers.back.joinToString(" ") { it.toString().padStart(2, '0') },
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
 }
 
 private fun statusText(status: LotteryTicketStatus): String =

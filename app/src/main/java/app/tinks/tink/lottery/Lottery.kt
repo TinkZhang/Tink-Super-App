@@ -37,6 +37,9 @@ data class LotteryTicket(
     val result: LotteryResult?,
 )
 
+internal val newestLotteryFirst =
+    compareByDescending<LotteryTicket> { it.revealTime }.thenByDescending { it.id }
+
 data class LotteryCheckOutcome(
     val lottery: LotteryTicket,
     val result: LotteryResult,
