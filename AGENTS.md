@@ -4,10 +4,12 @@
 
 ## Rules
 
+- Work directly on `main` and push verified commits to `origin/main`.
+
 - Keep Retrofit interfaces aligned with `api-contract/dist/openapi.yaml`.
 - Follow existing Compose, Hilt, repository, and view model patterns.
 - Keep API models close to the feature package unless an existing shared model is already used.
-- Every new or changed Android feature must include automated test updates in the same branch. Do not treat feature work as complete until the relevant unit, Robolectric Compose UI, and screenshot coverage has been added or deliberately documented as not applicable.
+- Every new or changed Android feature must include automated test updates with the implementation. Do not treat feature work as complete until the relevant unit, Robolectric Compose UI, and screenshot coverage has been added or deliberately documented as not applicable.
 - Do not commit local Android Studio files, build outputs, keystores, or secrets.
 
 ## Project Skills
@@ -34,7 +36,7 @@ When implementing a feature, update tests at the same time as the production cod
 - CI/reporting: non-UI checks may run by default. Mixed suites, UI tests, screenshot checks, and Appium dispatch must be gated on an explicit user request. Publish reports for checks that were authorized and run.
 - Black-box Appium handoff: Android CI owns building and uploading the debug APK artifact (`tink-android-debug-apk`). `tink-test` should download this artifact and must not checkout or build the Android project for Appium runs.
 
-If a test category is not applicable, write the reason in the PR/Linear update. Avoid skipping a category silently.
+If a test category is not applicable, write the reason in the Linear update. Avoid skipping a category silently.
 
 For screenshot tests, use the GitHub Actions runner as the source of truth for baselines when local rendering differs from CI rendering. Screenshot reports should remain viewable from the published GitHub Pages report.
 

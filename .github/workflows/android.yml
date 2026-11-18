@@ -1,6 +1,12 @@
 name: Android
 
 on:
+  workflow_dispatch:
+    inputs:
+      run_ui_tests:
+        description: Run Android UI, screenshot, and Appium tests
+        type: boolean
+        default: false
   pull_request:
   push:
     branches:
@@ -31,7 +37,15 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Run selected non-UI Android tests
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.run_ui_tests) }}
+        run: |
+          ./gradlew testDebugUnitTest \
+            --tests app.tinks.tink.random.RandomModelsTest \
+            --tests app.tinks.tink.yt.YouTubeVideoUrlTest
+
       - name: Run Android tests
+        if: github.event_name == 'workflow_dispatch' && inputs.run_ui_tests
         id: gradle
         shell: bash
         run: |
@@ -66,7 +80,7 @@ jobs:
           if-no-files-found: error
 
       - name: Prepare HTML reports
-        if: always()
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.run_ui_tests
         shell: bash
         run: |
           set -euo pipefail
@@ -135,7 +149,7 @@ jobs:
           </html>
           HTML
 
-          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
             rm -rf reports-site/latest
             mkdir -p reports-site/latest
             cp -R "$report_root"/. reports-site/latest/
@@ -144,7 +158,7 @@ jobs:
           touch reports-site/.nojekyll
 
       - name: Upload Android reports
-        if: always()
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.run_ui_tests
         uses: actions/upload-artifact@v4
         with:
           name: android-reports
@@ -152,7 +166,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Publish reports to GitHub Pages
-        if: always()
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.run_ui_tests
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -161,7 +175,8 @@ jobs:
 
       - name: Trigger black-box Android Appium tests
         if: >-
-          github.event_name == 'push' &&
+          github.event_name == 'workflow_dispatch' &&
+          inputs.run_ui_tests &&
           github.ref == 'refs/heads/main' &&
           env.TINK_TEST_DISPATCH_TOKEN != '' &&
           steps.gradle.outputs.unit_status == '0' &&
@@ -184,7 +199,7 @@ jobs:
           JSON
 
       - name: Fail if Android tests failed
-        if: always()
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.run_ui_tests
         shell: bash
         run: |
           if [ "${{ steps.gradle.outputs.unit_status }}" != "0" ] ||
