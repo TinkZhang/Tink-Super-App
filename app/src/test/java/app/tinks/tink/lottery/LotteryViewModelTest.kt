@@ -13,6 +13,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.time.Instant
+import java.time.LocalDate
 
 class LotteryViewModelTest {
 
@@ -34,15 +35,13 @@ class LotteryViewModelTest {
     }
 
     @Test
-    fun capturePreview_opensEditableReviewDraft() = runTest {
+    fun addTicket_opensEmptyManualDraft() = runTest {
         val viewModel = LotteryViewModel(FakeLotteryRepository())
 
-        viewModel.onEvent(LotteryEvent.UseCapturedTicketPreview)
+        viewModel.onEvent(LotteryEvent.AddTicket)
 
         val draft = viewModel.uiState.value.draft
-        assertNotNull(draft)
-        assertEquals("21126", draft?.issueId)
-        assertEquals("01 11 12 34 35", draft?.frontNumbersText)
+        assertEquals(LotteryDraft(), draft)
     }
 
     @Test
@@ -50,10 +49,20 @@ class LotteryViewModelTest {
         val repository = FakeLotteryRepository()
         val viewModel = LotteryViewModel(repository)
 
-        viewModel.onEvent(LotteryEvent.UseCapturedTicketPreview)
+        viewModel.onEvent(LotteryEvent.AddTicket)
+        viewModel.onEvent(LotteryEvent.UpdateDraftIssueId("21 126"))
+        viewModel.onEvent(LotteryEvent.UpdateDraftFrontNumbers("01 11 12 34 35"))
+        viewModel.onEvent(LotteryEvent.UpdateDraftBackNumbers("09 12"))
+        viewModel.onEvent(LotteryEvent.SelectRevealDate(LocalDate.of(2026, 12, 1)))
+        assertTrue(viewModel.uiState.value.draft?.jsonPreview?.contains("2026-12-01T12:30:00Z") == true)
         viewModel.onEvent(LotteryEvent.SaveDraft)
 
-        assertEquals("21126", repository.createdRequests.single().issueId)
+        val request = repository.createdRequests.single()
+        assertEquals("21126", request.issueId)
+        assertEquals(listOf(1, 11, 12, 34, 35), request.frontNumbers)
+        assertEquals(listOf(9, 12), request.backNumbers)
+        assertEquals("2026-12-01T12:30:00Z", request.revealTime)
+        assertNull(request.capturedImageUri)
         assertNull(viewModel.uiState.value.draft)
         assertEquals(2, repository.refreshCalls)
     }
@@ -62,8 +71,8 @@ class LotteryViewModelTest {
     fun invalidDraft_keepsReviewOpenWithError() = runTest {
         val viewModel = LotteryViewModel(FakeLotteryRepository())
 
-        viewModel.onEvent(LotteryEvent.UseCapturedTicketPreview)
-        viewModel.onEvent(LotteryEvent.UpdateDraftFrontNumbers("1 2"))
+        viewModel.onEvent(LotteryEvent.AddTicket)
+        viewModel.onEvent(LotteryEvent.UpdateDraftFrontNumbers("01 02"))
         viewModel.onEvent(LotteryEvent.SaveDraft)
 
         val draft = viewModel.uiState.value.draft

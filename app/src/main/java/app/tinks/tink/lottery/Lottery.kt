@@ -4,6 +4,9 @@ import java.time.Instant
 
 const val LOTTERY_TYPE_DA_LE_TOU = "超级大乐透"
 
+internal const val FRONT_NUMBER_MAX = 35
+internal const val BACK_NUMBER_MAX = 12
+
 data class LotteryNumbers(
     val front: List<Int>,
     val back: List<Int>,
@@ -114,8 +117,8 @@ fun LotteryTicket.matchSummary(): LotteryMatchSummary? {
 }
 
 fun LotteryDraft.toCreateRequest(): LotteryCreateRequest {
-    val frontNumbers = frontNumbersText.parseNumbers(expectedCount = 5, min = 1, max = 35)
-    val backNumbers = backNumbersText.parseNumbers(expectedCount = 2, min = 1, max = 12)
+    val frontNumbers = frontNumbersText.parseNumbers(expectedCount = 5, min = 1, max = FRONT_NUMBER_MAX)
+    val backNumbers = backNumbersText.parseNumbers(expectedCount = 2, min = 1, max = BACK_NUMBER_MAX)
     val revealTime = runCatching { Instant.parse(revealTimeText.trim()) }
         .getOrElse { throw IllegalArgumentException("Reveal time must be an ISO instant, such as 2026-06-04T12:30:00Z.") }
     val cleanIssueId = issueId.trim().removePrefix("第").removeSuffix("期")

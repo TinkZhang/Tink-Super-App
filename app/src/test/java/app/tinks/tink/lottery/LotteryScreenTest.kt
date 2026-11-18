@@ -27,8 +27,8 @@ class LotteryScreenTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun dashboard_invokesCameraAndHistoryCallbacks() {
-        var cameraClicks = 0
+    fun dashboard_opensManualEntryAndHistory() {
+        val events = mutableListOf<LotteryEvent>()
         var historyClicks = 0
 
         composeRule.setContent {
@@ -36,7 +36,7 @@ class LotteryScreenTest {
                 LotteryScreen(
                     state = sampleUiState(),
                     onOpenHistoryStats = { historyClicks += 1 },
-                    onRequestCapture = { cameraClicks += 1 },
+                    onEvent = { events.add(it) },
                 )
             }
         }
@@ -44,7 +44,7 @@ class LotteryScreenTest {
         composeRule.onNodeWithTag("lottery_add_fab").performClick()
         composeRule.onNodeWithTag("lottery_history_stats_button").performClick()
 
-        assertEquals(1, cameraClicks)
+        assertEquals(listOf(LotteryEvent.AddTicket), events)
         assertEquals(1, historyClicks)
     }
 
@@ -86,7 +86,10 @@ class LotteryScreenTest {
         }
 
         composeRule.onNodeWithTag("lottery_review_screen").assertIsDisplayed()
-        composeRule.onNodeWithText("Review ticket").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Add lottery ticket").assertIsDisplayed()
+        composeRule.onNodeWithTag("lottery_review_screen")
+            .performScrollToNode(hasTestTag("lottery_json"))
+        composeRule.onNodeWithTag("lottery_json").assertIsDisplayed()
         composeRule.onNodeWithTag("lottery_review_screen")
             .performScrollToNode(hasTestTag("lottery_review_save_button"))
         composeRule.onNodeWithTag("lottery_review_save_button").performClick()

@@ -1,8 +1,8 @@
 package app.tinks.tink.lottery
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,16 +21,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocalActivity
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.outlined.LocalActivity
 import androidx.compose.material3.AssistChip
@@ -36,7 +38,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -52,17 +54,32 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tinks.tink.ui.theme.TinkTheme
 import java.time.Instant
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun LotteryScreen(
@@ -70,19 +87,10 @@ fun LotteryScreen(
     onOpenHistoryStats: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview(),
-    ) { bitmap ->
-        if (bitmap != null) {
-            viewModel.onEvent(LotteryEvent.UseCapturedTicketPreview)
-        }
-    }
-
     LotteryScreen(
         state = uiState,
         onEvent = viewModel::onEvent,
         onOpenHistoryStats = onOpenHistoryStats,
-        onRequestCapture = { cameraLauncher.launch(null) },
     )
 }
 
@@ -92,7 +100,6 @@ internal fun LotteryScreen(
     state: LotteryUiState,
     onEvent: (LotteryEvent) -> Unit = {},
     onOpenHistoryStats: () -> Unit = {},
-    onRequestCapture: () -> Unit = {},
 ) {
     val refreshState = rememberPullToRefreshState()
 
@@ -101,17 +108,16 @@ internal fun LotteryScreen(
             outcome = state.luckyOutcome,
             onDone = { onEvent(LotteryEvent.DismissHero) },
         )
-        state.draft != null -> LotteryReviewScreen(
+        state.draft != null -> LotteryEntryScreen(
             draft = state.draft,
-            isSaving = state.isLoading,
+            isSaving = state.isSaving,
             onEvent = onEvent,
-            onRetakePhoto = onRequestCapture,
         )
         else -> Scaffold(
             floatingActionButton = {
                 ExtendedFloatingActionButton(
-                    onClick = onRequestCapture,
-                    icon = { Icon(Icons.Filled.CameraAlt, contentDescription = null) },
+                    onClick = { onEvent(LotteryEvent.AddTicket) },
+                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                     text = { Text("Add") },
                     modifier = Modifier.testTag("lottery_add_fab"),
                 )
@@ -243,7 +249,7 @@ private fun LotteryEmptyActiveCard() {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Icon(
-                Icons.Filled.AddAPhoto,
+                Icons.Filled.LocalActivity,
                 contentDescription = null,
                 modifier = Modifier.size(44.dp),
                 tint = MaterialTheme.colorScheme.primary,
@@ -254,7 +260,7 @@ private fun LotteryEmptyActiveCard() {
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = "Capture a 大乐透 ticket and review the parsed JSON before saving.",
+                text = "Tap Add to enter a ticket.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -443,79 +449,108 @@ private fun LotteryHistoryStatsButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun LotteryReviewScreen(
+private fun LotteryEntryScreen(
     draft: LotteryDraft,
     isSaving: Boolean,
     onEvent: (LotteryEvent) -> Unit,
-    onRetakePhoto: () -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
+    val today = remember { LocalDate.now() }
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("MMM d") }
+    val front = draft.frontNumbersText.numberSlots(5)
+    val back = draft.backNumbersText.numberSlots(2)
+    val focus = remember { List(7) { FocusRequester() } }
+    val frontValid = front.all { it.isCompleteNumber(FRONT_NUMBER_MAX) } && front.distinct().size == front.size
+    val backValid = back.all { it.isCompleteNumber(BACK_NUMBER_MAX) } && back.distinct().size == back.size
+
+    BackHandler { onEvent(LotteryEvent.DismissReview) }
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
+            .imePadding()
             .testTag("lottery_review_screen"),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp),
     ) {
         item("header") {
-            Text(
-                text = "Review ticket",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-        item("type") {
-            OutlinedTextField(
-                value = draft.type,
-                onValueChange = {},
-                enabled = false,
-                label = { Text("Type") },
-                modifier = Modifier.fillMaxWidth(),
-            )
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Filled.LocalActivity,
+                    contentDescription = "Add lottery ticket",
+                    modifier = Modifier.size(36.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
         item("issue") {
             OutlinedTextField(
                 value = draft.issueId,
                 onValueChange = { onEvent(LotteryEvent.UpdateDraftIssueId(it)) },
-                label = { Text("Issue id") },
+                enabled = !isSaving,
+                label = { Text("Issue ID") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        item("front") {
-            OutlinedTextField(
-                value = draft.frontNumbersText,
-                onValueChange = { onEvent(LotteryEvent.UpdateDraftFrontNumbers(it)) },
-                label = { Text("Front numbers") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item("back") {
-            OutlinedTextField(
-                value = draft.backNumbersText,
-                onValueChange = { onEvent(LotteryEvent.UpdateDraftBackNumbers(it)) },
-                label = { Text("Back numbers") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
+        item("numbers") {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                LotteryNumberInputs(
+                    label = "Front numbers",
+                    numbers = front,
+                    max = FRONT_NUMBER_MAX,
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    enabled = !isSaving,
+                    focus = focus.take(5),
+                    nextGroup = focus[5],
+                    onChange = { onEvent(LotteryEvent.UpdateDraftFrontNumbers(it)) },
+                )
+                LotteryNumberInputs(
+                    label = "Back numbers",
+                    numbers = back,
+                    max = BACK_NUMBER_MAX,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    enabled = !isSaving,
+                    focus = focus.drop(5),
+                    onChange = { onEvent(LotteryEvent.UpdateDraftBackNumbers(it)) },
+                )
+            }
         }
         item("reveal") {
-            OutlinedTextField(
-                value = draft.revealTimeText,
-                onValueChange = { onEvent(LotteryEvent.UpdateDraftRevealTime(it)) },
-                label = { Text("Reveal time") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            Column {
+                Text("Reveal date", style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf("Today", "Tomorrow", "Day after tomorrow").forEachIndexed { index, label ->
+                        val date = today.plusDays(index.toLong())
+                        FilterChip(
+                            selected = draft.revealTimeText.startsWith(date.toString()),
+                            onClick = {
+                                focusManager.clearFocus()
+                                onEvent(LotteryEvent.SelectRevealDate(date))
+                            },
+                            enabled = !isSaving,
+                            modifier = Modifier.weight(1f),
+                            label = {
+                                Column(
+                                    Modifier.fillMaxWidth().heightIn(min = 58.dp).padding(vertical = 4.dp),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    Text(label, textAlign = TextAlign.Center)
+                                    Text(date.format(dateFormatter), style = MaterialTheme.typography.labelSmall)
+                                }
+                            },
+                        )
+                    }
+                }
+            }
         }
         draft.parseError?.let { error ->
             item("error") {
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                Text(error, color = MaterialTheme.colorScheme.error)
             }
         }
         item("json") {
@@ -526,7 +561,7 @@ private fun LotteryReviewScreen(
             ) {
                 Text(
                     text = draft.jsonPreview,
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(16.dp).testTag("lottery_json"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -540,41 +575,123 @@ private fun LotteryReviewScreen(
         item("actions") {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(
-                    onClick = {
-                        onEvent(LotteryEvent.RetakePhoto)
-                        onRetakePhoto()
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("lottery_review_retake_button"),
-                ) {
-                    Icon(Icons.Filled.Refresh, contentDescription = null)
-                    Spacer(Modifier.width(6.dp))
-                    Text("Retake")
-                }
-                FilledTonalButton(
                     onClick = { onEvent(LotteryEvent.DismissReview) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("lottery_review_manual_edit_button"),
+                    enabled = !isSaving,
                 ) {
                     Text("Cancel")
                 }
-                Button(
+                IconButton(
                     onClick = { onEvent(LotteryEvent.SaveDraft) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("lottery_review_save_button"),
+                    enabled = !isSaving && draft.issueId.isNotBlank() &&
+                        frontValid && backValid && draft.revealTimeText.isNotBlank(),
+                    modifier = Modifier.testTag("lottery_review_save_button"),
                 ) {
-                    Icon(Icons.Filled.Save, contentDescription = null)
-                    Spacer(Modifier.width(6.dp))
-                    Text("Save")
+                    Icon(Icons.Filled.Save, contentDescription = "Save ticket")
                 }
             }
         }
+    }
+}
+
+private fun String.numberSlots(count: Int): List<String> {
+    val slots = split(' ')
+    return List(count) { slots.getOrElse(it) { "" } }
+}
+
+private fun String.isCompleteNumber(max: Int): Boolean =
+    length == 2 && toIntOrNull()?.let { it in 1..max } == true
+
+@Composable
+private fun LotteryNumberInputs(
+    label: String,
+    numbers: List<String>,
+    max: Int,
+    containerColor: Color,
+    contentColor: Color,
+    enabled: Boolean,
+    focus: List<FocusRequester>,
+    nextGroup: FocusRequester? = null,
+    onChange: (String) -> Unit,
+) {
+    val shape = RoundedCornerShape(8.dp)
+    val complete = numbers.filter { it.isCompleteNumber(max) }
+    val hasDuplicates = complete.distinct().size != complete.size
+    val hasOutOfRange = numbers.any { it.length == 2 && !it.isCompleteNumber(max) }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(label, style = MaterialTheme.typography.labelLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            numbers.forEachIndexed { index, number ->
+                val next = focus.getOrNull(index + 1) ?: nextGroup
+                var focused by remember { mutableStateOf(false) }
+                BasicTextField(
+                    value = number,
+                    onValueChange = { input ->
+                        val digits = input.filter { it in '0'..'9' }.take(2)
+                        if (digits != number) {
+                            val updated = numbers.toMutableList().apply { set(index, digits) }
+                            onChange(updated.joinToString(" "))
+                            if (number.length < 2 && digits.isCompleteNumber(max)) next?.requestFocus()
+                        }
+                    },
+                    enabled = enabled,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = if (next == null) ImeAction.Done else ImeAction.Next,
+                    ),
+                    textStyle = MaterialTheme.typography.titleMedium.copy(
+                        color = contentColor,
+                        textAlign = TextAlign.Center,
+                    ),
+                    cursorBrush = SolidColor(contentColor),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                        .focusRequester(focus[index])
+                        .onFocusChanged { focused = it.isFocused }
+                        .background(containerColor, shape)
+                        .border(1.dp, if (focused) contentColor else Color.Transparent, shape)
+                        .semantics { contentDescription = "$label ${index + 1}" },
+                    decorationBox = { innerTextField ->
+                        Box(contentAlignment = Alignment.Center) {
+                            if (number.isEmpty()) {
+                                Text("··", color = contentColor.copy(alpha = 0.7f))
+                            }
+                            innerTextField()
+                        }
+                    },
+                )
+            }
+            repeat(5 - numbers.size) { Spacer(Modifier.weight(1f)) }
+        }
+        val error = when {
+            hasOutOfRange -> "A number is out of range."
+            hasDuplicates -> "Numbers cannot repeat."
+            else -> null
+        }
+        if (error != null) {
+            Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 320, heightDp = 640)
+@Composable
+private fun LotteryEntryScreenPreview() {
+    TinkTheme(dynamicColor = false) {
+        LotteryEntryScreen(
+            draft = LotteryDraft(
+                issueId = "21126",
+                frontNumbersText = "01 11 12 34 35",
+                backNumbersText = "09 12",
+            ),
+            isSaving = false,
+            onEvent = {},
+        )
     }
 }
 

@@ -14,19 +14,19 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import java.time.Instant
+import java.time.LocalDate
 import javax.inject.Inject
 
 sealed interface LotteryEvent {
     object Refresh : LotteryEvent
-    object UseCapturedTicketPreview : LotteryEvent
+    object AddTicket : LotteryEvent
     object DismissReview : LotteryEvent
-    object RetakePhoto : LotteryEvent
     object SaveDraft : LotteryEvent
     object DismissHero : LotteryEvent
     data class UpdateDraftIssueId(val value: String) : LotteryEvent
     data class UpdateDraftFrontNumbers(val value: String) : LotteryEvent
     data class UpdateDraftBackNumbers(val value: String) : LotteryEvent
-    data class UpdateDraftRevealTime(val value: String) : LotteryEvent
+    data class SelectRevealDate(val date: LocalDate) : LotteryEvent
     data class CheckLottery(val id: Int) : LotteryEvent
     data class DeleteLottery(val id: Int) : LotteryEvent
 }
@@ -63,6 +63,7 @@ data class LotteryUiState(
     val stats: LotteryStatsUiState,
     val draft: LotteryDraft?,
     val luckyOutcome: LotteryCheckOutcome?,
+    val isSaving: Boolean = false,
 )
 
 data class LotteryState(
@@ -70,6 +71,7 @@ data class LotteryState(
     val isLoading: Boolean = false,
     val draft: LotteryDraft? = null,
     val luckyOutcome: LotteryCheckOutcome? = null,
+    val isSaving: Boolean = false,
 ) {
     fun toUiState(now: Instant = Instant.now()): LotteryUiState {
         val ticketStates = tickets
@@ -85,6 +87,7 @@ data class LotteryState(
             stats = tickets.toStats(now),
             draft = draft,
             luckyOutcome = luckyOutcome,
+            isSaving = isSaving,
         )
     }
 }
@@ -106,15 +109,18 @@ class LotteryViewModel @Inject constructor(
     fun onEvent(event: LotteryEvent) {
         when (event) {
             LotteryEvent.Refresh -> refreshHistory()
-            LotteryEvent.UseCapturedTicketPreview -> startParsedDraft()
-            LotteryEvent.DismissReview -> _state.update { it.copy(draft = null) }
-            LotteryEvent.RetakePhoto -> _state.update { it.copy(draft = null) }
+            LotteryEvent.AddTicket -> _state.update { it.copy(draft = it.draft ?: LotteryDraft()) }
+            LotteryEvent.DismissReview -> _state.update { if (it.isSaving) it else it.copy(draft = null) }
             LotteryEvent.SaveDraft -> saveDraft()
             LotteryEvent.DismissHero -> _state.update { it.copy(luckyOutcome = null) }
-            is LotteryEvent.UpdateDraftIssueId -> updateDraft { it.copy(issueId = event.value, parseError = null) }
+            is LotteryEvent.UpdateDraftIssueId -> updateDraft {
+                it.copy(issueId = event.value.filter { digit -> digit in '0'..'9' }, parseError = null)
+            }
             is LotteryEvent.UpdateDraftFrontNumbers -> updateDraft { it.copy(frontNumbersText = event.value, parseError = null) }
             is LotteryEvent.UpdateDraftBackNumbers -> updateDraft { it.copy(backNumbersText = event.value, parseError = null) }
-            is LotteryEvent.UpdateDraftRevealTime -> updateDraft { it.copy(revealTimeText = event.value, parseError = null) }
+            is LotteryEvent.SelectRevealDate -> updateDraft {
+                it.copy(revealTimeText = "${event.date}T12:30:00Z", parseError = null)
+            }
             is LotteryEvent.CheckLottery -> checkLottery(event.id)
             is LotteryEvent.DeleteLottery -> deleteLottery(event.id)
         }
@@ -139,26 +145,14 @@ class LotteryViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun startParsedDraft() {
-        _state.update {
-            it.copy(
-                draft = LotteryDraft(
-                    issueId = "21126",
-                    frontNumbersText = "01 11 12 34 35",
-                    backNumbersText = "09 12",
-                    revealTimeText = "2021-11-03T12:30:00Z",
-                )
-            )
-        }
-    }
-
     private fun updateDraft(update: (LotteryDraft) -> LotteryDraft) {
         _state.update { state ->
-            state.copy(draft = state.draft?.let(update))
+            if (state.isSaving) state else state.copy(draft = state.draft?.let(update))
         }
     }
 
     private fun saveDraft() {
+        if (_state.value.isSaving) return
         val request = try {
             _state.value.draft?.toCreateRequest() ?: return
         } catch (error: IllegalArgumentException) {
@@ -166,16 +160,17 @@ class LotteryViewModel @Inject constructor(
             return
         }
 
+        _state.update { it.copy(isSaving = true) }
         repository.createLottery(request)
             .onEach { result ->
                 when (result) {
-                    is ApiResult.Loading -> _state.update { it.copy(isLoading = true) }
+                    is ApiResult.Loading -> Unit
                     is ApiResult.Success -> {
-                        _state.update { it.copy(draft = null, isLoading = false) }
+                        _state.update { it.copy(draft = null, isSaving = false) }
                         refreshHistory()
                     }
                     is ApiResult.Error -> _state.update {
-                        it.copy(isLoading = false)
+                        it.copy(isSaving = false)
                     }.also {
                         AppSnackbarBus.showApiFailure(onRetry = ::saveDraft)
                     }
