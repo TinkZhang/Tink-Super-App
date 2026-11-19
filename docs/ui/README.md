@@ -10,9 +10,9 @@ The two Weight drawer entries open the same overview. The unlocked Baidu referen
 
 ## When to update Figma
 
-1. **Before implementation**, draft the proposed change on a separate Figma page or frame and link it for approval. Keep the Current UI references as the comparison point.
-2. **After native visual review**, sync the affected Current UI references with the verified implementation as part of the same feature work. Update this catalog with frame links, source paths, and representative states. For visual bug fixes, use this same final review step.
-3. **At release**, use the full Android UI suite to verify the release branch. If a release fix changes the visible UI, update the affected reference after verifying the fix.
+1. **Before coding**, draft the proposed UI on a separate Figma page or frame and have the user approve the exact frames. Record the approved link in the feature notes under `docs/ui/`. Use Current UI as the reference for the comparison.
+2. **On the release branch**, pushing `release/vX.Y.Z` starts release verification and the **Prepare Figma refresh** job. The job compares the release commit with this catalog’s reference revision and puts candidate frames, changed sources, and design notes in the Actions summary and `figma-refresh` artifact. Further pushes to the release branch regenerate the handoff.
+3. **After release visual review**, use a signed-in Figma session to update only the affected Current UI frames from the verified release build. Update this catalog’s frame links, source paths, and representative states, then record the verified release commit as the reference revision. If the app UI is identical to the reference, record the result without editing the canvas.
 
 ## Screens
 

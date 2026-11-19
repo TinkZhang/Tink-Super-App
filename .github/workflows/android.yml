@@ -36,6 +36,27 @@ jobs:
       - name: Check debug APK builds
         run: ./gradlew assembleDebug
 
+  figma-refresh:
+    name: Prepare Figma refresh
+    if: startsWith(github.ref, 'refs/heads/release/v') && github.event.deleted != true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Identify release UI changes
+        shell: bash
+        run: |
+          python3 scripts/prepare-figma-release.py --release "$GITHUB_REF_NAME" --head "$GITHUB_SHA" \
+            > "$RUNNER_TEMP/figma-refresh.md"
+          cat "$RUNNER_TEMP/figma-refresh.md" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: figma-refresh
+          path: ${{ runner.temp }}/figma-refresh.md
+          if-no-files-found: error
+
   release-checks:
     if: startsWith(github.ref, 'refs/heads/release/v')
     runs-on: ubuntu-latest

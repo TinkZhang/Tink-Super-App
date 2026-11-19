@@ -32,4 +32,4 @@ The checked-in **Compose Preview** renders the populated overview with sample re
 
 ## Design review
 
-For changes to this flow, draft the affected Material 3 states in Figma and review the smallest supported layout. Check Chinese labels, the 斤 unit, reachability of the adjustment and save controls, chart labels, and the transition between overview and history. Link the approved frame here after implementation and add references for any new states.
+For changes to this flow, draft the affected Material 3 states in Figma and review the smallest supported layout. Check Chinese labels, the 斤 unit, reachability of the adjustment and save controls, chart labels, and the transition between overview and history. Record the approved draft link here before implementing. Refresh the Current UI frame and the references for any new states after reviewing the release candidate.
