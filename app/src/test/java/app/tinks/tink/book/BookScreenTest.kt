@@ -15,6 +15,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
@@ -301,7 +302,7 @@ class BookScreenTest {
     }
 
     @Test
-    fun detailProgress_promptsForReadingTimeBeforeSaving() {
+    fun detailProgress_savesWithoutReadingTimeByDefault() {
         val events = mutableListOf<BookEvent>()
 
         composeRule.setContent {
@@ -319,14 +320,45 @@ class BookScreenTest {
         composeRule.onNodeWithTag("book_edit_progress").performClick()
         composeRule.onNodeWithTag("book_progress_page").performTextClearance()
         composeRule.onNodeWithTag("book_progress_page").performTextInput("100")
-        composeRule.onNodeWithTag("book_session_start_time").assertIsDisplayed()
-        composeRule.onNodeWithTag("book_session_stop_time").assertIsDisplayed()
+        composeRule.onNodeWithTag("book_session_start_time").assertDoesNotExist()
+        composeRule.onNodeWithTag("book_session_stop_time").assertDoesNotExist()
         composeRule.onNodeWithTag("book_progress_save").performClick()
 
         val event = events.single() as BookEvent.UpdateReadingProgress
         assertEquals(2, event.bookId)
         assertEquals(100, event.stopPage)
         assertEquals(null, event.stopProgressPercentage)
+        assertEquals(null, event.startTime)
+        assertEquals(null, event.stopTime)
+    }
+
+    @Test
+    fun detailProgress_optInShowsSeparateStartAndEndPickers() {
+        val events = mutableListOf<BookEvent>()
+
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                BookScreen(
+                    state = BookUiState(
+                        screen = BooksScreenState.Detail(2),
+                        selectedBook = sampleBook(BookState.Reading),
+                    ),
+                    onEvent = events::add,
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("book_edit_progress").performClick()
+        composeRule.onNodeWithTag("book_log_reading_time").performClick()
+        listOf("start_date", "start_time", "stop_date", "stop_time").forEach { suffix ->
+            composeRule.onNodeWithTag("book_session_$suffix").performScrollTo().assertIsDisplayed()
+        }
+        composeRule.onNodeWithTag("book_progress_save").performClick()
+
+        val event = events.single() as BookEvent.UpdateReadingProgress
+        checkNotNull(event.stopTime)
+        checkNotNull(event.startTime)
+        assertEquals(true, event.stopTime.isAfter(event.startTime))
     }
 
     @Test

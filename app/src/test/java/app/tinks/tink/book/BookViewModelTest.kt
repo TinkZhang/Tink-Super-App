@@ -159,6 +159,31 @@ class BookViewModelTest {
     }
 
     @Test
+    fun updatingReadingProgressWithoutTimes_preservesDurationAndSkipsTimeEntry() = runTest {
+        val repository = FakeRepository()
+        val viewModel = BookViewModel(repository, FakeTimeRepository())
+        val book = sampleBook(BookState.Reading)
+
+        viewModel.onEvent(BookEvent.OpenDetail(book.id))
+        advanceUntilIdle()
+        viewModel.onEvent(
+            BookEvent.UpdateReadingProgress(
+                bookId = book.id,
+                startTime = null,
+                stopTime = null,
+                stopPage = 100,
+                stopProgressPercentage = null,
+            )
+        )
+        advanceUntilIdle()
+
+        assertEquals(emptyList<TimeUpsertRequest>(), repository.queuedTimeEntries)
+        assertEquals(100, repository.updatePayloads.single().currentPage)
+        assertEquals(book.readingDurationMinutes, repository.updatePayloads.single().readingDurationMinutes)
+        assertEquals(100, viewModel.uiState.value.selectedBook?.currentPage)
+    }
+
+    @Test
     fun updatingReadingProgress_logsTimeEntryAndUpdatesBook() = runTest {
         val repository = FakeRepository()
         val viewModel = BookViewModel(repository, FakeTimeRepository())
@@ -222,6 +247,9 @@ class BookViewModelTest {
 
         override fun getBook(bookId: Long): Flow<ApiResult<Book>> =
             flowOf(ApiResult.Success(sampleBook(BookState.Reading)))
+
+        override fun getNotes(bookId: Long): Flow<ApiResult<List<BookNote>>> =
+            flowOf(ApiResult.Success(emptyList()))
 
         override fun updateBook(bookId: Long, payload: BookUpdateRequest): Flow<ApiResult<Book>> {
             updatePayloads.add(payload)

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Environment
 import android.provider.MediaStore
+import android.text.format.DateFormat
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -30,11 +31,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -60,6 +64,7 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.PhoneAndroid
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -70,6 +75,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -91,11 +98,18 @@ import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDialog
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -114,10 +128,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -140,11 +158,13 @@ import java.io.FileOutputStream
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.Year
+import java.time.temporal.ChronoUnit
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
+import java.time.format.FormatStyle
 import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -481,10 +501,7 @@ private fun Int.contributionDayText(): String =
 
 private data class ReadingProgressLogDraft(
     val startTime: Instant,
-    val stopTime: Instant,
     val startProgressLabel: String,
-    val stopPage: Int?,
-    val stopProgressPercentage: Double?,
 )
 
 @Composable
@@ -2324,97 +2341,224 @@ private fun ProgressTimeDialog(
     book: Book,
     readingTimeEntries: List<TimeEntry>,
     onDismiss: () -> Unit,
-    onSave: (Instant, Instant, Int?, Double?) -> Unit,
+    onSave: (Instant?, Instant?, Int?, Double?) -> Unit,
 ) {
-    var pageText by remember(book.id) { mutableStateOf("") }
+    val usesPages = book.pageFormat.usesPages
     var progressText by remember(book.id) {
-        mutableStateOf(book.progressPercentage?.formatPercentInput(book.pageFormat).orEmpty())
+        mutableStateOf(
+            if (usesPages) book.currentPage?.toString().orEmpty()
+            else book.progressPercentage?.formatPercentInput(book.pageFormat).orEmpty()
+        )
     }
-    var startTimeEdited by remember(book.id) { mutableStateOf(false) }
-    var stopTimeText by remember(book.id) {
-        mutableStateOf(Instant.now().formatSessionDateTimeInput())
-    }
-    val stopTime = stopTimeText.parseSessionDateTimeOrNull() ?: Instant.now()
-    val draft = book.createProgressLogDraft(
-        page = if (book.pageFormat.usesPages) pageText.toIntOrNull() else null,
-        progress = if (book.pageFormat.usesPages) null else progressText.toDoubleOrNull()?.coerceIn(0.0, 100.0),
-        readingTimeEntries = readingTimeEntries,
-        stopTime = stopTime,
-    )
-    var startTimeText by remember(book.id) {
-        mutableStateOf(draft.startTime.formatSessionDateTimeInput())
-    }
-    LaunchedEffect(draft.startTime) {
-        if (!startTimeEdited) {
-            startTimeText = draft.startTime.formatSessionDateTimeInput()
-        }
-    }
+    val page = if (usesPages) progressText.toIntOrNull() else null
+    val progress = if (usesPages) null else progressText.toDoubleOrNull()?.coerceIn(0.0, 100.0)
+    var logReadingTime by remember(book.id) { mutableStateOf(false) }
+    var editedStartTime by remember(book.id) { mutableStateOf<Instant?>(null) }
+    var stopTime by remember(book.id) { mutableStateOf(Instant.now().truncatedTo(ChronoUnit.MINUTES)) }
+    val draft = if (logReadingTime) {
+        book.createProgressLogDraft(page, progress, readingTimeEntries, stopTime)
+    } else null
+    val startTime = draft?.let { editedStartTime ?: it.startTime }
+    val invalidTime = startTime != null && !stopTime.isAfter(startTime)
+    val fieldLabel = if (usesPages) "Current page" else "Progress %"
+    val focusManager = LocalFocusManager.current
+    val colors = MaterialTheme.colorScheme
+
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
-                onClick = {
-                    onSave(
-                        startTimeText.parseSessionDateTimeOrNull() ?: draft.startTime,
-                        stopTimeText.parseSessionDateTimeOrNull() ?: draft.stopTime,
-                        if (book.pageFormat.usesPages) pageText.toIntOrNull() else null,
-                        if (book.pageFormat.usesPages) null else progressText.toDoubleOrNull()?.coerceIn(0.0, 100.0),
-                    )
-                },
-                enabled = if (book.pageFormat.usesPages) {
-                    pageText.toIntOrNull() != null
-                } else {
-                    progressText.toDoubleOrNull() != null
-                },
+                onClick = { onSave(startTime, stopTime.takeIf { logReadingTime }, page, progress) },
+                enabled = (page != null || progress != null) && !invalidTime,
                 modifier = Modifier.testTag("book_progress_save"),
             ) { Text("Save") }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
         title = { Text("Update progress") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (book.pageFormat.usesPages) {
-                    OutlinedTextField(
-                        value = pageText,
-                        onValueChange = { pageText = it.filter(Char::isDigit) },
-                        label = { Text("Current page") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.testTag("book_progress_page"),
-                    )
-                } else {
-                    OutlinedTextField(
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(MaterialTheme.shapes.large)
+                        .background(colors.secondaryContainer)
+                        .padding(top = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(fieldLabel, style = MaterialTheme.typography.labelLarge, color = colors.onSecondaryContainer)
+                    TextField(
                         value = progressText,
-                        onValueChange = { progressText = it.asPercentInput() },
-                        label = { Text("Progress %") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        onValueChange = {
+                            progressText = if (usesPages) it.filter(Char::isDigit) else it.asPercentInput()
+                        },
+                        textStyle = MaterialTheme.typography.headlineLarge.copy(textAlign = TextAlign.Center),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = if (usesPages) KeyboardType.Number else KeyboardType.Decimal,
+                            imeAction = ImeAction.Done,
+                        ),
                         singleLine = true,
-                        modifier = Modifier.testTag("book_progress_percent"),
+                        colors = TextFieldDefaults.colors(
+                            focusedTextColor = colors.onSecondaryContainer,
+                            unfocusedTextColor = colors.onSecondaryContainer,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = colors.primary,
+                            unfocusedIndicatorColor = Color.Transparent,
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                            .semantics { contentDescription = fieldLabel }
+                            .testTag(if (usesPages) "book_progress_page" else "book_progress_percent"),
                     )
                 }
-                BookDetailMetadata("From", draft.startProgressLabel)
-                OutlinedTextField(
-                    value = startTimeText,
-                    onValueChange = {
-                        startTimeEdited = true
-                        startTimeText = it
-                    },
-                    label = { Text("Start time") },
-                    singleLine = true,
-                    modifier = Modifier.testTag("book_session_start_time"),
-                )
-                OutlinedTextField(
-                    value = stopTimeText,
-                    onValueChange = { stopTimeText = it },
-                    label = { Text("End time") },
-                    singleLine = true,
-                    modifier = Modifier.testTag("book_session_stop_time"),
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth().testTag("book_log_reading_time").toggleable(
+                        value = logReadingTime,
+                        role = Role.Switch,
+                        onValueChange = {
+                            focusManager.clearFocus()
+                            logReadingTime = it
+                        },
+                    ).padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Log reading time", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            if (logReadingTime) "Creates a Google Calendar event" else "Saves progress only",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = logReadingTime, onCheckedChange = null)
+                }
+                if (draft != null && startTime != null) {
+                    BookDetailMetadata("From", draft.startProgressLabel)
+                    ReadingSessionPickerRow("Start", "start", startTime) { editedStartTime = it }
+                    ReadingSessionPickerRow("End", "stop", stopTime) {
+                        editedStartTime = startTime
+                        stopTime = it
+                    }
+                    if (invalidTime) {
+                        Text("End must be after start.", color = colors.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
             }
         },
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReadingSessionPickerRow(
+    label: String,
+    tagSuffix: String,
+    instant: Instant,
+    onChange: (Instant) -> Unit,
+) {
+    val is24Hour = DateFormat.is24HourFormat(LocalContext.current)
+    val zone = ZoneId.systemDefault()
+    val dateTime = instant.atZone(zone)
+    var showDate by remember { mutableStateOf(false) }
+    var showTime by remember { mutableStateOf(false) }
+
+    Column {
+        Text(label, style = MaterialTheme.typography.labelLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ReadingSessionPickerButton(
+                field = "Date",
+                icon = Icons.Outlined.CalendarMonth,
+                value = dateTime.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)),
+                onClick = { showDate = true },
+                modifier = Modifier.weight(1f).testTag("book_session_${tagSuffix}_date"),
+            )
+            ReadingSessionPickerButton(
+                field = "Time",
+                icon = Icons.Outlined.Schedule,
+                value = dateTime.format(DateTimeFormatter.ofPattern(if (is24Hour) "HH:mm" else "h:mm a")),
+                onClick = { showTime = true },
+                modifier = Modifier.weight(1f).testTag("book_session_${tagSuffix}_time"),
+            )
+        }
+    }
+
+    if (showDate) {
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = dateTime.toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDate = false },
+            confirmButton = {
+                TextButton(
+                    enabled = state.selectedDateMillis != null,
+                    onClick = {
+                        state.selectedDateMillis?.let {
+                            val date = Instant.ofEpochMilli(it).atOffset(ZoneOffset.UTC).toLocalDate()
+                            onChange(date.atTime(dateTime.toLocalTime()).atZone(zone).toInstant())
+                        }
+                        showDate = false
+                    },
+                ) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { showDate = false }) { Text("Cancel") } },
+        ) {
+            DatePicker(state = state)
+        }
+    }
+    if (showTime) {
+        val state = rememberTimePickerState(dateTime.hour, dateTime.minute, is24Hour)
+        TimePickerDialog(
+            onDismissRequest = { showTime = false },
+            title = { Text("Select ${label.lowercase()} time") },
+            confirmButton = {
+                TextButton(onClick = {
+                    val time = LocalTime.of(state.hour, state.minute)
+                    onChange(dateTime.toLocalDate().atTime(time).atZone(zone).toInstant())
+                    showTime = false
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { showTime = false }) { Text("Cancel") } },
+        ) {
+            TimePicker(state = state)
+        }
+    }
+}
+
+@Composable
+private fun ReadingSessionPickerButton(
+    field: String,
+    icon: ImageVector,
+    value: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier,
+        shape = MaterialTheme.shapes.small,
+        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+    ) {
+        Column(Modifier.fillMaxWidth()) {
+            Text(field, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    value,
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp))
+            }
+        }
+    }
 }
 
 @Composable
@@ -2607,10 +2751,7 @@ private fun Book.createProgressLogDraft(
     val minutes = maxOf(1L, ceil(estimatedPages / pagesPerMinute).toLong())
     return ReadingProgressLogDraft(
         startTime = stopTime.minusSeconds(minutes * 60),
-        stopTime = stopTime,
         startProgressLabel = readingProgressPointLabel(currentPage, progressPercentage),
-        stopPage = if (pageFormat.usesPages) page else null,
-        stopProgressPercentage = if (pageFormat.usesPages) null else progress,
     )
 }
 
@@ -2695,26 +2836,12 @@ private fun String.asPercentInput(): String {
     }
 }
 
-private fun Instant.formatSessionDateTimeInput(): String =
-    atZone(ZoneId.systemDefault()).format(READING_SESSION_DATE_TIME_FORMATTER)
-
-private fun String.parseSessionDateTimeOrNull(): Instant? =
-    try {
-        LocalDateTime.parse(trim(), READING_SESSION_DATE_TIME_FORMATTER)
-            .atZone(ZoneId.systemDefault())
-            .toInstant()
-    } catch (_: DateTimeParseException) {
-        null
-    }
-
 private const val ZLIB_PACKAGE_NAME = "com.positron_it.zlib"
 private val ReadKeeperYellow = Color(0xFFF4B400)
 private val ReadKeeperRed = Color(0xFFDB4437)
 private val ReadKeeperBlue = Color(0xFF4285F4)
 private val ReadKeeperGreen = Color(0xFF0F9D58)
 private val ReadKeeperOnYellow = Color(0xFF1F1B16)
-private val READING_SESSION_DATE_TIME_FORMATTER: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 private val PAGE_PROGRESS_RANGE_REGEX = Regex("""Page\s+(\d+)\s*-\s*Page\s+(\d+)""")
 private val PERCENT_PROGRESS_RANGE_REGEX = Regex("""(\d+(?:\.\d+)?)%\s*-\s*(\d+(?:\.\d+)?)%""")
 

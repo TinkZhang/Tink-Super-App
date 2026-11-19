@@ -247,6 +247,33 @@ class BookRepositoryTest {
     }
 
     @Test
+    fun syncPendingProgressWithoutTime_updatesOnlyTheBook() = runTest {
+        val dao = FakeBookDao(
+            listOf(
+                bookDto(currentPage = 20, pages = 200, readingDurationMinutes = 30)
+                    .toDomain()
+                    .toEntity()
+            )
+        )
+        val api = FakeBookApi()
+        val timeApi = RecordingTimeApi()
+        val repository = BookRepository(api, dao, timeApi, null, null, null)
+
+        repository.queueReadingProgress(
+            bookId = 1,
+            currentPage = 50,
+            readingDurationMinutes = 30,
+            timeEntry = null,
+        ).toList()
+        repository.syncPendingProgress()
+
+        assertEquals(50, api.updatedBooks.single().second.currentPage)
+        assertEquals(30, api.updatedBooks.single().second.readingDurationMinutes)
+        assertTrue(timeApi.createdEntries.isEmpty())
+        assertTrue(dao.getPendingProgress().isEmpty())
+    }
+
+    @Test
     fun syncPendingProgress_updatesBookAndTimeThenClearsPendingState() = runTest {
         val dao = FakeBookDao(
             listOf(

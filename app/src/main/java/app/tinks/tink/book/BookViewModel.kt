@@ -84,8 +84,8 @@ sealed interface BookEvent {
     ) : BookEvent
     data class UpdateReadingProgress(
         val bookId: Long,
-        val startTime: Instant,
-        val stopTime: Instant,
+        val startTime: Instant?,
+        val stopTime: Instant?,
         val stopPage: Int?,
         val stopProgressPercentage: Double?,
     ) : BookEvent
@@ -535,12 +535,19 @@ class BookViewModel @Inject constructor(
         val currentBook = _state.value.selectedBook?.takeIf { it.id == event.bookId }
             ?: _state.value.findBook(event.bookId)
             ?: return
-        val startTime = event.startTime
-        val stopTime = if (event.stopTime.isAfter(startTime)) {
-            event.stopTime
+        val currentPage = if (currentBook.pageFormat.usesPages) {
+            event.stopPage
         } else {
-            startTime.plusSeconds(1)
+            event.stopProgressPercentage?.toBookProgressUnits(currentBook.pageFormat)
+        } ?: return
+        val startTime = event.startTime
+        val stopTime = event.stopTime
+        if (startTime == null || stopTime == null) {
+            if (startTime != null || stopTime != null) return
+            saveReadingProgress(event.bookId, currentPage, currentBook.readingDurationMinutes, timeEntry = null)
+            return
         }
+        if (!stopTime.isAfter(startTime)) return
         val stopProgressLabel = currentBook.progressLabel(event.stopPage, event.stopProgressPercentage)
         val payload = TimeUpsertRequest(
             type = READING_TIME_TYPE,
@@ -551,11 +558,7 @@ class BookViewModel @Inject constructor(
         )
         saveReadingProgress(
             bookId = event.bookId,
-            currentPage = if (currentBook.pageFormat.usesPages) {
-                event.stopPage
-            } else {
-                event.stopProgressPercentage?.toBookProgressUnits(currentBook.pageFormat)
-            },
+            currentPage = currentPage,
             readingDurationMinutes = currentBook.readingDurationMinutes +
                 Duration.between(startTime, stopTime).seconds
                     .coerceAtLeast(1)
@@ -568,7 +571,7 @@ class BookViewModel @Inject constructor(
         bookId: Long,
         currentPage: Int?,
         readingDurationMinutes: Int,
-        timeEntry: TimeUpsertRequest,
+        timeEntry: TimeUpsertRequest?,
     ) {
         mutationJob = repository.queueReadingProgress(
             bookId = bookId,
