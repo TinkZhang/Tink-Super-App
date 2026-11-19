@@ -11,6 +11,12 @@
 - Keep API models close to the feature package unless an existing shared model is already used.
 - Keep local Android Studio files, build outputs, keystores, and secrets out of Git.
 
+## UI Design
+
+- Use the [UI catalog](docs/ui/README.md) and existing Compose components to understand the current UI. Follow Material 3 and the app's dynamic color theme.
+- For app UI or navigation changes, get user approval on the linked Figma design before implementing. A user-requested code prototype may be used for design exploration.
+- After visual review, update the UI catalog with the approved frame, implementation commit, and representative visuals.
+
 ## Project Skills
 
 Official Google Android skills are available under `.agent/skills/android/`. When a task matches edge-to-edge UI, testing setup, Navigation 3, Compose adaptive UI, or Compose theming/styles work, review the relevant local `SKILL.md` before implementing.
