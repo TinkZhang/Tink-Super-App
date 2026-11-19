@@ -28,6 +28,26 @@ plugins {
     jacoco
 }
 
+val sharedSigningStoreFile = secretValue("TINK_ANDROID_SIGNING_STORE_FILE")
+val sharedSigningStorePassword = secretValue("TINK_ANDROID_SIGNING_STORE_PASSWORD")
+val sharedSigningKeyAlias = secretValue("TINK_ANDROID_SIGNING_KEY_ALIAS")
+val sharedSigningKeyPassword = secretValue("TINK_ANDROID_SIGNING_KEY_PASSWORD")
+val sharedSigningValues = listOf(
+    sharedSigningStoreFile,
+    sharedSigningStorePassword,
+    sharedSigningKeyAlias,
+    sharedSigningKeyPassword,
+)
+val hasSharedSigning = sharedSigningValues.any { it.isNotBlank() }
+if (hasSharedSigning) {
+    require(sharedSigningValues.all { it.isNotBlank() }) {
+        "Set all four TINK_ANDROID_SIGNING_* settings. See docs/android-signing.md."
+    }
+    require(rootProject.file(sharedSigningStoreFile).isFile) {
+        "The shared Android signing keystore is missing. See docs/android-signing.md."
+    }
+}
+
 android {
     namespace = "app.tinks.tink"
     compileSdk {
@@ -49,7 +69,19 @@ android {
         )
     }
 
+    if (hasSharedSigning) {
+        signingConfigs.create("sharedDebug") {
+            storeFile = rootProject.file(sharedSigningStoreFile)
+            storePassword = sharedSigningStorePassword
+            keyAlias = sharedSigningKeyAlias
+            keyPassword = sharedSigningKeyPassword
+        }
+    }
+
     buildTypes {
+        if (hasSharedSigning) {
+            getByName("debug").signingConfig = signingConfigs.getByName("sharedDebug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(

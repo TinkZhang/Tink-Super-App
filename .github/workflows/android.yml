@@ -101,8 +101,26 @@ jobs:
             app/build/reports/screenshotTest/
             app/build/test-results/
           if-no-files-found: error
-      - name: Build APK for Appium and release
-        run: ./gradlew assembleDebug
+      - name: Build signed APK for Appium and release
+        env:
+          TINK_ANDROID_SIGNING_STORE_BASE64: ${{ secrets.TINK_ANDROID_SIGNING_STORE_BASE64 }}
+          TINK_ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.TINK_ANDROID_SIGNING_STORE_PASSWORD }}
+          TINK_ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.TINK_ANDROID_SIGNING_KEY_ALIAS }}
+          TINK_ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.TINK_ANDROID_SIGNING_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$TINK_ANDROID_SIGNING_STORE_BASE64" || -z "$TINK_ANDROID_SIGNING_STORE_PASSWORD" || -z "$TINK_ANDROID_SIGNING_KEY_ALIAS" || -z "$TINK_ANDROID_SIGNING_KEY_PASSWORD" ]]; then
+            echo "::error::Configure the shared Android signing secrets before publishing a release. See docs/android-signing.md."
+            exit 1
+          fi
+          umask 077
+          TINK_ANDROID_SIGNING_STORE_FILE="$(mktemp "$RUNNER_TEMP/tink-signing.XXXXXX")"
+          export TINK_ANDROID_SIGNING_STORE_FILE
+          trap 'unlink "$TINK_ANDROID_SIGNING_STORE_FILE"' EXIT
+          printf '%s' "$TINK_ANDROID_SIGNING_STORE_BASE64" | base64 --decode > "$TINK_ANDROID_SIGNING_STORE_FILE"
+          unset TINK_ANDROID_SIGNING_STORE_BASE64
+          ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APK_ARTIFACT }}
