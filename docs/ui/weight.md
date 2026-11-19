@@ -1,6 +1,6 @@
 # Weight
 
-**Reference revision** `8590e41` · **Figma reference** Pending.
+**Reference revision** `8590e41` · **Figma reference** [Weight overview](https://www.figma.com/design/bGT7KPRSoMJ1iYkmHNmAnf?node-id=3-321)
 
 ## Current UI
 
