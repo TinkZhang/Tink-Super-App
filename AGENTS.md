@@ -2,86 +2,28 @@
 
 `Tink-Super-App` is the Android client for Tink, built with Kotlin and Jetpack Compose.
 
-## Rules
+## Daily Development
 
-- Work directly on `main` and push verified commits to `origin/main`.
-
+- Work directly on `main`. After each Codex request that changes files, commit the request's changes and push to `origin/main` before reporting completion.
+- Sync with `origin/main` before starting work. Preserve unrelated changes and use a clean checkout of `main` if the existing checkout contains work in progress.
 - Keep Retrofit interfaces aligned with `api-contract/dist/openapi.yaml`.
 - Follow existing Compose, Hilt, repository, and view model patterns.
 - Keep API models close to the feature package unless an existing shared model is already used.
-- Every new or changed Android feature must include automated test updates with the implementation. Do not treat feature work as complete until the relevant unit, Robolectric Compose UI, and screenshot coverage has been added or deliberately documented as not applicable.
-- Do not commit local Android Studio files, build outputs, keystores, or secrets.
+- Keep local Android Studio files, build outputs, keystores, and secrets out of Git.
 
 ## Project Skills
 
 Official Google Android skills are available under `.agent/skills/android/`. When a task matches edge-to-edge UI, testing setup, Navigation 3, Compose adaptive UI, or Compose theming/styles work, review the relevant local `SKILL.md` before implementing.
 
-## Feature Test Policy
+## Feature Tests
 
-### UI test execution is opt-in
+Update the relevant unit, Robolectric Compose UI, screenshot, and navigation tests with the production code. Cover mappings, repository behavior, view model transitions, visible screen states, and navigation as applicable. Record any inapplicable coverage in the completion summary. Appium mock and development API scenarios live in `tink-test`.
 
-- Run UI tests only when the user explicitly asks for them. Otherwise, DO NOT run UI tests.
-- This applies locally and in CI to Robolectric Compose/UI tests, screenshot tests and baseline generation, instrumented UI tests, and Appium.
-- Implementing a feature, building, installing, launching, fixing or pushing the app does not authorize UI tests.
-- You may author UI tests without running them. Non-UI tests and build/install/launch operations remain allowed.
-- Use explicit non-UI test selection. Do not run unfiltered `testDebugUnitTest`, coverage tasks that depend on it, or UI CI workflows unless UI tests were requested.
-- This takes precedence over all UI-test execution guidance below and in referenced skills/playbooks.
+For daily verification, select relevant non-UI tests explicitly with `./gradlew testDebugUnitTest --tests '<test class>'`. The default CI on `main` runs selected non-UI checks and builds the debug APK. Run the full unit and UI suites on the release branch. Local UI runs or screenshot baseline updates require a separate explicit user request. Use GitHub Actions for Android verification when local Java is unavailable.
 
-When implementing a feature, update tests at the same time as the production code:
+## Releases
 
-- Unit tests: cover DTO/domain mapping, repository request/response behavior, UI state transformation, and view model state transitions.
-- Robolectric Compose UI tests: cover user-visible screen behavior, callbacks, empty/loading/error states, and navigation events that do not require a real device.
-- Screenshot tests: add or update Compose Preview Screenshot Testing baselines for changed screens, important states, and reusable feature UI components.
-- Navigation tests: when adding or changing destinations, cover top-level destination mapping and back-stack behavior with pure Kotlin tests where possible.
-- CI/reporting: non-UI checks may run by default. Mixed suites, UI tests, screenshot checks, and Appium dispatch must be gated on an explicit user request. Publish reports for checks that were authorized and run.
-- Black-box Appium handoff: Android CI owns building and uploading the debug APK artifact (`tink-android-debug-apk`). `tink-test` should download this artifact and must not checkout or build the Android project for Appium runs.
-
-If a test category is not applicable, write the reason in the Linear update. Avoid skipping a category silently.
-
-For screenshot tests, use the GitHub Actions runner as the source of truth for baselines when local rendering differs from CI rendering. Screenshot reports should remain viewable from the published GitHub Pages report.
-
-## Verification
-
-Only when the user explicitly requests UI tests, run the mixed unit/Robolectric/Compose suite:
-
-```sh
-./gradlew testDebugUnitTest
-```
-
-Only within an explicit UI-test request, run coverage (which depends on the mixed suite):
-
-```sh
-./gradlew jacocoDebugUnitTestReport
-```
-
-Only when explicitly requested, run instrumented UI tests:
-
-```sh
-./gradlew connectedDebugAndroidTest
-```
-
-Only when explicitly requested, run Compose Preview Screenshot Testing:
-
-```sh
-./gradlew updateDebugScreenshotTest
-./gradlew validateDebugScreenshotTest
-```
-
-Use `updateDebugScreenshotTest` to create or intentionally update screenshot baselines before `validateDebugScreenshotTest`.
-
-Build the local debug APK used by black-box Appium tests:
-
-```sh
-scripts/build-appium-debug-apk.sh
-```
-
-Only when the user explicitly requests UI tests, run the Appium suites from `../tink-test`:
-
-```sh
-scripts/run_android_appium_local.sh --suite e2e
-scripts/run_android_appium_local.sh --suite mock
-```
-
-The Android GitHub Actions workflow publishes unit/UI, coverage, and screenshot HTML reports under GitHub Pages run paths. The screenshot report is copied from `app/build/reports/screenshotTest/preview/debug` so rendered screenshot results can be opened directly in the browser.
-
-GitHub Actions installs Java and is the authoritative Android gate when local Java is unavailable.
+- The user creates and pushes a branch named `release/vX.Y.Z` from the desired commit on `main`.
+- The Android workflow runs the debug and release unit suites, Robolectric UI tests, JaCoCo reporting, and Compose screenshot validation. It builds one debug APK and installs that exact artifact in the Appium mock and development API E2E suites from `tink-test`.
+- Once all checks pass, the workflow publishes the matching GitHub release tag with notes from Git history, the tested debug APK, and a ZIP containing HTML test reports and logs. Failed runs retain their available reports in GitHub Actions.
+- If a release check fails because of an app defect, fix and push it on `main`. The user can then update the release branch to the corrected commit. Use Actions to rerun transient failures on the same commit.
