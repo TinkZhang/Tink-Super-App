@@ -71,10 +71,6 @@ fun SecureWebScreen(
         authRequestId += 1
     }
 
-    LaunchedEffect(Unit) {
-        requestAuthentication()
-    }
-
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {

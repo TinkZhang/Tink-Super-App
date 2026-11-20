@@ -3,9 +3,11 @@ package app.tinks.tink.leetkeeper
 import android.app.Application
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import app.tinks.tink.ui.theme.TinkTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -28,8 +30,9 @@ class LeetKeeperScreenTest {
             }
         }
 
-        composeRule.onNodeWithText("LeetKeeper").assertIsDisplayed()
+        composeRule.onNodeWithTag("leetkeeper_dashboard").assertIsDisplayed()
         composeRule.onNodeWithText("NeetCode 150").assertIsDisplayed()
+        composeRule.onNodeWithTag("leetkeeper_dashboard").performScrollToNode(hasText("2. Add Two Numbers"))
         composeRule.onNodeWithText("2. Add Two Numbers").assertIsDisplayed()
     }
 

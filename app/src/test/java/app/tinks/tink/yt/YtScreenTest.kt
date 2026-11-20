@@ -62,6 +62,7 @@ class YtScreenTest {
             YtScreen(YtUiState(downloads = listOf(item), error = "Enter a valid YouTube video link."), onCancel = { cancelled = it })
         } }
         compose.onNodeWithTag("yt_error").assertIsDisplayed()
+        compose.onNodeWithTag("yt_screen").performScrollToIndex(2)
         compose.onNodeWithTag("yt_cancel_3").performScrollTo().performClick()
         assertEquals(3, cancelled)
     }
