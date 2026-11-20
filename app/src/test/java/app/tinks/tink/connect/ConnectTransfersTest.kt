@@ -2,6 +2,7 @@ package app.tinks.tink.connect
 
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Response
@@ -13,6 +14,26 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class ConnectTransfersTest {
+    @Test
+    fun downloadChecksReceivedBytesAgainstHubMetadata() {
+        val contents = byteArrayOf(1, 2, 3)
+        val client = OkHttpClient.Builder().addInterceptor { chain ->
+            Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                .code(200).message("OK").body(contents.toResponseBody()).build()
+        }.build()
+        val staged = File.createTempFile("connect-test", ".download")
+        try {
+            val transfer = ConnectTransfers(client)
+            transfer.download("https://storage.example/file", staged, 3)
+            assertArrayEquals(contents, staged.readBytes())
+            assertThrows(IOException::class.java) {
+                transfer.download("https://storage.example/file", staged, 4)
+            }
+        } finally {
+            staged.delete()
+        }
+    }
+
     @Test
     fun resumesAtServerOffsetAfterAnInterruptedChunk() {
         val payload = ByteArray(CONNECT_CHUNK_SIZE + 41) { (it % 251).toByte() }

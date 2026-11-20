@@ -34,7 +34,7 @@ jobs:
             --tests app.tinks.tink.random.RandomModelsTest \
             --tests app.tinks.tink.yt.YouTubeVideoUrlTest
       - name: Check debug APK builds
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --stacktrace
 
   figma-refresh:
     name: Prepare Figma refresh

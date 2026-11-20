@@ -75,8 +75,14 @@ class ConnectViewModel @Inject constructor(
     fun download(file: ConnectFile, destination: Uri) = runOperation("Couldn’t download ${file.name}") {
         val url = api.download(file.id).url
         withContext(Dispatchers.IO) {
-            val stream = resolver.openOutputStream(destination, "wt") ?: throw IOException("Destination unavailable")
-            stream.use { transfers.download(url, it) }
+            val staged = File.createTempFile("connect-", ".download", context.cacheDir)
+            try {
+                transfers.download(url, staged, file.size)
+                val stream = resolver.openOutputStream(destination, "wt") ?: throw IOException("Destination unavailable")
+                staged.inputStream().use { input -> stream.use { output -> input.copyTo(output) } }
+            } finally {
+                staged.delete()
+            }
         }
         _state.update { it.copy(message = "Downloaded ${file.name}") }
     }

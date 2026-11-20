@@ -2,7 +2,6 @@ package app.tinks.tink.connect
 
 import java.io.File
 import java.io.IOException
-import java.io.OutputStream
 import java.io.RandomAccessFile
 import java.util.Base64
 import java.util.concurrent.TimeUnit
@@ -85,10 +84,13 @@ class ConnectTransfers internal constructor(private val client: OkHttpClient) {
         }
     }
 
-    internal fun download(url: String, target: OutputStream) {
+    internal fun download(url: String, stagingFile: File, expectedSize: Long) {
         execute(Request.Builder().url(url).build()) { response ->
             val body = response.body ?: throw IOException("Empty download response")
-            body.byteStream().use { it.copyTo(target) }
+            val received = stagingFile.outputStream().use { output ->
+                body.byteStream().use { input -> input.copyTo(output) }
+            }
+            if (received != expectedSize) throw IOException("Downloaded file size does not match")
         }
     }
 
