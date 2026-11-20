@@ -276,7 +276,8 @@ private fun WeeklyRecordCard(
                     Icon(Icons.Filled.ArrowBack, contentDescription = "Previous week")
                 }
                 Text(
-                    text = weekRangeLabel(offset),
+                    text = data.records.firstOrNull()?.date?.let { weekRangeLabel(today = it) }
+                        ?: weekRangeLabel(offset),
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.titleMedium,

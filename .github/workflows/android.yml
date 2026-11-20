@@ -88,7 +88,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Run all Android unit, Robolectric and screenshot tests
         run: |
-          ./gradlew --continue testDebugUnitTest testReleaseUnitTest \
+          ./gradlew --continue -PincludeReleaseTestManifest=true testDebugUnitTest testReleaseUnitTest \
             jacocoDebugUnitTestReport validateDebugScreenshotTest
       - name: Upload Android test reports
         if: always()
