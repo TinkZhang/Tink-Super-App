@@ -77,6 +77,8 @@ import app.tinks.tink.merriam.MerriamScreen
 import app.tinks.tink.navigation.MyNavKey
 import app.tinks.tink.navigation.ScreenA
 import app.tinks.tink.navigation.ScreenB
+import app.tinks.tink.connect.ConnectScreen
+import app.tinks.tink.navigation.ScreenConnect
 import app.tinks.tink.navigation.ScreenBooks
 import app.tinks.tink.navigation.ScreenDiaryLoom
 import app.tinks.tink.navigation.ScreenHair
@@ -279,7 +281,7 @@ fun MyApp(
                 if (currentKey != ScreenRandomPlay) SnackbarHost(hostState = snackbarHostState)
             },
             topBar = {
-                if (currentKey !is ScreenBooks && currentKey !is ScreenDiaryLoom && currentKey != ScreenRandomPlay && currentKey != ScreenRandomWheelEditor) {
+                if (currentKey !is ScreenBooks && currentKey !is ScreenDiaryLoom && currentKey != ScreenConnect && currentKey != ScreenRandomPlay && currentKey != ScreenRandomWheelEditor) {
                     TopAppBar(
                     title = {
                         if (currentKey is ScreenLeeter) {
@@ -408,6 +410,10 @@ fun MyApp(
                             TimeScreen(timeViewModel)
                         }
                         is ScreenSettings -> SettingsScreen(hiltViewModel())
+                        ScreenConnect -> ConnectScreen(
+                            viewModel = hiltViewModel(),
+                            onOpenDrawer = { scope.launch { drawerState.open() } },
+                        )
                         is ScreenBooks -> BookScreen(
                             hiltViewModel(),
                             onOpenDrawer = { scope.launch { drawerState.open() } },
@@ -458,6 +464,7 @@ private fun MyNavKey.drawerTestTag(): String = when (this) {
     ScreenTime -> "drawer_destination_time"
     ScreenBooks -> "drawer_destination_books"
     ScreenDiaryLoom -> "drawer_destination_diaryloom"
+    ScreenConnect -> "drawer_destination_connect"
     ScreenLottery -> "drawer_destination_lottery"
     ScreenSalesforce -> "drawer_destination_salesforce"
     ScreenLotteryHistoryStats -> "drawer_destination_lottery_history_stats"

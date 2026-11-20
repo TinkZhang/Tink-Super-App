@@ -3,6 +3,7 @@ package app.tinks.tink.di
 import android.content.Context
 import app.tinks.tink.BuildConfig
 import app.tinks.tink.book.BookApi
+import app.tinks.tink.connect.ConnectApi
 import app.tinks.tink.haircut.HaircutApi
 import app.tinks.tink.leetkeeper.LeetKeeperApi
 import app.tinks.tink.lottery.LotteryApi
@@ -67,8 +68,13 @@ object NetworkModule {
             .addInterceptor { chain ->
                 val request = chain.request()
                 val url = request.url
+                val environment = if (url.pathSegments.firstOrNull() == "connect") {
+                    appEnvironmentRepository.connectEnvironment()
+                } else {
+                    appEnvironmentRepository.currentEnvironment()
+                }
                 val shouldUseDevApi =
-                    appEnvironmentRepository.currentEnvironment() == ApiEnvironment.Dev &&
+                    environment == ApiEnvironment.Dev &&
                         url.host == "api.tinks.app" &&
                         tinkApiBaseUrl.contains("api.tinks.app") &&
                         !url.encodedPath.startsWith("/dev/")
@@ -115,6 +121,15 @@ object NetworkModule {
                 json.asConverterFactory("application/json".toMediaType())
             )
             .build()
+
+    @Provides
+    @Singleton
+    fun provideConnectApi(retrofit: Retrofit, okHttpClient: OkHttpClient): ConnectApi {
+        val client = okHttpClient.newBuilder().apply {
+            interceptors().removeAll { it is HttpLoggingInterceptor }
+        }.build()
+        return retrofit.newBuilder().client(client).build().create(ConnectApi::class.java)
+    }
 
     @Provides
     @Singleton

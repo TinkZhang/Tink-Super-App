@@ -31,10 +31,12 @@ class AppEnvironmentRepository @Inject constructor(
         environment.value = value
     }
 
-    private fun loadEnvironment(): ApiEnvironment {
+    fun connectEnvironment(): ApiEnvironment = loadEnvironment(ApiEnvironment.Prod)
+
+    private fun loadEnvironment(defaultEnvironment: ApiEnvironment = DEFAULT_ENVIRONMENT): ApiEnvironment {
         val stored = prefs.getString(KEY_API_ENVIRONMENT, null)
         return runCatching { stored?.let(ApiEnvironment::valueOf) }.getOrNull()
-            ?: DEFAULT_ENVIRONMENT
+            ?: defaultEnvironment
     }
 
     private companion object {

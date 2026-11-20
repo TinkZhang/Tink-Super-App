@@ -1,6 +1,7 @@
 package app.tinks.tink.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Code
@@ -123,10 +124,15 @@ data object ScreenYt : MyNavKey {
     override val icon = Icons.Filled.Download
 }
 
+data object ScreenConnect : MyNavKey {
+    override val label = "Connect"
+    override val icon = Icons.Filled.Folder
+}
+
 val allTopDestinations = listOf(
     ScreenA, ScreenB, ScreenWeight, ScreenHair,
     ScreenLeeter, ScreenZi, ScreenMerriam, ScreenTime, ScreenBooks, ScreenDiaryLoom, ScreenLottery, ScreenSalesforce,
-    ScreenSecureWeb, ScreenRandom, ScreenYt
+    ScreenSecureWeb, ScreenRandom, ScreenYt, ScreenConnect
 )
 
 data object ScreenRandom : MyNavKey {
