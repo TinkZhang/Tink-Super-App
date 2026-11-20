@@ -1,3 +1,4 @@
+import com.android.build.api.variant.HasUnitTestBuilder
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.gradle.testing.jacoco.tasks.JacocoReport
 import java.util.Properties
@@ -106,6 +107,12 @@ android {
         unitTests {
             isIncludeAndroidResources = true
         }
+    }
+}
+
+androidComponents {
+    beforeVariants(selector().withBuildType("release")) { variant ->
+        (variant as HasUnitTestBuilder).enableUnitTest = true
     }
 }
 
