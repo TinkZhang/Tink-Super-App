@@ -65,10 +65,13 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -307,7 +310,11 @@ private fun LotteryActiveTicketCard(
                 LotteryStatusChip(ticket.status)
             }
 
-            LotteryNumbersBlock(ticket.ticket.numbers, label = "My numbers")
+            LotteryNumbersBlock(
+                ticket.ticket.numbers,
+                label = "My numbers",
+                winningNumbers = ticket.ticket.result?.numbers,
+            )
 
             Text(
                 text = "Reveal time ${ticket.revealTimeText}",
@@ -362,7 +369,12 @@ private fun LotteryStatusChip(status: LotteryTicketStatus) {
 }
 
 @Composable
-private fun LotteryNumbersBlock(numbers: LotteryNumbers, label: String) {
+private fun LotteryNumbersBlock(
+    numbers: LotteryNumbers,
+    label: String,
+    winningNumbers: LotteryNumbers? = null,
+) {
+    val matches = winningNumbers?.let(numbers::matchedWith)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = label,
@@ -375,6 +387,7 @@ private fun LotteryNumbersBlock(numbers: LotteryNumbers, label: String) {
                     number = number,
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    matched = number in matches?.front.orEmpty(),
                 )
             }
         }
@@ -384,6 +397,7 @@ private fun LotteryNumbersBlock(numbers: LotteryNumbers, label: String) {
                     number = number,
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    matched = number in matches?.back.orEmpty(),
                 )
             }
         }
@@ -395,19 +409,29 @@ private fun NumberBall(
     number: Int,
     containerColor: Color,
     contentColor: Color,
+    matched: Boolean,
 ) {
+    val background = if (matched) lerp(containerColor, Color.Black, 0.40f) else containerColor
+    val foreground = when {
+        !matched -> contentColor
+        background.luminance() > 0.179f -> Color.Black
+        else -> Color.White
+    }
     Box(
         modifier = Modifier
             .size(34.dp)
             .clip(CircleShape)
-            .background(containerColor),
+            .background(background)
+            .then(if (matched) Modifier.semantics(mergeDescendants = true) {
+                stateDescription = "Matched"
+            } else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = number.toString().padStart(2, '0'),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
-            color = contentColor,
+            color = foreground,
         )
     }
 }
@@ -736,7 +760,11 @@ private fun LotteryResultHero(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(28.dp))
-        LotteryNumbersBlock(outcome.lottery.numbers, label = "My numbers")
+        LotteryNumbersBlock(
+            outcome.lottery.numbers,
+            label = "My numbers",
+            winningNumbers = outcome.result.numbers,
+        )
         Spacer(Modifier.height(16.dp))
         LotteryNumbersBlock(outcome.result.numbers, label = "Winning numbers")
         Spacer(Modifier.height(24.dp))
@@ -854,7 +882,11 @@ private fun LotteryHistoryItem(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            LotteryNumbersBlock(ticket.ticket.numbers, label = "My numbers")
+            LotteryNumbersBlock(
+                ticket.ticket.numbers,
+                label = "My numbers",
+                winningNumbers = ticket.ticket.result?.numbers,
+            )
             ticket.ticket.result?.let { result ->
                 LotteryNumbersBlock(result.numbers, label = "Winning numbers")
             }

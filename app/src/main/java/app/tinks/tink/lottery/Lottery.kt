@@ -12,6 +12,11 @@ data class LotteryNumbers(
     val back: List<Int>,
 )
 
+internal fun LotteryNumbers.matchedWith(winning: LotteryNumbers): LotteryNumbers = LotteryNumbers(
+    front = front.intersect(winning.front.toSet()).toList(),
+    back = back.intersect(winning.back.toSet()).toList(),
+)
+
 data class LotteryResult(
     val id: Int,
     val type: String,
@@ -95,8 +100,9 @@ object LotteryPrizeClassifier {
         }
 
     fun classify(ticket: LotteryNumbers, result: LotteryNumbers): LotteryMatchSummary {
-        val frontMatches = ticket.front.toSet().intersect(result.front.toSet()).size
-        val backMatches = ticket.back.toSet().intersect(result.back.toSet()).size
+        val matches = ticket.matchedWith(result)
+        val frontMatches = matches.front.size
+        val backMatches = matches.back.size
         return LotteryMatchSummary(
             frontMatches = frontMatches,
             backMatches = backMatches,

@@ -34,4 +34,15 @@ class LotteryPrizeClassifierTest {
         assertEquals(2, summary.backMatches)
         assertEquals("一等奖", summary.prizeTier)
     }
+
+    @Test
+    fun matchedNumbers_onlyCompareWithinEachArea() {
+        val ticket = LotteryNumbers(front = listOf(1, 3, 8, 12, 35), back = listOf(2, 9))
+        val winning = LotteryNumbers(front = listOf(1, 2, 4, 11, 20), back = listOf(8, 9))
+
+        assertEquals(LotteryNumbers(front = listOf(1), back = listOf(9)), ticket.matchedWith(winning))
+        val summary = LotteryPrizeClassifier.classify(ticket, winning)
+        assertEquals(1, summary.frontMatches)
+        assertEquals(1, summary.backMatches)
+    }
 }

@@ -1,7 +1,9 @@
 package app.tinks.tink.lottery
 
 import android.app.Application
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -110,6 +112,25 @@ class LotteryScreenTest {
 
         composeRule.onNodeWithTag("lottery_result_hero").assertIsDisplayed()
         composeRule.onNodeWithText("一等奖").assertIsDisplayed()
+    }
+
+    @Test
+    fun heroHighlightsOnlyMyNumbersThatMatchTheSameArea() {
+        val outcome = sampleOutcome()
+        val winning = LotteryNumbers(front = listOf(1, 4, 9, 20, 30), back = listOf(11, 12))
+
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                LotteryScreen(
+                    state = sampleUiState(luckyOutcome = outcome.copy(result = outcome.result.copy(numbers = winning))),
+                )
+            }
+        }
+
+        val matched = hasStateDescription("Matched")
+        composeRule.onAllNodes(matched).assertCountEquals(2)
+        composeRule.onNode(matched and hasText("01")).assertExists()
+        composeRule.onNode(matched and hasText("12")).assertExists()
     }
 
     @Test
