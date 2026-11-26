@@ -20,3 +20,11 @@ The Figma draft includes the dashboard, both lists, the add-reading dialog, and 
 - Show the queue below the candidates as bordered, tinted square tiles. Each tile is about one fifth as wide as the writing board. When the row fills, wrap the tiles onto the next line and keep 确认添加 accessible.
 - Long-pressing a tile removes only that character. The tile shrinks and fades out, and the remaining tiles shift into place. Keep a character only once in the queue.
 - Keep the primary button label 确认添加. Enable it when the queue has at least one character. One confirmation saves the queue through the existing idempotent single-character endpoint. If a request fails, keep that character and the remaining ones for retry. Characters already saved do not increase the total.
+
+## Dashboard and handwriting polish
+
+**Design status** `ready-for-review` · [Dashboard and handwriting draft](https://www.figma.com/design/bGT7KPRSoMJ1iYkmHNmAnf?node-id=34-2)
+
+- Use adjacent Material 3 tonal cards for 会读汉字 and 会写汉字, with different semantic colors, a clear count and a plus action. Tap the card for its list. Keep the existing review characters and move the two floating story controls into labeled actions below the review section.
+- Reserve the same vertical space for the candidate row when waiting for ink, recognizing, and showing candidates. Leave the empty row blank and keep retry controls available when recognition fails. Leave the selected-character area free of empty-state instructions, with room for the first row of tiles.
+- The draft includes light and compact dark dashboards and two compact handwriting states. Both handwriting states fit at 320 × 640 and position 已选汉字 at the same height.
