@@ -6,6 +6,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HandwritingStateTest {
+    @Test fun isolatedCharacterUsesEmptyPreContextAndNormalizedBoard() {
+        val context = singleCharacterRecognitionContext()
+
+        assertEquals("", context.preContext)
+        val board = requireNotNull(context.writingArea)
+        assertEquals(1f, board.width, 0f)
+        assertEquals(1f, board.height, 0f)
+    }
+
     @Test fun candidatesKeepDistinctHanCharactersInRecognitionOrder() {
         assertEquals(
             listOf("土", "士", "𠀀", "〇"),

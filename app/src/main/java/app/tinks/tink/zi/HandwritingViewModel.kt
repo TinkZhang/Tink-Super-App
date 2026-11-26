@@ -1,5 +1,6 @@
 package app.tinks.tink.zi
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tinks.tink.network.ApiResult
@@ -44,6 +45,12 @@ internal data class HandwritingState(
 ) {
     val canSave get() = selected != null && !isDrawing && !isSaving && !alreadyRecorded && !saved
 }
+
+internal fun singleCharacterRecognitionContext(): RecognitionContext =
+    RecognitionContext.builder()
+        .setPreContext("")
+        .setWritingArea(WritingArea(1f, 1f))
+        .build()
 
 internal fun handwritingCandidates(values: List<String>): List<String> =
     values.asSequence()
@@ -154,7 +161,7 @@ class HandwritingViewModel @Inject constructor(private val repository: WrittenZi
                     for (point in points) stroke.addPoint(Ink.Point.create(point.x, point.y, point.timeMillis))
                     ink.addStroke(stroke.build())
                 }
-                val context = RecognitionContext.builder().setWritingArea(WritingArea(1f, 1f)).build()
+                val context = singleCharacterRecognitionContext()
                 val result = recognizer.value.recognize(ink.build(), context).await()
                 val candidates = handwritingCandidates(result.candidates.map { it.text })
                 mutableState.update {
@@ -165,7 +172,8 @@ class HandwritingViewModel @Inject constructor(private val repository: WrittenZi
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
-            } catch (_: Exception) {
+            } catch (error: Exception) {
+                Log.w("ZiHandwriting", "Digital ink recognition failed", error)
                 mutableState.update { it.copy(recognition = InkRecognitionState.Failed) }
             }
         }
