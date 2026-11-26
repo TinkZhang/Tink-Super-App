@@ -23,8 +23,8 @@ The Figma draft includes the dashboard, both lists, the add-reading dialog, and 
 
 ## Dashboard and handwriting polish
 
-**Design status** `ready-for-review` · [Dashboard and handwriting draft](https://www.figma.com/design/bGT7KPRSoMJ1iYkmHNmAnf?node-id=38-2)
+**Design status** `ready-for-review` · [Dashboard and handwriting draft](https://www.figma.com/design/bGT7KPRSoMJ1iYkmHNmAnf?node-id=40-2)
 
-- Stack full-width Material 3 tonal cards for 会读汉字 and 会写汉字, with different semantic colors, a clear count and a plus action. Tap the card for its list. Keep the existing review characters. Keep the review rows at their original height, distribute extra viewport space between sections, and place the two labeled story actions near the bottom. Let the page scroll when the content needs more height.
+- Stack full-width Material 3 tonal cards for 会读汉字 and 会写汉字, with different semantic colors, a clear count and a plus action. Tap the card for its list. Keep the existing review characters. Group the two stat cards at the top with a fixed 16 dp gap. Place the two labeled story actions at the bottom. Center the review card in the remaining height and retain its original row height. Let the page scroll when the content needs more height.
 - Reserve the same vertical space for the candidate row when waiting for ink, recognizing, and showing candidates. Leave the empty row blank and keep retry controls available when recognition fails. Leave the selected-character area free of empty-state instructions, with room for the first row of tiles.
 - The full-height dashboards were checked at 360 × 760 and 320 × 640 with the story actions within 12 dp of the gesture area. The draft also includes two compact handwriting states. Both handwriting states fit at 320 × 640 and position 已选汉字 at the same height.
