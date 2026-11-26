@@ -11,3 +11,12 @@ The 识字 dashboard shows separate counts for 会读汉字 and 会写汉字. Ta
 - If recognition produces no candidate, keep the strokes visible so the user can continue writing or start over. Keep the current selection available for retry if saving fails.
 
 The Figma draft includes the dashboard, both lists, the add-reading dialog, and the empty, recognized, and unrecognized board states. The empty board is shown at 320 × 640. It uses sample counts and a light Material 3 palette. The implementation will use the app's dynamic color scheme.
+
+## Batch handwriting
+
+**Design status** `ready-for-review` · [Batch handwriting draft](https://www.figma.com/design/bGT7KPRSoMJ1iYkmHNmAnf?node-id=28-2)
+
+- Tapping a candidate appends it to 已选汉字 in selection order and clears the strokes and candidates so the user can write the next character.
+- Show the queue below the candidates as bordered, tinted square tiles. Each tile is about one fifth as wide as the writing board. When the row fills, wrap the tiles onto the next line and keep 确认添加 accessible.
+- Long-pressing a tile removes only that character. The tile shrinks and fades out, and the remaining tiles shift into place. Keep a character only once in the queue.
+- Keep the primary button label 确认添加. Enable it when the queue has at least one character. Submit the queue in one request and retain it for retry if saving fails. Characters already saved do not increase the total.
