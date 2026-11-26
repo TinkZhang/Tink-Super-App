@@ -9,7 +9,7 @@ class HandwritingStateTest {
     @Test fun candidatesKeepDistinctHanCharactersInRecognitionOrder() {
         assertEquals(
             listOf("土", "士", "𠀀", "〇"),
-            handwritingCandidates(listOf("A", "土", "土", "  士", "天地", "𠀀", "⼀", "〇", "王")),
+            handwritingCandidates(listOf("A", "土", "土", "  士", "天地", "𠀀", "⼀", "〸", "〇", "王")),
         )
     }
 

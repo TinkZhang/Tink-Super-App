@@ -52,7 +52,8 @@ internal fun handwritingCandidates(values: List<String>): List<String> =
         .filter {
             val codePoint = it.codePointAt(0)
             it == "〇" ||
-                (Character.isIdeographic(codePoint) && Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.HAN)
+                (codePoint >= 0x3400 && Character.isIdeographic(codePoint) &&
+                    Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.HAN)
         }
         .distinct()
         .take(4)
