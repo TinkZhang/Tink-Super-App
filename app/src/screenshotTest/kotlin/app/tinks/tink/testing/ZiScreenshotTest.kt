@@ -10,7 +10,9 @@ import app.tinks.tink.zi.WrittenZiListState
 import app.tinks.tink.zi.ZiDashboard
 import app.tinks.tink.zi.ZiHandwritingScreen
 import app.tinks.tink.zi.ZiUiState
+import app.tinks.tink.zi.Zi
 import com.android.tools.screenshot.PreviewTest
+import kotlinx.datetime.LocalDate
 
 @PreviewTest
 @Preview(widthDp = 320, heightDp = 640, locale = "zh")
@@ -19,7 +21,14 @@ fun ZiDashboardPreview() {
     TinkTheme(dynamicColor = false) {
         Surface {
             ZiDashboard(
-                uiState = ZiUiState(isLoading = false, showDialog = false, learntZiNum = 126),
+                uiState = ZiUiState(
+                    isLoading = false,
+                    showDialog = false,
+                    learntZiNum = 126,
+                    reviewList = listOf("春", "山", "书", "云", "光", "月").map {
+                        Zi(it, LocalDate(2026, 1, 1), 2)
+                    },
+                ),
                 written = WrittenZiListState(listOf("土", "山"), isLoading = false),
             )
         }

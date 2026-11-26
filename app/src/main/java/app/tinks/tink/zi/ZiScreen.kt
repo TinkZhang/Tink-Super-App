@@ -1,26 +1,36 @@
 package app.tinks.tink.zi
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -29,13 +39,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.tinks.tink.ui.components.ContentCard
 
 @Composable
 fun ZiScreen(
@@ -78,68 +89,81 @@ internal fun ZiDashboard(
             onRefresh = { onEvent(ZiEvent.Refresh) },
             modifier = Modifier.fillMaxSize(),
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 88.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                item {
-                    ZiCountCard(
-                        title = "会读汉字数量",
-                        count = uiState.learntZiNum.takeUnless {
-                            uiState.allZis.isEmpty() && (uiState.isLoading || uiState.isNetworkError)
-                        },
-                        addLabel = "添加会读的字", id = "read",
-                        onOpen = onReadList, onAdd = { onEvent(ZiEvent.AddZiDialogOpen) },
-                    )
-                }
-                item {
-                    ZiCountCard(
-                        title = "会写汉字数量", count = written.characters?.size,
-                        addLabel = "添加会写的字", id = "written",
-                        onOpen = onWrittenList, onAdd = onAddWritten,
-                    )
-                }
-                if (written.failed) {
-                    item { TextButton(onClick = onRetryWritten) { Text("会写汉字加载失败，点击重试") } }
-                }
-                if (uiState.reviewList.isNotEmpty()) {
-                    item {
-                        ContentCard(title = "复习汉字") {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                uiState.reviewList.chunked(3).forEach { row ->
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        row.forEach { zi ->
-                                            SawtoothCard(modifier = Modifier.weight(1f), contentPadding = PaddingValues(8.dp)) {
-                                                Text(
-                                                    text = zi.zi,
-                                                    style = MaterialTheme.typography.headlineLarge,
-                                                    textAlign = TextAlign.Center,
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                )
-                                            }
-                                        }
-                                        repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
-                                    }
-                                }
-                            }
+            BoxWithConstraints(Modifier.fillMaxSize()) {
+                val viewportHeight = maxHeight
+                val colors = MaterialTheme.colorScheme
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .heightIn(min = viewportHeight)
+                        .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 32.dp),
+                    verticalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        ZiCountCard(
+                            title = "会读汉字",
+                            count = uiState.learntZiNum.takeUnless {
+                                uiState.allZis.isEmpty() && (uiState.isLoading || uiState.isNetworkError)
+                            },
+                            addLabel = "添加会读的字",
+                            id = "read",
+                            icon = Icons.AutoMirrored.Filled.MenuBook,
+                            containerColor = colors.primaryContainer,
+                            contentColor = colors.onPrimaryContainer,
+                            actionColor = colors.primary,
+                            onActionColor = colors.onPrimary,
+                            onOpen = onReadList,
+                            onAdd = { onEvent(ZiEvent.AddZiDialogOpen) },
+                        )
+                        ZiCountCard(
+                            title = "会写汉字",
+                            count = written.characters?.size,
+                            addLabel = "添加会写的字",
+                            id = "written",
+                            icon = Icons.Filled.Edit,
+                            containerColor = colors.tertiaryContainer,
+                            contentColor = colors.onTertiaryContainer,
+                            actionColor = colors.tertiary,
+                            onActionColor = colors.onTertiary,
+                            onOpen = onWrittenList,
+                            onAdd = onAddWritten,
+                        )
+                        if (written.failed) {
+                            TextButton(onClick = onRetryWritten) { Text("会写汉字加载失败，点击重试") }
+                        }
+                    }
+
+                    if (uiState.reviewList.isNotEmpty()) {
+                        ZiReviewCard(uiState.reviewList, Modifier.padding(vertical = 12.dp))
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(top = if (uiState.reviewList.isEmpty()) 12.dp else 0.dp)
+                            .testTag("zi_story_actions"),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        OutlinedButton(
+                            onClick = onStoryListNavigation,
+                            modifier = Modifier.weight(1f).heightIn(min = 54.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
+                            Spacer(Modifier.size(6.dp))
+                            Text("故事列表", textAlign = TextAlign.Center)
+                        }
+                        FilledTonalButton(
+                            onClick = { onEvent(ZiEvent.GenerateStory) },
+                            modifier = Modifier.weight(1f).heightIn(min = 54.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                        ) {
+                            Icon(Icons.Filled.AutoAwesome, contentDescription = null)
+                            Spacer(Modifier.size(6.dp))
+                            Text("生成故事", textAlign = TextAlign.Center)
                         }
                     }
                 }
             }
-        }
-        FloatingActionButton(
-            onClick = onStoryListNavigation,
-            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
-        ) {
-            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "故事列表")
-        }
-        FloatingActionButton(
-            onClick = { onEvent(ZiEvent.GenerateStory) },
-            shape = FloatingActionButtonDefaults.largeShape,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
-        ) {
-            Icon(Icons.Filled.RestartAlt, contentDescription = "生成故事")
         }
         if (uiState.showDialog) {
             AddZiDialog(
@@ -156,25 +180,89 @@ private fun ZiCountCard(
     count: Int?,
     addLabel: String,
     id: String,
+    icon: ImageVector,
+    containerColor: Color,
+    contentColor: Color,
+    actionColor: Color,
+    onActionColor: Color,
     onOpen: () -> Unit,
     onAdd: () -> Unit,
 ) {
-    Card(onClick = onOpen, modifier = Modifier.fillMaxWidth().testTag("zi_${id}_card")) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+    Card(
+        onClick = onOpen,
+        modifier = Modifier.fillMaxWidth().testTag("zi_${id}_card"),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp).padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surface,
+                contentColor = actionColor,
             ) {
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = null)
+                }
+            }
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(
                     text = count?.toString() ?: "—",
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.testTag("zi_${id}_count"),
                 )
-                FilledTonalIconButton(onClick = onAdd, modifier = Modifier.testTag("zi_add_$id")) {
-                    Icon(Icons.Filled.Add, contentDescription = addLabel)
+            }
+            FilledIconButton(
+                onClick = onAdd,
+                modifier = Modifier.testTag("zi_add_$id"),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = actionColor,
+                    contentColor = onActionColor,
+                ),
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = addLabel)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ZiReviewCard(characters: List<Zi>, modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        modifier = modifier.fillMaxWidth().testTag("zi_review_card"),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = colors.surfaceContainer,
+    ) {
+        Column(
+            Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("复习汉字", style = MaterialTheme.typography.titleMedium)
+            for (row in characters.chunked(3)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for (character in row) {
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            shape = MaterialTheme.shapes.medium,
+                            color = colors.surface,
+                            border = BorderStroke(1.dp, colors.outlineVariant),
+                        ) {
+                            Box(Modifier.heightIn(min = 56.dp).padding(4.dp), contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = character.zi,
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        }
+                    }
+                    repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
         }

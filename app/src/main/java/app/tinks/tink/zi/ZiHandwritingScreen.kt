@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,6 +29,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +54,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onLongClick
@@ -122,37 +125,40 @@ internal fun ZiHandwritingScreen(
                     OutlinedButton(onClick = onClear, enabled = canEdit) { Text("清空") }
                 }
                 Text("候选字", style = MaterialTheme.typography.titleMedium)
-                when {
-                    state.model == InkModelState.Loading -> Text("正在准备中文手写模型，首次需要联网。")
-                    state.model == InkModelState.Failed -> {
-                        Text("中文手写模型下载失败。请检查网络后重试。", color = MaterialTheme.colorScheme.error)
-                        TextButton(onClick = onRetryModel) { Text("重新下载") }
-                    }
-                    state.candidates.isNotEmpty() -> {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            state.candidates.forEach { character ->
-                                SuggestionChip(
-                                    onClick = { onSelect(character) },
-                                    enabled = !state.isSaving,
-                                    label = { Text(character, style = MaterialTheme.typography.headlineSmall) },
-                                    modifier = Modifier.weight(1f, fill = false).heightIn(min = 48.dp),
-                                )
+                val candidateHeight = 56.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(candidateHeight).testTag("zi_candidate_slot"),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    when {
+                        state.model == InkModelState.Loading -> Text("正在准备中文手写模型…")
+                        state.model == InkModelState.Failed -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("模型下载失败", color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
+                            TextButton(onClick = onRetryModel) { Text("重新下载") }
+                        }
+                        state.candidates.isNotEmpty() -> {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                state.candidates.forEach { character ->
+                                    SuggestionChip(
+                                        onClick = { onSelect(character) },
+                                        enabled = !state.isSaving,
+                                        label = { Text(character, style = MaterialTheme.typography.headlineSmall) },
+                                        modifier = Modifier.weight(1f, fill = false).heightIn(min = 48.dp),
+                                    )
+                                }
                             }
                         }
-                        if (state.saveMessage == null) Text("选择你写的那个字。")
+                        state.recognition == InkRecognitionState.Recognizing -> {
+                            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                        }
+                        state.recognition == InkRecognitionState.NoMatch -> Text("没识别出这个字，可以补写或重写。")
+                        state.recognition == InkRecognitionState.Failed -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("手写识别失败", color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
+                            TextButton(onClick = onRetryRecognition) { Text("重新识别") }
+                        }
                     }
-                    state.recognition == InkRecognitionState.Recognizing -> Text("正在识别…")
-                    state.recognition == InkRecognitionState.NoMatch -> Text("没识别出这个字。可以补写笔画，或清空重写。")
-                    state.recognition == InkRecognitionState.Failed -> {
-                        Text("手写识别失败。")
-                        TextButton(onClick = onRetryRecognition) { Text("重新识别") }
-                    }
-                    else -> Text("写完后，候选字会显示在这里。")
                 }
-                Text("已选汉字", style = MaterialTheme.typography.titleMedium)
-                if (state.queuedCharacters.isEmpty()) {
-                    Text("点选候选字后，会显示在这里。", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+                Text("已选汉字", style = MaterialTheme.typography.titleMedium, modifier = Modifier.testTag("zi_queued_title"))
                 QueuedCharacters(
                     characters = state.queuedCharacters,
                     tileSize = (boardSize * .2f).coerceAtLeast(44.dp),
@@ -198,7 +204,7 @@ private fun QueuedCharacters(
     }
 
     FlowRow(
-        modifier = Modifier.fillMaxWidth().testTag("zi_queued_characters"),
+        modifier = Modifier.fillMaxWidth().heightIn(min = tileSize).testTag("zi_queued_characters"),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
