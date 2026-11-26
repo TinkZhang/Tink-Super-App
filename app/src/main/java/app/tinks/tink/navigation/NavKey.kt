@@ -31,13 +31,8 @@ data object ScreenA : MyNavKey {
     override val icon = Icons.Filled.Home
 }
 
-data object ScreenB : MyNavKey {
-    override val label = "设置 B"
-    override val icon = Icons.Filled.Settings
-}
-
 data object ScreenWeight : MyNavKey {
-    override val label = "体重 C"
+    override val label = "体重"
     override val icon = Icons.Filled.Build
 }
 
@@ -142,9 +137,22 @@ data object ScreenConnect : MyNavKey {
 }
 
 val allTopDestinations = listOf(
-    ScreenA, ScreenB, ScreenWeight, ScreenHair,
-    ScreenLeeter, ScreenZi, ScreenMerriam, ScreenTime, ScreenBooks, ScreenDiaryLoom, ScreenLottery, ScreenSalesforce,
-    ScreenSecureWeb, ScreenRandom, ScreenYt, ScreenConnect
+    ScreenA,
+    ScreenWeight,
+    ScreenBooks,
+    ScreenYt,
+    ScreenLottery,
+    ScreenDiaryLoom,
+    ScreenTime,
+    ScreenMerriam,
+    ScreenZi,
+    // Remaining modules are ordered by name, using pinyin for Chinese names.
+    ScreenSecureWeb,
+    ScreenConnect,
+    ScreenLeeter,
+    ScreenHair,
+    ScreenSalesforce,
+    ScreenRandom,
 )
 
 data object ScreenRandom : MyNavKey {

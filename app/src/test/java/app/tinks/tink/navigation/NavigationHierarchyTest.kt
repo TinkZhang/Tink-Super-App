@@ -5,6 +5,17 @@ import org.junit.Test
 
 class NavigationHierarchyTest {
     @Test
+    fun drawerListsPriorityModulesFirstAndRemainingModulesAlphabetically() {
+        assertEquals(
+            listOf(
+                "Home", "体重", "ReadKeeper", "YT", "Lottery", "DiaryLoom", "Time", "M-W Builder", "识字",
+                "Baidu", "Connect", "LeetKeeper", "理发", "Salesforce", "随机",
+            ),
+            allTopDestinations.map(MyNavKey::label),
+        )
+    }
+
+    @Test
     fun randomChildrenBelongToRandom_andOnlySettingsAppearInDrawer() {
         assertEquals(ScreenRandom, ScreenRandomPlay.topDestination())
         assertEquals(ScreenRandom, ScreenRandomWheelEditor.topDestination())

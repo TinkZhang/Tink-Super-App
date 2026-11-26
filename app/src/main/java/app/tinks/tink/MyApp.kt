@@ -76,7 +76,6 @@ import app.tinks.tink.lottery.LotteryScreen
 import app.tinks.tink.merriam.MerriamScreen
 import app.tinks.tink.navigation.MyNavKey
 import app.tinks.tink.navigation.ScreenA
-import app.tinks.tink.navigation.ScreenB
 import app.tinks.tink.connect.ConnectScreen
 import app.tinks.tink.navigation.ScreenConnect
 import app.tinks.tink.navigation.ScreenBooks
@@ -385,10 +384,6 @@ fun MyApp(
                             onAddTime = openTimeAddFromHome,
                             onNewDiary = openNewDiaryFromHome,
                         )
-                        is ScreenB -> WeightScreen(
-                            hiltViewModel(),
-                            onOpenHistory = { backStack.add(ScreenWeightHistory) },
-                        )
                         is ScreenWeight -> WeightScreen(
                             hiltViewModel(),
                             onOpenHistory = { backStack.add(ScreenWeightHistory) },
@@ -468,7 +463,7 @@ private fun MyNavKey.drawerTestTag(): String = when (this) {
     ScreenRandomPlay -> "random_play_destination"
     ScreenRandomWheelEditor -> "random_wheel_editor_destination"
     ScreenA -> "drawer_destination_home"
-    ScreenB, ScreenWeight -> "drawer_destination_weight"
+    ScreenWeight -> "drawer_destination_weight"
     ScreenHair -> "drawer_destination_hair"
     ScreenLeeter -> "drawer_destination_leeter"
     ScreenZi -> "drawer_destination_zi"
