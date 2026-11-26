@@ -33,7 +33,11 @@ fun ZiHandwritingCandidatePreview() {
     TinkTheme(dynamicColor = false) {
         Surface {
             ZiHandwritingScreen(
-                state = HandwritingState(model = InkModelState.Ready, candidates = listOf("土", "士", "王"), selected = "土"),
+                state = HandwritingState(
+                    model = InkModelState.Ready,
+                    candidates = listOf("土", "士", "王"),
+                    queuedCharacters = listOf("山", "木", "水", "火"),
+                ),
             )
         }
     }

@@ -16,6 +16,8 @@ data class WrittenZiListState(
     val failed: Boolean = false,
 )
 
+internal data class WrittenZiBatchResult(val confirmedCount: Int, val addedCount: Int)
+
 @Singleton
 class WrittenZiRepository @Inject constructor(private val api: ZiApi) {
     private val lock = Mutex()
@@ -38,6 +40,16 @@ class WrittenZiRepository @Inject constructor(private val api: ZiApi) {
             list.value = previous
             throw cancelled
         }
+    }
+
+    internal suspend fun saveBatch(characters: List<String>): WrittenZiBatchResult {
+        var added = 0
+        for ((index, character) in characters.withIndex()) {
+            val result = save(character)
+            if (result !is ApiResult.Success) return WrittenZiBatchResult(index, added)
+            if (result.data.added) added++
+        }
+        return WrittenZiBatchResult(characters.size, added)
     }
 
     suspend fun save(character: String): ApiResult<WrittenZiResult> = lock.withLock {

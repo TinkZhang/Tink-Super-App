@@ -1,13 +1,22 @@
 package app.tinks.tink.zi
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +28,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -27,6 +37,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -43,6 +54,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -62,6 +74,7 @@ fun ZiHandwritingRoute(boardId: String, viewModel: HandwritingViewModel, onSaved
         onUndo = viewModel::undo,
         onClear = viewModel::clear,
         onSelect = viewModel::select,
+        onRemove = viewModel::remove,
         onSave = viewModel::save,
         onRetryModel = viewModel::prepareModel,
         onRetryRecognition = viewModel::recognize,
@@ -76,12 +89,13 @@ internal fun ZiHandwritingScreen(
     onUndo: () -> Unit = {},
     onClear: () -> Unit = {},
     onSelect: (String) -> Unit = {},
+    onRemove: (String) -> Unit = {},
     onSave: () -> Unit = {},
     onRetryModel: () -> Unit = {},
     onRetryRecognition: () -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().testTag("zi_handwriting_screen")) {
-        val boardSize = minOf((maxWidth - 32.dp).coerceAtLeast(0.dp), (maxHeight - 270.dp).coerceIn(160.dp, 320.dp))
+        val boardSize = minOf((maxWidth - 32.dp).coerceAtLeast(0.dp), (maxHeight - 304.dp).coerceIn(160.dp, 320.dp))
         Column(
             modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -91,7 +105,6 @@ internal fun ZiHandwritingScreen(
                     .verticalScroll(rememberScrollState()).padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text("请在田字格里写一个汉字。", style = MaterialTheme.typography.bodyLarge)
                 HandwritingBoard(
                     side = boardSize,
                     strokes = state.strokes,
@@ -118,8 +131,7 @@ internal fun ZiHandwritingScreen(
                     state.candidates.isNotEmpty() -> {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             state.candidates.forEach { character ->
-                                FilterChip(
-                                    selected = state.selected == character,
+                                SuggestionChip(
                                     onClick = { onSelect(character) },
                                     enabled = !state.isSaving,
                                     label = { Text(character, style = MaterialTheme.typography.headlineSmall) },
@@ -137,12 +149,22 @@ internal fun ZiHandwritingScreen(
                     }
                     else -> Text("写完后，候选字会显示在这里。")
                 }
-                state.saveMessage?.let { message ->
-                    Text(
-                        message,
-                        color = if (state.alreadyRecorded) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
-                    )
+                Text("已选汉字", style = MaterialTheme.typography.titleMedium)
+                if (state.queuedCharacters.isEmpty()) {
+                    Text("点选候选字后，会显示在这里。", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                QueuedCharacters(
+                    characters = state.queuedCharacters,
+                    tileSize = (boardSize * .2f).coerceAtLeast(44.dp),
+                    enabled = !state.isSaving && !state.saved,
+                    onRemove = onRemove,
+                )
+                state.saveMessage?.let { message ->
+                    Text(message, color = MaterialTheme.colorScheme.error)
+                }
+            }
+            if (state.isSaving) {
+                LinearProgressIndicator(Modifier.widthIn(max = 480.dp).fillMaxWidth())
             }
             Button(
                 onClick = onSave,
@@ -150,13 +172,76 @@ internal fun ZiHandwritingScreen(
                 modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth().padding(vertical = 8.dp)
                     .heightIn(min = 48.dp).testTag("zi_confirm_written"),
             ) {
-                Text(
-                    when {
-                        state.isSaving -> "正在保存…"
-                        state.selected != null -> "确认添加「${state.selected}」"
-                        else -> "确认添加"
+                Text("确认添加")
+            }
+        }
+    }
+}
+
+@Composable
+private fun QueuedCharacters(
+    characters: List<String>,
+    tileSize: Dp,
+    enabled: Boolean,
+    onRemove: (String) -> Unit,
+) {
+    val displayed = remember { mutableStateListOf<String>().apply { addAll(characters) } }
+    val remove by rememberUpdatedState(onRemove)
+    LaunchedEffect(characters) {
+        for (character in characters) {
+            if (character !in displayed) displayed.add(character)
+        }
+        if (displayed.size == characters.size && displayed != characters) {
+            displayed.clear()
+            displayed.addAll(characters)
+        }
+    }
+
+    FlowRow(
+        modifier = Modifier.fillMaxWidth().testTag("zi_queued_characters"),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        for (character in displayed) {
+            key(character) {
+                val visible = character in characters
+                val visibility = remember { MutableTransitionState(visible) }
+                visibility.targetState = visible
+                LaunchedEffect(visible, visibility.isIdle) {
+                    if (!visible && visibility.isIdle) displayed.remove(character)
+                }
+                AnimatedVisibility(
+                    visibleState = visibility,
+                    enter = EnterTransition.None,
+                    exit = scaleOut(tween(180), targetScale = .72f) + fadeOut(tween(180)),
+                ) {
+                    val canRemove = enabled && visible
+                    val shape = RoundedCornerShape(10.dp)
+                    Box(
+                        modifier = Modifier.size(tileSize)
+                            .clip(shape)
+                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+                            .pointerInput(character, canRemove) {
+                                if (canRemove) detectTapGestures(onLongPress = { remove(character) })
+                            }
+                            .semantics(mergeDescendants = true) {
+                                if (canRemove) {
+                                    onLongClick(label = "移除「$character」") {
+                                        remove(character)
+                                        true
+                                    }
+                                }
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            character,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
                     }
-                )
+                }
             }
         }
     }

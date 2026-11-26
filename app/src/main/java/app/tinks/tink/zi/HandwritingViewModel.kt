@@ -3,7 +3,6 @@ package app.tinks.tink.zi
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.tinks.tink.network.ApiResult
 import app.tinks.tink.ui.components.AppSnackbarBus
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.common.model.RemoteModelManager
@@ -34,16 +33,36 @@ internal data class HandwritingState(
     val boardId: String? = null,
     val strokes: List<List<HandwritingPoint>> = emptyList(),
     val candidates: List<String> = emptyList(),
-    val selected: String? = null,
+    val queuedCharacters: List<String> = emptyList(),
     val model: InkModelState = InkModelState.Loading,
     val recognition: InkRecognitionState = InkRecognitionState.Idle,
     val isDrawing: Boolean = false,
     val isSaving: Boolean = false,
     val saveMessage: String? = null,
-    val alreadyRecorded: Boolean = false,
     val saved: Boolean = false,
 ) {
-    val canSave get() = selected != null && !isDrawing && !isSaving && !alreadyRecorded && !saved
+    val canSave get() = queuedCharacters.isNotEmpty() && !isDrawing && !isSaving && !saved
+
+    fun enqueue(character: String): HandwritingState {
+        if (isDrawing || isSaving || saved || character !in candidates) return this
+        return copy(
+            strokes = emptyList(),
+            candidates = emptyList(),
+            queuedCharacters = if (character in queuedCharacters) queuedCharacters else queuedCharacters + character,
+            recognition = InkRecognitionState.Idle,
+        )
+    }
+
+    fun remove(character: String): HandwritingState {
+        if (isSaving || saved) return this
+        return copy(queuedCharacters = queuedCharacters - character)
+    }
+
+    fun failedSave(confirmedCount: Int): HandwritingState = copy(
+        queuedCharacters = queuedCharacters.drop(confirmedCount),
+        isSaving = false,
+        saveMessage = if (confirmedCount == 0) "保存失败，请重试。" else "部分汉字已处理，请重试剩余汉字。",
+    )
 }
 
 internal fun singleCharacterRecognitionContext(): RecognitionContext =
@@ -112,8 +131,7 @@ class HandwritingViewModel @Inject constructor(private val repository: WrittenZi
         recognitionJob?.cancel()
         mutableState.update {
             it.copy(
-                isDrawing = true, candidates = emptyList(), selected = null,
-                recognition = InkRecognitionState.Idle, saveMessage = null, alreadyRecorded = false,
+                isDrawing = true, candidates = emptyList(), recognition = InkRecognitionState.Idle,
             )
         }
     }
@@ -143,13 +161,10 @@ class HandwritingViewModel @Inject constructor(private val repository: WrittenZi
     fun recognize() {
         recognitionJob?.cancel()
         val snapshot = mutableState.value
-        mutableState.update {
-            it.copy(
-                candidates = emptyList(), selected = null, recognition = InkRecognitionState.Idle,
-                saveMessage = null, alreadyRecorded = false,
-            )
-        }
-        if (snapshot.model != InkModelState.Ready || snapshot.strokes.isEmpty() || snapshot.isDrawing) return
+        mutableState.update { it.copy(candidates = emptyList(), recognition = InkRecognitionState.Idle) }
+        if (snapshot.model != InkModelState.Ready || snapshot.strokes.isEmpty() ||
+            snapshot.isDrawing || snapshot.isSaving || snapshot.saved
+        ) return
 
         recognitionJob = viewModelScope.launch {
             delay(450)
@@ -180,34 +195,32 @@ class HandwritingViewModel @Inject constructor(private val repository: WrittenZi
     }
 
     fun select(character: String) {
-        mutableState.update {
-            if (it.isSaving || character !in it.candidates || character == it.selected) it
-            else it.copy(selected = character, saveMessage = null, alreadyRecorded = false)
-        }
+        mutableState.update { it.enqueue(character) }
+    }
+
+    fun remove(character: String) {
+        mutableState.update { it.remove(character) }
     }
 
     fun save() {
         val current = mutableState.value
-        val character = current.selected ?: return
         if (!current.canSave) return
+        recognitionJob?.cancel()
         mutableState.update { it.copy(isSaving = true, saveMessage = null) }
         saveJob = viewModelScope.launch {
-            when (val result = repository.save(character)) {
-                is ApiResult.Success -> {
-                    if (result.data.added) {
-                        mutableState.update { it.copy(isSaving = false, saved = true) }
-                        AppSnackbarBus.showMessage("已添加「$character」")
-                    } else {
-                        mutableState.update {
-                            it.copy(isSaving = false, alreadyRecorded = true, saveMessage = "「$character」已在会写列表里")
-                        }
-                    }
-                }
-                is ApiResult.Error -> mutableState.update {
-                    it.copy(isSaving = false, saveMessage = "保存失败，请重试。")
-                }
-                ApiResult.Loading -> Unit
+            val result = repository.saveBatch(current.queuedCharacters)
+            if (result.confirmedCount != current.queuedCharacters.size) {
+                mutableState.update { it.failedSave(result.confirmedCount) }
+                recognize()
+                return@launch
             }
+
+            mutableState.update { it.copy(isSaving = false, saved = true) }
+            val message = when (result.addedCount) {
+                0 -> "这些字已在会写列表里"
+                else -> "已添加 ${result.addedCount} 个会写的字"
+            }
+            AppSnackbarBus.showMessage(message)
         }
     }
 

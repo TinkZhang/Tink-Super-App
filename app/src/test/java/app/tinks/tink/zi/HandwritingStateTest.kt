@@ -22,11 +22,31 @@ class HandwritingStateTest {
         )
     }
 
-    @Test fun confirmationRequiresAnExplicitSelectionAndAllowsRetry() {
+    @Test fun selectingCandidateQueuesItAndClearsOnlyTheCurrentWriting() {
+        val state = HandwritingState(
+            strokes = listOf(listOf(HandwritingPoint(.5f, .5f, 0L))),
+            queuedCharacters = listOf("山"),
+            candidates = listOf("土", "士"),
+        )
+
+        val selected = state.enqueue("土")
+
+        assertEquals(listOf("山", "土"), selected.queuedCharacters)
+        assertTrue(selected.strokes.isEmpty())
+        assertTrue(selected.candidates.isEmpty())
+        assertEquals(listOf("山", "土"), selected.copy(candidates = listOf("土")).enqueue("土").queuedCharacters)
+        assertEquals(listOf("土"), selected.remove("山").queuedCharacters)
+    }
+
+    @Test fun confirmationRequiresQueuedCharactersAndKeepsUnconfirmedEntriesForRetry() {
         val state = HandwritingState(candidates = listOf("土", "士"))
         assertFalse(state.canSave)
-        assertTrue(state.copy(selected = "土", saveMessage = "保存失败").canSave)
-        assertFalse(state.copy(selected = "土", isDrawing = true).canSave)
-        assertFalse(state.copy(selected = "土", alreadyRecorded = true).canSave)
+        assertFalse(state.copy(queuedCharacters = listOf("土"), isDrawing = true).canSave)
+        val saving = state.copy(queuedCharacters = listOf("土", "山", "木"), isSaving = true)
+        assertFalse(saving.canSave)
+        assertEquals(saving, saving.remove("土"))
+        val retry = saving.failedSave(1)
+        assertEquals(listOf("山", "木"), retry.queuedCharacters)
+        assertTrue(retry.canSave)
     }
 }

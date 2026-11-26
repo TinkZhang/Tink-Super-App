@@ -1,11 +1,15 @@
 package app.tinks.tink.zi
 
 import android.app.Application
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import app.tinks.tink.ui.theme.TinkTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -40,18 +44,25 @@ class ZiScreenTest {
         assertEquals(listOf("read list", "add read", "written list", "add written"), actions)
     }
 
-    @Test fun boardKeepsConfirmationDisabledUntilACharacterIsSelected() {
-        var selected: String? = null
+    @Test fun boardQueuesCandidatesAndSupportsRemovingATile() {
+        val state = mutableStateOf(HandwritingState(model = InkModelState.Ready, candidates = listOf("土", "士")))
         compose.setContent {
             TinkTheme(dynamicColor = false) {
                 ZiHandwritingScreen(
-                    state = HandwritingState(model = InkModelState.Ready, candidates = listOf("土", "士")),
-                    onSelect = { selected = it },
+                    state = state.value,
+                    onSelect = { state.value = state.value.enqueue(it) },
+                    onRemove = { state.value = state.value.remove(it) },
                 )
             }
         }
         compose.onNodeWithTag("zi_confirm_written").assertIsNotEnabled()
         compose.onNodeWithText("士").performClick()
-        assertEquals("士", selected)
+        compose.onNodeWithTag("zi_confirm_written").assertIsEnabled()
+        compose.onNodeWithText("确认添加").assertExists()
+        compose.onNodeWithText("土").assertDoesNotExist()
+        compose.onNodeWithText("士").performSemanticsAction(SemanticsActions.OnLongClick) { it() }
+        compose.waitForIdle()
+        compose.onNodeWithText("士").assertDoesNotExist()
+        compose.onNodeWithTag("zi_confirm_written").assertIsNotEnabled()
     }
 }
