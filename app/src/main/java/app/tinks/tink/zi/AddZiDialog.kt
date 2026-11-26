@@ -7,6 +7,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,7 +32,7 @@ fun AddZiDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("添加汉字") },
+        title = { Text("添加会读的字") },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -40,14 +41,16 @@ fun AddZiDialog(
                 OutlinedTextField(
                     value = zis,
                     onValueChange = { zis = it },
-                    label = { Text("学习的汉字") },
+                    label = { Text("学习的汉字", style = MaterialTheme.typography.titleMedium) },
+                    textStyle = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
                 OutlinedTextField(
                     value = proficiency,
                     onValueChange = { proficiency = it },
-                    label = { Text("熟练度") },
+                    label = { Text("熟练度", style = MaterialTheme.typography.titleMedium) },
+                    textStyle = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true

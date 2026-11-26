@@ -19,3 +19,5 @@ fun ZiDto.toDomain(): Zi {
         proficiency = proficiency,
     )
 }
+
+internal fun Zi.isReadable(): Boolean = proficiency == 5

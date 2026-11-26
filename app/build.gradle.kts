@@ -168,6 +168,8 @@ tasks.register<JacocoReport>("jacocoDebugUnitTestReport") {
 }
 
 dependencies {
+    implementation(libs.mlkit.digital.ink)
+    implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.youtubedl.android)
     implementation(libs.youtubedl.ffmpeg)
     implementation(libs.androidx.core.ktx)

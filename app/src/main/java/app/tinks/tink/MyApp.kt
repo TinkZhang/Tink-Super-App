@@ -95,7 +95,9 @@ import app.tinks.tink.navigation.ScreenStoryList
 import app.tinks.tink.navigation.ScreenTime
 import app.tinks.tink.navigation.ScreenWeight
 import app.tinks.tink.navigation.ScreenWeightHistory
+import app.tinks.tink.navigation.ScreenWrittenZi
 import app.tinks.tink.navigation.ScreenZi
+import app.tinks.tink.navigation.ScreenZiHandwriting
 import app.tinks.tink.navigation.ScreenYt
 import app.tinks.tink.yt.YtScreen
 import app.tinks.tink.navigation.allTopDestinations
@@ -111,8 +113,10 @@ import app.tinks.tink.time.TimeViewModel
 import app.tinks.tink.ui.components.AppSnackbarBus
 import app.tinks.tink.weight.WeightHistoryScreen
 import app.tinks.tink.weight.WeightScreen
+import app.tinks.tink.zi.ZiHandwritingRoute
 import app.tinks.tink.zi.ZiScreen
 import app.tinks.tink.zi.zilist.LearntZiListScreen
+import app.tinks.tink.zi.zilist.WrittenZiListScreen
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -394,10 +398,18 @@ fun MyApp(
                         is ScreenLeeter -> LeetKeeperScreen(hiltViewModel())
                         is ScreenZi -> ZiScreen(
                             hiltViewModel(),
-                            onNavigationEvent = { backStack.add(ScreenLearntZi) },
+                            onReadList = { backStack.add(ScreenLearntZi) },
+                            onWrittenList = { backStack.add(ScreenWrittenZi) },
+                            onAddWritten = { backStack.add(ScreenZiHandwriting()) },
                             onStoryListNavigation = { backStack.add(ScreenStoryList) }
                         )
                         is ScreenLearntZi -> LearntZiListScreen(hiltViewModel())
+                        ScreenWrittenZi -> WrittenZiListScreen(hiltViewModel())
+                        is ScreenZiHandwriting -> ZiHandwritingRoute(
+                            boardId = key.boardId,
+                            viewModel = hiltViewModel(),
+                            onSaved = { if (backStack.lastOrNull() == key) navigateBack() },
+                        )
                         is ScreenMerriam -> MerriamScreen(hiltViewModel())
                         is ScreenTime -> {
                             LaunchedEffect(pendingQuickAddRequestId) {
@@ -472,6 +484,8 @@ private fun MyNavKey.drawerTestTag(): String = when (this) {
     ScreenSecureWeb -> "drawer_destination_secure_web"
     ScreenYt -> "drawer_destination_yt"
     ScreenLearntZi -> "drawer_destination_learnt_zi"
+    ScreenWrittenZi -> "drawer_destination_written_zi"
+    is ScreenZiHandwriting -> "drawer_destination_zi_handwriting"
     ScreenStoryList -> "drawer_destination_story_list"
     is ScreenStoryDetail -> "drawer_destination_story_detail"
     ScreenWeightHistory -> "drawer_destination_weight_history"

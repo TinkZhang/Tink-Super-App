@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import app.tinks.tink.network.ApiResult
 import app.tinks.tink.ui.components.AppSnackbarBus
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.launchIn
@@ -53,12 +54,21 @@ data class ZiState(
 
 @HiltViewModel
 class ZiViewModel @Inject constructor(
-    private val repository: ZiRepository
+    private val repository: ZiRepository,
+    private val writtenRepository: WrittenZiRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ZiState())
     val uiState = _state.map { it.toUiState() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())
+
+    val writtenState = writtenRepository.state
+    private var writtenRefresh: Job? = null
+
+    fun refreshWritten() {
+        if (writtenRefresh?.isActive == true) return
+        writtenRefresh = viewModelScope.launch { writtenRepository.refresh() }
+    }
 
     init {
         refreshAllData()
@@ -73,7 +83,10 @@ class ZiViewModel @Inject constructor(
                     event.zis.filterNot { it.isWhitespace() })
             }
 
-            ZiEvent.Refresh -> refreshAllData()
+            ZiEvent.Refresh -> {
+                refreshAllData()
+                refreshWritten()
+            }
             is ZiEvent.DismissDialog -> _state.update { it.copy(showDialog = false) }
             is ZiEvent.AddZiDialogOpen -> _state.update { it.copy(showDialog = true) }
             ZiEvent.GenerateStory -> generateStory()
@@ -94,7 +107,7 @@ class ZiViewModel @Inject constructor(
                         isLoading = false,
                         isNetworkError = false,
                         allZis = result.data,
-                        learntZiNum = result.data.filter { it.proficiency == 5 }.size,
+                        learntZiNum = result.data.count(Zi::isReadable),
                         reviewList = result.data.filter { it.proficiency < 5 }
                             .sortedBy { it.proficiency }.take(9),
                     )

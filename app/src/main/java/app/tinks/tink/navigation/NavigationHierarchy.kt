@@ -5,6 +5,8 @@ fun MyNavKey.topDestination(): MyNavKey = when (this) {
     ScreenWeightHistory -> ScreenWeight
     ScreenLotteryHistoryStats -> ScreenLottery
     ScreenLearntZi,
+    ScreenWrittenZi,
+    is ScreenZiHandwriting,
     ScreenStoryList,
     is ScreenStoryDetail -> ScreenZi
     ScreenSettings -> ScreenSettings

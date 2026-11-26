@@ -1,6 +1,7 @@
 package app.tinks.tink.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Build
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
+import java.util.UUID
 
 sealed interface MyNavKey : NavKey {
     val label: String
@@ -60,8 +62,18 @@ data object ScreenZi : MyNavKey {
 }
 
 data object ScreenLearntZi : MyNavKey {
-    override val label = "已学会的字"
+    override val label = "会读汉字"
     override val icon = Icons.Filled.Translate
+}
+
+data object ScreenWrittenZi : MyNavKey {
+    override val label = "会写汉字"
+    override val icon = Icons.Filled.Translate
+}
+
+data class ScreenZiHandwriting(val boardId: String = UUID.randomUUID().toString()) : MyNavKey {
+    override val label = "添加会写的字"
+    override val icon = Icons.Filled.Edit
 }
 
 data object ScreenMerriam: MyNavKey {

@@ -21,6 +21,12 @@ interface ZiApi {
     @GET("zi/learnt_zi_num")
     suspend fun getLearntZiNum(): Int
 
+    @GET("zi/written")
+    suspend fun getWrittenZis(): List<String>
+
+    @PUT("zi/written")
+    suspend fun putWrittenZi(@Body request: WrittenZiRequest): WrittenZiResult
+
     @POST("story/generate")
     suspend fun generateStory(@Body request: StoryGenerateRequest)
 }
@@ -43,3 +49,9 @@ data class ZiDto(
 data class StoryGenerateRequest(
     val length: Int,
 )
+
+@Serializable
+data class WrittenZiRequest(val zi: String)
+
+@Serializable
+data class WrittenZiResult(val added: Boolean)

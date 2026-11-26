@@ -37,4 +37,11 @@ class NavigationHierarchyTest {
         assertEquals(ScreenZi, ScreenStoryList.topDestination())
         assertEquals(ScreenZi, ScreenStoryDetail("story-id").topDestination())
     }
+
+    @Test
+    fun topDestination_mapsAllCharacterScreensToZi() {
+        assertEquals(ScreenZi, ScreenLearntZi.topDestination())
+        assertEquals(ScreenZi, ScreenWrittenZi.topDestination())
+        assertEquals(ScreenZi, ScreenZiHandwriting("test-board").topDestination())
+    }
 }
