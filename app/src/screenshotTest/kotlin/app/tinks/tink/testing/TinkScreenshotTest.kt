@@ -296,7 +296,11 @@ fun BookReadingTrackerScreenshotPreview() {
                         progressPercentage = 30.0,
                         archiveStatus = null,
                         archivedDate = null,
-                    )
+                    ),
+                    listCardSample(BookState.Reading, "Kindle", currentPage = 108, progressPercentage = 25.0)
+                        .copy(id = 2, title = "The Creative Act"),
+                    listCardSample(BookState.Reading, "Paper", currentPage = 24, progressPercentage = 10.0)
+                        .copy(id = 3, title = "A Field Guide to Getting Lost"),
                 ),
                 wishlistBooks = emptyList(),
                 archivedBooks = emptyList(),

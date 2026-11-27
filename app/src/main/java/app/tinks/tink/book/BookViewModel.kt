@@ -134,10 +134,16 @@ class BookViewModel @Inject constructor(
 
     private var searchJob: Job? = null
     private var mutationJob: Job? = null
+    private var hasEnteredScreen = false
 
     init {
         loadCategories()
         refreshAll()
+    }
+
+    fun onScreenEntered() {
+        if (hasEnteredScreen) refreshCurrent()
+        hasEnteredScreen = true
     }
 
     fun onEvent(event: BookEvent) {
@@ -272,7 +278,7 @@ class BookViewModel @Inject constructor(
                     ApiResult.Loading -> _state.update { it.copy(isLoading = true) }
                     is ApiResult.Success -> _state.update {
                         when (state) {
-                            BookState.Reading -> it.copy(readingBooks = result.data, isLoading = false)
+                            BookState.Reading -> it.copy(readingBooks = result.data.mostRecentlyUpdatedFirst(), isLoading = false)
                             BookState.Wish -> it.copy(wishlistBooks = result.data, isLoading = false)
                             BookState.Archived -> it.copy(archivedBooks = result.data, isLoading = false)
                         }
@@ -535,36 +541,8 @@ class BookViewModel @Inject constructor(
         val currentBook = _state.value.selectedBook?.takeIf { it.id == event.bookId }
             ?: _state.value.findBook(event.bookId)
             ?: return
-        val currentPage = if (currentBook.pageFormat.usesPages) {
-            event.stopPage
-        } else {
-            event.stopProgressPercentage?.toBookProgressUnits(currentBook.pageFormat)
-        } ?: return
-        val startTime = event.startTime
-        val stopTime = event.stopTime
-        if (startTime == null || stopTime == null) {
-            if (startTime != null || stopTime != null) return
-            saveReadingProgress(event.bookId, currentPage, currentBook.readingDurationMinutes, timeEntry = null)
-            return
-        }
-        if (!stopTime.isAfter(startTime)) return
-        val stopProgressLabel = currentBook.progressLabel(event.stopPage, event.stopProgressPercentage)
-        val payload = TimeUpsertRequest(
-            type = READING_TIME_TYPE,
-            start = startTime.toString(),
-            end = stopTime.toString(),
-            title = "${currentBook.title} ${currentBook.currentProgressLabel()} - $stopProgressLabel",
-            description = "ReadKeeper reading progress update",
-        )
-        saveReadingProgress(
-            bookId = event.bookId,
-            currentPage = currentPage,
-            readingDurationMinutes = currentBook.readingDurationMinutes +
-                Duration.between(startTime, stopTime).seconds
-                    .coerceAtLeast(1)
-                    .let { seconds -> ((seconds + 59) / 60).toInt() },
-            timeEntry = payload,
-        )
+        val save = event.toReadingProgressSave(currentBook) ?: return
+        saveReadingProgress(event.bookId, save.currentPage, save.durationMinutes, save.timeEntry)
     }
 
     private fun saveReadingProgress(
@@ -584,13 +562,14 @@ class BookViewModel @Inject constructor(
                     ApiResult.Loading -> _state.update { it.copy(isLoading = true) }
                     is ApiResult.Success -> {
                         _state.update {
-                            it.copy(
-                                selectedBook = result.data,
+                            val updated = it.withUpdatedBook(result.data)
+                            updated.copy(
+                                readingBooks = updated.readingBooks.mostRecentlyUpdatedFirst(),
                                 isLoading = false,
                             )
                         }
-                        loadDetailNotes(bookId)
-                        refreshAll()
+                        if (_state.value.screen == BooksScreenState.Detail(bookId)) loadDetailNotes(bookId)
+                        if (timeEntry != null) loadReadingRecordDates()
                     }
                     is ApiResult.Error -> failLoading {
                         saveReadingProgress(
@@ -732,7 +711,43 @@ private fun BookUiState.withUpdatedBook(book: Book): BookUiState =
         archivedBooks = archivedBooks.map { if (it.id == book.id) book else it },
     )
 
-private const val READING_TIME_TYPE = 2
+internal fun List<Book>.mostRecentlyUpdatedFirst(): List<Book> = sortedByDescending { book ->
+    book.updatedAt.asBookInstant() ?: book.createdAt.asBookInstant()
+}
+
+private fun String?.asBookInstant(): Instant? = this?.let {
+    runCatching { Instant.parse(it) }.getOrNull()
+}
+
+internal data class ReadingProgressSave(
+    val currentPage: Int,
+    val durationMinutes: Int,
+    val timeEntry: TimeUpsertRequest?,
+)
+
+internal fun BookEvent.UpdateReadingProgress.toReadingProgressSave(book: Book): ReadingProgressSave? {
+    if (book.id != bookId) return null
+    val page = (if (book.pageFormat.usesPages) stopPage else stopProgressPercentage?.toBookProgressUnits(book.pageFormat))
+        ?: return null
+    val start = startTime
+    val stop = stopTime
+    if (start == null && stop == null) return ReadingProgressSave(page, book.readingDurationMinutes, null)
+    if (start == null || stop == null || !stop.isAfter(start)) return null
+    val elapsedMinutes = ((Duration.between(start, stop).seconds.coerceAtLeast(1) + 59) / 60).toInt()
+    return ReadingProgressSave(
+        currentPage = page,
+        durationMinutes = book.readingDurationMinutes + elapsedMinutes,
+        timeEntry = TimeUpsertRequest(
+            type = READING_TIME_TYPE,
+            start = start.toString(),
+            end = stop.toString(),
+            title = "${book.title} ${book.currentProgressLabel()} - ${book.progressLabel(stopPage, stopProgressPercentage)}",
+            description = "ReadKeeper reading progress update",
+        ),
+    )
+}
+
+internal const val READING_TIME_TYPE = 2
 
 private fun Book.currentProgressLabel(): String =
     if (pageFormat.usesPages) {

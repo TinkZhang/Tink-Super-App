@@ -20,7 +20,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
@@ -34,10 +33,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -50,7 +47,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,6 +54,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tinks.tink.R
 import app.tinks.tink.book.BookPageFormat
+import app.tinks.tink.book.ProgressTimeDialog
 import app.tinks.tink.ui.theme.TinkTheme
 import coil.compose.AsyncImage
 
@@ -83,13 +80,12 @@ internal fun HomeScreen(
     onAddTime: () -> Unit = {},
     onNewDiary: () -> Unit = {},
 ) {
-    if (state.showReadKeeperProgressDialog) {
-        ReadKeeperProgressDialog(
-            book = state.snapshot.readKeeperBook,
-            value = state.readKeeperProgressInput,
-            onValueChange = { onEvent(HomeEvent.UpdateReadKeeperProgressInput(it)) },
+    state.readKeeperProgressBook?.let { book ->
+        ProgressTimeDialog(
+            book = book,
+            readingTimeEntries = state.readingTimeEntries,
             onDismiss = { onEvent(HomeEvent.DismissReadKeeperProgress) },
-            onSave = { onEvent(HomeEvent.SaveReadKeeperProgress) },
+            onSave = { onEvent(HomeEvent.SaveReadKeeperProgress(it)) },
         )
     }
 
@@ -364,41 +360,6 @@ private fun HomeCellCard(
             content()
         }
     }
-}
-
-@Composable
-private fun ReadKeeperProgressDialog(
-    book: HomeReadKeeperBook?,
-    value: String,
-    onValueChange: (String) -> Unit,
-    onDismiss: () -> Unit,
-    onSave: () -> Unit,
-) {
-    val targetLabel = book?.progressTargetLabel ?: "Progress"
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Update ReadKeeper") },
-        text = {
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                label = { Text(targetLabel) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onSave) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
 }
 
 private fun buildHomeCells(snapshot: HomeSnapshot): List<HomeCell> =

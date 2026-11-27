@@ -80,6 +80,25 @@ class BookScreenTest {
     }
 
     @Test
+    fun continueReadingShowsLatestBookAndOpensItsSharedProgressDialog() {
+        val events = mutableListOf<BookEvent>()
+        val first = sampleBook(BookState.Reading).copy(id = 11, title = "Latest reading book")
+        val second = first.copy(id = 12, title = "Another reading book")
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                BookScreen(state = BookUiState(readingBooks = listOf(first, second)), onEvent = events::add)
+            }
+        }
+
+        composeRule.onNodeWithTag("book_item_11").assertIsDisplayed()
+        composeRule.onNodeWithTag("book_quick_progress_12").performClick()
+        composeRule.onNodeWithText("Update progress").assertIsDisplayed()
+        composeRule.onNodeWithTag("book_progress_save").performClick()
+
+        assertEquals(BookEvent.UpdateReadingProgress(12, null, null, second.currentPage, null), events.single())
+    }
+
+    @Test
     fun home_showsReadingContributionGraph() {
         val year = Year.now().value
 

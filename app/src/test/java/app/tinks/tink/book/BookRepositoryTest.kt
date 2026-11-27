@@ -211,6 +211,18 @@ class BookRepositoryTest {
     }
 
     @Test
+    fun refreshReadingShelfRetainsProgressThatHasNotSynced() = runTest {
+        val remoteBook = bookDto(currentPage = 20, pages = 200)
+        val local = remoteBook.toDomain().toEntity().copy(currentPage = 50, hasPendingProgress = true)
+        val repository = BookRepository(
+            FakeBookApi(reading = listOf(remoteBook)), FakeBookDao(listOf(local)), null, null, null, null,
+        )
+
+        val result = repository.getBooks(BookState.Reading).toList().last() as ApiResult.Success
+        assertEquals(50, result.data.single().currentPage)
+    }
+
+    @Test
     fun queueReadingProgress_updatesCacheAndPersistsTheCompleteOfflineWrite() = runTest {
         val dao = FakeBookDao(
             listOf(
@@ -315,6 +327,7 @@ class BookRepositoryTest {
     private class FakeBookApi(
         private val searchResponse: JsonElement = Json.encodeToJsonElement(listOf(searchResultDto())),
         private val readingFailure: Throwable? = null,
+        private val reading: List<BookDto> = emptyList(),
     ) : BookApi {
         val searchQueries = mutableListOf<String>()
         val createdDrafts = mutableListOf<BookCreateRequest>()
@@ -345,7 +358,7 @@ class BookRepositoryTest {
         }
         override suspend fun getReading(page: Int, size: Int, category: String?): List<BookDto> {
             readingFailure?.let { throw it }
-            return emptyList()
+            return reading
         }
         override suspend fun getAbandon(page: Int, size: Int, category: String?): List<BookDto> {
             abandonCategories.add(category)

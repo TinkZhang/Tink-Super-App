@@ -184,6 +184,25 @@ class BookViewModelTest {
     }
 
     @Test
+    fun updatingProgressFromHomeReordersTheShelfWithoutOpeningDetails() = runTest {
+        val first = sampleBook(BookState.Reading).copy(id = 1, updatedAt = "2026-11-27T10:00:00+02:00")
+        val second = first.copy(id = 2, updatedAt = "2026-11-27T07:00:00Z")
+        val repository = FakeRepository(reading = listOf(second, first))
+        val viewModel = BookViewModel(repository, FakeTimeRepository())
+        advanceUntilIdle()
+        assertEquals(listOf(1L, 2L), viewModel.uiState.value.readingBooks.map(Book::id))
+
+        viewModel.onEvent(BookEvent.UpdateReadingProgress(second.id, null, null, 95, null))
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(BooksScreenState.Home, state.screen)
+        assertEquals(null, state.selectedBook)
+        assertEquals(listOf(2L, 1L), state.readingBooks.map(Book::id))
+        assertEquals(95, state.readingBooks.first().currentPage)
+    }
+
+    @Test
     fun updatingReadingProgress_logsTimeEntryAndUpdatesBook() = runTest {
         val repository = FakeRepository()
         val viewModel = BookViewModel(repository, FakeTimeRepository())
@@ -230,7 +249,9 @@ class BookViewModelTest {
         assertEquals(4.0, viewModel.uiState.value.selectedBook?.rating)
     }
 
-    private class FakeRepository : BookRepository(NoopBookApi) {
+    private class FakeRepository(
+        private val reading: List<Book> = listOf(sampleBook(BookState.Reading)),
+    ) : BookRepository(NoopBookApi) {
         val requests = mutableListOf<Pair<BookState, String?>>()
         val wishlistDrafts = mutableListOf<BookDraft>()
         val readingDrafts = mutableListOf<BookDraft>()
@@ -239,7 +260,7 @@ class BookViewModelTest {
 
         override fun getBooks(state: BookState, category: String?): Flow<ApiResult<List<Book>>> {
             requests.add(state to category)
-            return flowOf(ApiResult.Success(listOf(sampleBook(state))))
+            return flowOf(ApiResult.Success(if (state == BookState.Reading) reading else listOf(sampleBook(state))))
         }
 
         override fun getCategories(): Flow<ApiResult<List<String>>> =
@@ -281,9 +302,10 @@ class BookViewModelTest {
             return flowOf(
                 ApiResult.Loading,
                 ApiResult.Success(
-                    sampleBook(BookState.Reading).copy(
+                    reading.first { it.id == bookId }.copy(
                         currentPage = currentPage,
                         readingDurationMinutes = readingDurationMinutes,
+                        updatedAt = "2026-11-27T09:00:00Z",
                     )
                 ),
             )

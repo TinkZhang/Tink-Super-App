@@ -8,7 +8,10 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import app.tinks.tink.book.BookEvent
 import app.tinks.tink.book.BookPageFormat
+import app.tinks.tink.book.BookState
+import app.tinks.tink.book.sampleBook
 import app.tinks.tink.ui.theme.TinkTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -44,6 +47,26 @@ class HomeScreenTest {
         composeRule.onAllNodesWithText("Start").assertCountEquals(0)
         composeRule.onAllNodesWithText("Stop").assertCountEquals(0)
         assertEquals(HomeEvent.OpenReadKeeperProgress, events.single())
+    }
+
+    @Test
+    fun homeProgressUsesTheReadKeeperDialogAndSubmitsTheOpenedBook() {
+        val book = sampleBook(BookState.Reading)
+        val events = mutableListOf<HomeEvent>()
+        composeRule.setContent {
+            TinkTheme(dynamicColor = false) {
+                HomeScreen(state = HomeUiState(readKeeperProgressBook = book), onEvent = events::add)
+            }
+        }
+
+        composeRule.onNodeWithText("Update progress").assertIsDisplayed()
+        composeRule.onNodeWithText("Log reading time").assertIsDisplayed()
+        composeRule.onNodeWithTag("book_progress_save").performClick()
+
+        assertEquals(
+            HomeEvent.SaveReadKeeperProgress(BookEvent.UpdateReadingProgress(book.id, null, null, book.currentPage, null)),
+            events.single(),
+        )
     }
 
     private fun readingBook() = HomeReadKeeperBook(

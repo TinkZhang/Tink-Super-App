@@ -36,6 +36,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -114,6 +115,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -175,6 +177,7 @@ fun BookScreen(
     onOpenDrawer: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) { viewModel.onScreenEntered() }
     BookScreen(
         state = state,
         onEvent = viewModel::onEvent,
@@ -363,11 +366,21 @@ private fun BooksHome(
     state: BookUiState,
     onEvent: (BookEvent) -> Unit,
 ) {
-    val current = state.readingBooks.firstOrNull()
+    var progressBook by remember { mutableStateOf<Book?>(null) }
     val abandonedCount = state.archivedBooks.count { it.archiveStatus == ArchiveStatus.Abandon }
     val doneCount = state.archivedBooks.count { it.archiveStatus == ArchiveStatus.Done }
-    val continueBooks = state.readingBooks.drop(if (current == null) 0 else 1).ifEmpty {
-        current?.let(::listOf).orEmpty()
+    val continueBooks = state.readingBooks.take(5)
+
+    progressBook?.let { book ->
+        ProgressTimeDialog(
+            book = book,
+            readingTimeEntries = state.readingTimeEntries,
+            onDismiss = { progressBook = null },
+            onSave = { event ->
+                onEvent(event)
+                progressBook = null
+            },
+        )
     }
 
     LazyColumn(
@@ -377,7 +390,7 @@ private fun BooksHome(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (current == null) {
+        if (state.readingBooks.isEmpty()) {
             item {
                 CurrentReadingCard(null, onEvent)
             }
@@ -435,8 +448,18 @@ private fun BooksHome(
                     onEvent(BookEvent.OpenList(BookState.Reading))
                 }
             }
-            items(continueBooks.take(2), key = { it.id }) { book ->
-                BookListCard(book, onEvent)
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for (book in continueBooks) {
+                        key(book.id) {
+                            ContinueReadingRow(
+                                book = book,
+                                onOpen = { onEvent(BookEvent.OpenDetail(book.id)) },
+                                onUpdateProgress = { progressBook = book },
+                            )
+                        }
+                    }
+                }
             }
         }
         item {
@@ -448,6 +471,64 @@ private fun BooksHome(
         item {
             YearlySummaryEntry(state.currentYearlySummary()) {
                 onEvent(BookEvent.OpenYearlySummary)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContinueReadingRow(
+    book: Book,
+    onOpen: () -> Unit,
+    onUpdateProgress: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                modifier = Modifier.weight(1f)
+                    .clickable(onClick = onOpen)
+                    .testTag("book_item_${book.id}")
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BookCover(book.coverUrl, book.title, Modifier.width(38.dp))
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
+                    Text(
+                        book.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    ProgressLine(book)
+                }
+            }
+            IconButton(
+                onClick = onUpdateProgress,
+                modifier = Modifier.size(48.dp).testTag("book_quick_progress_${book.id}"),
+            ) {
+                Box(
+                    modifier = Modifier.size(32.dp)
+                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_reading_progress),
+                        contentDescription = "Update progress for ${book.title}",
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
         }
     }
@@ -1836,16 +1917,8 @@ private fun BookDetail(
             book = book,
             readingTimeEntries = readingTimeEntries,
             onDismiss = { showProgress = false },
-            onSave = { startTime, stopTime, page, progress ->
-                onEvent(
-                    BookEvent.UpdateReadingProgress(
-                        bookId = book.id,
-                        startTime = startTime,
-                        stopTime = stopTime,
-                        stopPage = page,
-                        stopProgressPercentage = progress,
-                    )
-                )
+            onSave = { event ->
+                onEvent(event)
                 showProgress = false
             },
         )
@@ -2337,11 +2410,11 @@ private fun EditBookDialog(
 }
 
 @Composable
-private fun ProgressTimeDialog(
+internal fun ProgressTimeDialog(
     book: Book,
     readingTimeEntries: List<TimeEntry>,
     onDismiss: () -> Unit,
-    onSave: (Instant?, Instant?, Int?, Double?) -> Unit,
+    onSave: (BookEvent.UpdateReadingProgress) -> Unit,
 ) {
     val usesPages = book.pageFormat.usesPages
     var progressText by remember(book.id) {
@@ -2368,7 +2441,9 @@ private fun ProgressTimeDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
-                onClick = { onSave(startTime, stopTime.takeIf { logReadingTime }, page, progress) },
+                onClick = {
+                    onSave(BookEvent.UpdateReadingProgress(book.id, startTime, stopTime.takeIf { logReadingTime }, page, progress))
+                },
                 enabled = (page != null || progress != null) && !invalidTime,
                 modifier = Modifier.testTag("book_progress_save"),
             ) { Text("Save") }

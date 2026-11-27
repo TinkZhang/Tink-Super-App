@@ -2,10 +2,13 @@ package app.tinks.tink.home
 
 import app.tinks.tink.book.Book
 import app.tinks.tink.book.BookDao
+import app.tinks.tink.book.BookEvent
 import app.tinks.tink.book.BookPageFormat
 import app.tinks.tink.book.BookRepository
+import app.tinks.tink.book.READING_TIME_TYPE
 import app.tinks.tink.book.toBookProgressUnits
 import app.tinks.tink.book.toDomain
+import app.tinks.tink.book.toReadingProgressSave
 import app.tinks.tink.haircut.HaircutApi
 import app.tinks.tink.haircut.toDomain as toHaircutDomain
 import app.tinks.tink.merriam.db.MerriamDao
@@ -50,10 +53,7 @@ data class HomeReadKeeperBook(
     val currentPage: Int?,
     val progressPercentage: Double?,
     val pages: Int?,
-) {
-    val progressTargetLabel: String
-        get() = if (pageFormat.usesPages) "Page" else "Progress %"
-}
+)
 
 @Singleton
 open class HomeRepository @Inject constructor(
@@ -114,22 +114,18 @@ open class HomeRepository @Inject constructor(
         true
     }
 
-    open suspend fun updateReadKeeperProgress(page: Int?, progressPercentage: Double?): Boolean =
-        withContext(Dispatchers.IO) {
-            val book = bookDao.getLatestReadingBook()?.toDomain() ?: return@withContext false
-            val currentPage = if (book.pageFormat.usesPages) {
-                page
-            } else {
-                progressPercentage?.toBookProgressUnits(book.pageFormat)
-            }
-            val result = bookRepository.queueReadingProgress(
-                bookId = book.id,
-                currentPage = currentPage,
-                readingDurationMinutes = book.readingDurationMinutes,
-                timeEntry = null,
-            ).first { it !is app.tinks.tink.network.ApiResult.Loading }
-            result is app.tinks.tink.network.ApiResult.Success
-        }
+    open suspend fun getCachedReadKeeperBook(bookId: Long): Book? = bookDao.getBook(bookId)?.toDomain()
+
+    open suspend fun updateReadKeeperProgress(book: Book, event: BookEvent.UpdateReadingProgress): Boolean {
+        val save = event.toReadingProgressSave(book) ?: return false
+        val result = bookRepository.queueReadingProgress(
+            bookId = book.id,
+            currentPage = save.currentPage,
+            readingDurationMinutes = save.durationMinutes,
+            timeEntry = save.timeEntry,
+        ).first { it !is app.tinks.tink.network.ApiResult.Loading }
+        return result is app.tinks.tink.network.ApiResult.Success
+    }
 
     open suspend fun syncPendingActions() = withContext(Dispatchers.IO) {
         homeDao.getPendingActions().forEach { action ->
@@ -259,5 +255,3 @@ open class HomeRepository @Inject constructor(
             pages = pages,
         )
 }
-
-private const val READING_TIME_TYPE = 2

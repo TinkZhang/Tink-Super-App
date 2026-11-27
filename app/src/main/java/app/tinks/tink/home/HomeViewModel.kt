@@ -2,14 +2,23 @@ package app.tinks.tink.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tinks.tink.book.Book
+import app.tinks.tink.book.BookEvent
+import app.tinks.tink.book.READING_TIME_TYPE
+import app.tinks.tink.network.ApiResult
+import app.tinks.tink.time.TimeEntry
+import app.tinks.tink.time.TimeRepository
 import app.tinks.tink.ui.components.AppSnackbarBus
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 sealed interface HomeEvent {
@@ -18,15 +27,14 @@ sealed interface HomeEvent {
     data object AddWeight : HomeEvent
     data object OpenReadKeeperProgress : HomeEvent
     data object DismissReadKeeperProgress : HomeEvent
-    data class UpdateReadKeeperProgressInput(val value: String) : HomeEvent
-    data object SaveReadKeeperProgress : HomeEvent
+    data class SaveReadKeeperProgress(val update: BookEvent.UpdateReadingProgress) : HomeEvent
 }
 
 data class HomeUiState(
     val isRefreshing: Boolean = false,
     val snapshot: HomeSnapshot = HomeSnapshot(),
-    val showReadKeeperProgressDialog: Boolean = false,
-    val readKeeperProgressInput: String = "",
+    val readKeeperProgressBook: Book? = null,
+    val readingTimeEntries: List<TimeEntry> = emptyList(),
 ) {
     val canUpdateReadKeeper: Boolean
         get() = snapshot.readKeeperBook != null
@@ -35,8 +43,11 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repository: HomeRepository,
+    private val timeRepository: TimeRepository,
 ) : ViewModel() {
     private val progressDialogState = MutableStateFlow(HomeProgressDialogState())
+    private var openProgressJob: Job? = null
+    private var saveProgressJob: Job? = null
 
     val uiState = combine(
         repository.observeSnapshot(),
@@ -45,8 +56,8 @@ class HomeViewModel @Inject constructor(
         HomeUiState(
             isRefreshing = progressDialog.isRefreshing,
             snapshot = snapshot,
-            showReadKeeperProgressDialog = progressDialog.showReadKeeperProgressDialog,
-            readKeeperProgressInput = progressDialog.readKeeperProgressInput,
+            readKeeperProgressBook = progressDialog.readKeeperProgressBook,
+            readingTimeEntries = progressDialog.readingTimeEntries,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, HomeUiState())
 
@@ -68,13 +79,8 @@ class HomeViewModel @Inject constructor(
                 }
             }
             HomeEvent.OpenReadKeeperProgress -> openReadKeeperProgress()
-            HomeEvent.DismissReadKeeperProgress -> progressDialogState.update {
-                it.copy(showReadKeeperProgressDialog = false, readKeeperProgressInput = "")
-            }
-            is HomeEvent.UpdateReadKeeperProgressInput -> progressDialogState.update {
-                it.copy(readKeeperProgressInput = event.value.filterProgressInput())
-            }
-            HomeEvent.SaveReadKeeperProgress -> saveReadKeeperProgress()
+            HomeEvent.DismissReadKeeperProgress -> dismissReadKeeperProgress()
+            is HomeEvent.SaveReadKeeperProgress -> saveReadKeeperProgress(event.update)
         }
     }
 
@@ -87,39 +93,45 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun openReadKeeperProgress() {
-        val book = uiState.value.snapshot.readKeeperBook ?: run {
-            AppSnackbarBus.showMessage("No reading book cached yet")
-            return
-        }
-        progressDialogState.update {
-            it.copy(
-                showReadKeeperProgressDialog = true,
-                readKeeperProgressInput = "",
-            )
+        val bookId = uiState.value.snapshot.readKeeperBook?.id ?: return
+        openProgressJob?.cancel()
+        openProgressJob = viewModelScope.launch {
+            val book = repository.getCachedReadKeeperBook(bookId) ?: run {
+                AppSnackbarBus.showMessage("No reading book cached yet")
+                return@launch
+            }
+            progressDialogState.update { it.copy(readKeeperProgressBook = book, readingTimeEntries = emptyList()) }
+            val yearStart = LocalDate.now().withDayOfYear(1)
+            timeRepository.getTimeDashboard(yearStart, yearStart.withDayOfYear(yearStart.lengthOfYear()))
+                .collect { result ->
+                    if (result is ApiResult.Success) {
+                        val entries = result.data.entries.filter { it.type == READING_TIME_TYPE }
+                        progressDialogState.update { it.copy(readingTimeEntries = entries) }
+                    }
+                }
         }
     }
 
-    private fun saveReadKeeperProgress() {
-        val book = uiState.value.snapshot.readKeeperBook ?: return
-        val rawInput = uiState.value.readKeeperProgressInput
-        val page = if (book.pageFormat.usesPages) rawInput.toIntOrNull()?.coerceAtLeast(0) else null
-        val progress = if (book.pageFormat.usesPages) {
-            null
-        } else {
-            rawInput.toDoubleOrNull()?.coerceIn(0.0, 100.0)
-        }
-        if (page == null && progress == null) {
-            AppSnackbarBus.showMessage("Enter progress first")
-            return
-        }
+    private fun dismissReadKeeperProgress() {
+        openProgressJob?.cancel()
+        progressDialogState.update { it.copy(readKeeperProgressBook = null, readingTimeEntries = emptyList()) }
+    }
 
-        launchAction {
-            if (repository.updateReadKeeperProgress(page, progress)) {
-                progressDialogState.update {
-                    it.copy(showReadKeeperProgressDialog = false, readKeeperProgressInput = "")
-                }
+    private fun saveReadKeeperProgress(event: BookEvent.UpdateReadingProgress) {
+        val book = progressDialogState.value.readKeeperProgressBook?.takeIf { it.id == event.bookId } ?: return
+        if (saveProgressJob?.isActive == true) return
+        saveProgressJob = viewModelScope.launch {
+            val saved = try {
+                repository.updateReadKeeperProgress(book, event)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                false
+            }
+            if (saved) {
+                if (progressDialogState.value.readKeeperProgressBook == book) dismissReadKeeperProgress()
             } else {
-                AppSnackbarBus.showMessage("No reading book cached yet")
+                AppSnackbarBus.showMessage("Could not save reading progress")
             }
         }
     }
@@ -134,11 +146,6 @@ class HomeViewModel @Inject constructor(
 
 private data class HomeProgressDialogState(
     val isRefreshing: Boolean = false,
-    val showReadKeeperProgressDialog: Boolean = false,
-    val readKeeperProgressInput: String = "",
+    val readKeeperProgressBook: Book? = null,
+    val readingTimeEntries: List<TimeEntry> = emptyList(),
 )
-
-private fun String.filterProgressInput(): String =
-    filterIndexed { index, char ->
-        char.isDigit() || (char == '.' && index > 0 && !take(index).contains('.'))
-    }

@@ -54,7 +54,10 @@ open class BookRepository @Inject constructor(
         when (val remote = safeApiCall { fetchRemoteBooks(state, category) }) {
             is ApiResult.Success -> {
                 cacheBooks(state, remote.data)
-                emit(ApiResult.Success(remote.data))
+                val current = if (state == BookState.Reading && bookDao != null) {
+                    bookDao.getBooks(state.cacheStates()).map { it.toDomain() }.filterByCategory(category)
+                } else remote.data
+                emit(ApiResult.Success(current))
             }
             is ApiResult.Error -> if (cached.isEmpty()) emit(remote)
             ApiResult.Loading -> Unit
@@ -72,8 +75,7 @@ open class BookRepository @Inject constructor(
         if (cached != null) emit(ApiResult.Success(cached))
         when (val remote = safeApiCall { bookApi.getBook(bookId).toDomain() }) {
             is ApiResult.Success -> {
-                cacheRemoteBook(remote.data)
-                emit(ApiResult.Success(remote.data))
+                emit(ApiResult.Success(cacheRemoteBook(remote.data)))
             }
             is ApiResult.Error -> if (cached == null) emit(remote)
             ApiResult.Loading -> Unit
@@ -360,8 +362,8 @@ open class BookRepository @Inject constructor(
         }
     }
 
-    private suspend fun cacheRemoteBook(book: Book) {
-        val dao = bookDao ?: return
+    private suspend fun cacheRemoteBook(book: Book): Book {
+        val dao = bookDao ?: return book
         val local = dao.getBook(book.id)
         val remote = if (local?.hasPendingProgress == true) {
             book.toEntity(hasPendingProgress = true).copy(
@@ -377,6 +379,7 @@ open class BookRepository @Inject constructor(
             cacheCover(remote.coverUrl)
             updateWidget()
         }
+        return if (local?.hasPendingProgress == true) remote.toDomain() else book
     }
 
     private fun cacheCover(url: String?) {
