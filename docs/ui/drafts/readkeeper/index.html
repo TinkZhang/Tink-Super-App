@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ReadKeeper · Shared progress</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#e5ebe9;font:14px Roboto,"Noto Sans SC","PingFang SC",sans-serif;color:#26342f}#draft{display:flex;align-items:flex-start;gap:24px;padding:26px;width:770px}figure{margin:0}figcaption{margin:0 0 12px;font-size:14px;font-weight:650;color:#394944}
+.screen{width:360px;height:760px;display:flex;flex-direction:column;border-radius:24px;overflow:hidden;background:#f4f9f7;color:#1b2a25;--surface:#e9f1ee;--track:#c9e2dc;--progress:#087c6d;--muted:#4b6259;--text:#1b2a25}
+.compact{width:320px;height:640px;background:#13221e;color:#e5f3ed;--surface:#20332c;--track:#334f42;--progress:#82dbc2;--muted:#b3ccbf;--text:#e5f3ed}
+.status{height:32px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;flex:none;font-size:12px;font-weight:650}
+.signal{height:9px;display:flex;align-items:flex-end;gap:2px}.signal i{width:2px;background:currentColor}.signal i:nth-child(1){height:3px}.signal i:nth-child(2){height:5px}.signal i:nth-child(3){height:7px}.signal i:nth-child(4){height:9px}.battery{border:1px solid currentColor;width:16px;height:8px;border-radius:2px;padding:1px;margin-left:2px}.battery i{display:block;width:10px;height:4px;background:currentColor}
+.search{background:var(--surface);border-radius:100px;display:flex;align-items:center;gap:13px;padding:0 16px;height:48px;margin:6px 16px 8px;color:var(--text);flex:none;font-size:16px}
+.search svg{flex:none}.badges{display:flex;justify-content:space-between;padding:6px 18px 10px;gap:7px}
+.badge{width:55px;height:55px;border-radius:50%;position:relative;display:grid;place-items:center;color:#fff}.badge:nth-child(1){background:#f9b400;color:#2e2100}.badge:nth-child(2){background:#d74434}.badge:nth-child(3){background:#357cdf}.badge:nth-child(4){background:#0b9d53}.badge b{position:absolute;right:-3px;top:-1px;border-radius:12px;background:#af2a23;color:white;min-width:15px;height:15px;font-size:10px;text-align:center;line-height:15px}
+.content{padding:6px 16px 12px;overflow:auto;flex:1}.section{display:flex;align-items:center;justify-content:space-between;margin:6px 0 9px;height:26px}.section h2,.records h2{font-size:17px;font-weight:650;margin:0}.section span{font-weight:650;color:var(--progress)}
+.books{display:grid;gap:7px}.book{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:center;background:var(--surface);border-radius:10px;padding:7px 10px 7px 8px;min-height:66px}
+.cover{height:54px;width:38px;border-radius:4px;display:flex;flex-direction:column;justify-content:center;padding:4px;color:#fff;box-shadow:inset 3px 0 #0003;overflow:hidden}.cover strong{font-size:9px;line-height:1.16;font-family:Georgia,"PingFang SC",serif;word-break:normal}.cover:before{content:"";height:2px;background:currentColor;opacity:.7;width:65%;margin-bottom:4px}.cover.a{background:#b38026;color:#242b20}.cover.b{background:#173b50}.cover.c{background:#b54f38}.cover.d{background:#625277}.cover.e{background:#42664e}.meta{min-width:0;display:grid;gap:4px}.title{font-size:14px;line-height:1.25;font-weight:650;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}.progress{color:var(--muted);font-size:12px;line-height:1.2}.bar{height:3px;border-radius:6px;overflow:hidden;background:var(--track)}.bar i{height:100%;display:block;background:var(--progress);border-radius:6px}
+.records{margin-top:14px;padding:12px;border-radius:10px;background:var(--surface)}.records p{margin:3px 0 8px;color:var(--muted);font-size:12px}.dots{display:grid;grid-template-columns:repeat(32,1fr);gap:2px}.dots i{height:4px;border-radius:2px;background:var(--track)}.dots i:nth-child(4n),.dots i:nth-child(7n){background:var(--progress)}
+.gesture{height:22px;display:grid;place-items:center;flex:none}.gesture i{height:4px;width:102px;border-radius:6px;background:var(--muted)}
+</style><style>
+#draft{width:1140px}.book{grid-template-columns:40px minmax(0,1fr) 48px;gap:8px}
+.quick{min-height:48px;width:48px;display:grid;place-items:center;border:0;background:transparent;color:var(--progress);padding:0;cursor:pointer}.quick span{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:var(--track)}
+.home-body{padding:18px 16px;flex:1}.home-body h2{font-size:19px;margin:0 0 12px}.home-card{padding:14px;border-radius:14px;background:var(--surface)}.home-card .book{padding:0;grid-template-columns:48px minmax(0,1fr);gap:12px}.home-card .cover{width:46px;height:66px}.home-update{margin-top:12px;width:100%;height:44px;border:1px solid var(--progress);border-radius:99px;background:none;color:var(--progress);font-size:14px;font-weight:650}
+.dialog-demo{margin:22px 0 0;padding:18px;border-radius:23px;background:#eef5f1;color:#23342b;display:grid;gap:13px}.dialog-demo h2{margin:0}.progress-value{padding:9px;text-align:center;border-radius:12px;background:#dcebe5;color:#223d33}.progress-value label{display:block;font-size:12px}.progress-value input{width:100%;border:0;background:transparent;text-align:center;font-size:28px;color:inherit}
+.switch-line{display:flex;align-items:center;justify-content:space-between;gap:8px}.switch-line input{accent-color:#087c6d;width:18px;height:18px}
+.dialog-actions{display:flex;gap:8px;justify-content:flex-end}.dialog-actions button{min-height:42px;padding:0 10px;background:transparent;border:0;color:#086d61;font:inherit;font-weight:600}
+.time-fields{font-size:12px;gap:7px}.time-fields:not([hidden]){display:grid}.time-fields label{display:grid;grid-template-columns:34px 1fr 72px;align-items:center;gap:4px}.time-fields input{min-width:0;font:inherit}
+dialog{width:min(320px,calc(100vw - 36px));padding:0;border:0;background:none;border-radius:23px}dialog::backdrop{background:#162b2370}dialog .dialog-demo{margin:0}
+</style></head>
+<body><main id="draft"></main>
+<script>
+const icon=(path,n=22)=>'<svg width="'+n+'" height="'+n+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+path+'"/></svg>';
+const readingProgress = icon('M3 5h4c1.8 0 3.3.7 5 2 1.7-1.3 3.2-2 5-2h4v13h-4c-1.8 0-3.3.7-5 2-1.7-1.3-3.2-2-5-2H3zM12 7v13m2-9h5m-2-2 2 2-2 2',19);
+const books=[
+ ['a','Good<br>Inside','看见孩子','128 / 320 pages · 40%',40],
+ ['b','Data<br>Systems','Designing Data-Intensive Applications','212 / 616 pages · 34%',34],
+ ['c','The<br>Creative<br>Act','The Creative Act','Page 61 of 432 · 14%',14],
+ ['d','Deep<br>Work','Deep Work','62%',62],
+ ['e','A Field<br>Guide','A Field Guide to Getting Lost','28 / 224 pages · 13%',13]
+];
+const badges=[['M6 4h12v16l-6-4-6 4z',5],['M12 19S4 14 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5-8 10-8 10z',2],['M5 8h14v12H5zM4 4h16v4H4zM12 11v5m-2-2 2 2 2-2',2],['M4 12a8 8 0 1 0 16 0 8 8 0 1 0-16 0m4 0 3 3 5-6',12]];
+for(const [label,compact] of [['ReadKeeper · Compact list',false],['ReadKeeper · 320 × 640 dark',true]]){
+ const page=document.createElement('figure');
+ page.innerHTML='<figcaption>'+label+'</figcaption><section class="screen '+(compact?'compact':'')+'" aria-label="'+label+'"><div class="status"><span>9:41</span><div class="signal"><i></i><i></i><i></i><i></i><span class="battery"><i></i></span></div></div><div class="search">'+icon('M3 6h18M3 12h18M3 18h18')+'<span>Search books</span></div><div class="badges">'+badges.map(g=>'<div class="badge">'+icon(g[0],25)+'<b>'+g[1]+'</b></div>').join('')+'</div><div class="content"><div class="section"><h2>Continue reading</h2><span>All</span></div><div class="books">'+books.map(b=>'<div class="book"><div class="cover '+b[0]+'"><strong>'+b[1]+'</strong></div><div class="meta"><div class="title">'+b[2]+'</div><div class="bar"><i style="width:'+b[4]+'%"></i></div><div class="progress">'+b[3]+'</div></div><button class="quick" aria-label="Update progress for '+b[2]+'" data-progress="'+b[4]+'" data-pages="'+[128,212,61,'',28][books.indexOf(b)]+'"><span>'+readingProgress+'</span></button></div>').join('')+'</div><div class="records"><h2>Reading records</h2><p>2026 · 128 days</p><div class="dots">'+'<i></i>'.repeat(96)+'</div></div></div><div class="gesture"><i></i></div></section>';
+ document.querySelector('#draft').append(page);
+}
+
+function progressForm(id) {
+ return '<form method="dialog" class="dialog-demo"><h2>Update progress</h2><div class="progress-value"><label for="'+id+'-progress">Current page</label><input id="'+id+'-progress" type="number" value="128" min="0"></div><label class="switch-line">Log reading time <input class="time-toggle" type="checkbox" aria-label="Log reading time"></label><div class="time-fields" hidden><label>Start <input type="date" value="2026-11-27"><input type="time" value="09:00"></label><label>End <input type="date" value="2026-11-27"><input type="time" value="09:30"></label></div><div class="dialog-actions"><button type="submit" value="cancel">Cancel</button><button type="submit" value="save">Save</button></div></form>';
+}
+const home=document.createElement('figure');
+home.innerHTML='<figcaption>Home · Same progress dialog</figcaption><section class="screen" aria-label="Home and the shared dialog"><div class="status"><span>9:41</span></div><div class="search" style="border-radius:0;background:none">'+icon('M3 6h18M3 12h18M3 18h18')+'<span>Tink</span></div><div class="home-body"><div class="home-card"><h2>ReadKeeper</h2><div class="book"><div class="cover a"><strong>Good<br>Inside</strong></div><div class="meta"><div class="title">看见孩子</div><div class="progress">128 / 320 pages · 40%</div><div class="bar"><i style="width:40%"></i></div></div></div><button class="home-update" data-pages="128" data-progress="40">Update progress</button></div>'+progressForm('sample')+'</div><div class="gesture"><i></i></div></section>';
+document.querySelector('#draft').append(home);
+const dialog=document.createElement('dialog');
+dialog.innerHTML=progressForm('active');
+document.body.append(dialog);
+for(const button of document.querySelectorAll('.quick,.home-update')){
+ button.addEventListener('click', ()=>{
+  const field=dialog.querySelector('.progress-value');
+  field.querySelector('label').textContent=button.dataset.pages?'Current page':'Progress %';
+  field.querySelector('input').value=button.dataset.pages||button.dataset.progress;
+  const toggle=dialog.querySelector('.time-toggle');
+  toggle.checked=false;
+  dialog.querySelector('.time-fields').hidden=true;
+  dialog.showModal();
+ });
+}
+for(const toggle of document.querySelectorAll('.time-toggle')){
+ toggle.addEventListener('change', ()=>toggle.closest('form').querySelector('.time-fields').hidden=!toggle.checked);
+}
+</script></body></html>

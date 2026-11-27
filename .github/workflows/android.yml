@@ -36,27 +36,6 @@ jobs:
       - name: Check debug APK builds
         run: ./gradlew assembleDebug --stacktrace
 
-  figma-refresh:
-    name: Prepare Figma refresh
-    if: startsWith(github.ref, 'refs/heads/release/v') && github.event.deleted != true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Identify release UI changes
-        shell: bash
-        run: |
-          python3 scripts/prepare-figma-release.py --release "$GITHUB_REF_NAME" --head "$GITHUB_SHA" \
-            > "$RUNNER_TEMP/figma-refresh.md"
-          cat "$RUNNER_TEMP/figma-refresh.md" >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: figma-refresh
-          path: ${{ runner.temp }}/figma-refresh.md
-          if-no-files-found: error
-
   release-checks:
     if: startsWith(github.ref, 'refs/heads/release/v')
     runs-on: ubuntu-latest
@@ -126,6 +105,23 @@ jobs:
         with:
           name: ${{ env.APK_ARTIFACT }}
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+      - name: Render native screenshots for the offline UI gallery
+        run: |
+          mv app/src/screenshotTestDebug/reference "$RUNNER_TEMP/verified-screenshot-baselines"
+          ./gradlew updateDebugScreenshotTest
+      - name: Package the offline UI gallery
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          python3 scripts/build-ui-gallery.py \
+            --screenshots app/src/screenshotTestDebug/reference \
+            --version "$RELEASE_TAG" --commit "$GITHUB_SHA" \
+            --output "$RUNNER_TEMP/android-ui-gallery.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-ui-gallery
+          path: ${{ runner.temp }}/android-ui-gallery.zip
           if-no-files-found: error
 
   appium:
@@ -235,6 +231,10 @@ jobs:
         with:
           pattern: android-appium-*
           path: release-reports/appium
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-ui-gallery
+          path: release-assets
       - name: Publish tested APK and reports on GitHub
         shell: bash
         run: |
@@ -282,6 +282,7 @@ jobs:
             echo "- [Appium test source](https://github.com/TinkZhang/tink-test/tree/$TEST_SHA)"
             echo '- The APK is the debug build installed by Appium.'
             echo '- Download android-test-reports.zip for the HTML reports and logs.'
+            echo '- Extract android-ui-gallery.zip and open index.html to browse the native Compose Preview screenshots offline.'
           } > release-notes.md
 
           # Keep a draft until every asset is uploaded, including when retrying a failed upload.
@@ -290,5 +291,5 @@ jobs:
               --title "Tink Android $RELEASE_TAG" --notes-file release-notes.md
           fi
           gh release upload "$RELEASE_TAG" "release-assets/$apk" \
-            release-assets/android-test-reports.zip --clobber
+            release-assets/android-test-reports.zip release-assets/android-ui-gallery.zip --clobber
           gh release edit "$RELEASE_TAG" --draft=false --target "$GITHUB_SHA" --notes-file release-notes.md

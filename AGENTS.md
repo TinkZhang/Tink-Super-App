@@ -14,8 +14,8 @@
 ## UI Design
 
 - Use the [UI catalog](docs/ui/README.md) and existing Compose components to understand the current UI. Follow Material 3 and the app's dynamic color theme.
-- Draft app UI or navigation changes in Figma before coding and get user approval on the linked frames. Keep the approved draft link with the feature notes in `docs/ui/`.
-- Keep daily implementation and visual review tied to the approved draft. Refresh the Current UI frames and catalog from the verified Android release branch.
+- Draft app UI or navigation changes as offline HTML in `docs/ui/drafts/<feature>/index.html` and get user approval before coding, unless asked to proceed directly. Link the approved file in the feature notes.
+- Validate the implemented UI on the native app or through Compose previews. Use the release HTML gallery as the record of the shipped interface.
 
 ## Project Skills
 
@@ -29,8 +29,7 @@ For daily verification, select relevant non-UI tests explicitly with `./gradlew 
 
 ## Releases
 
-- The user creates and pushes a branch named `release/vX.Y.Z` from the desired commit on `main`. Each release push runs the **Prepare Figma refresh** job alongside release verification. The Actions summary and `figma-refresh` artifact identify candidate frames and changed UI sources since the catalog’s reference revision.
-- After reviewing the release candidate, use the authenticated Figma session to refresh the affected Current UI frames. Update the catalog’s reference revision to the verified release commit after completing the refresh.
+- The user creates and pushes `release/vX.Y.Z` from the desired commit on `main`. CI renders and packages an offline HTML UI gallery after screenshot validation. Use native screenshots of affected states to supplement it where automated previews lack coverage.
 - The Android workflow runs the debug and release unit suites, Robolectric UI tests, JaCoCo reporting, and Compose screenshot validation. It builds one debug APK and installs that exact artifact in the Appium mock and development API E2E suites from `tink-test`.
-- Once all checks pass, the workflow publishes the matching GitHub release tag with notes from Git history, the tested debug APK, and a ZIP containing HTML test reports and logs. Failed runs retain their available reports in GitHub Actions.
+- Once all checks pass, the workflow publishes the matching GitHub release tag with notes from Git history, the tested debug APK, a ZIP containing HTML test reports and logs, and `android-ui-gallery.zip`. Failed runs retain their available reports in GitHub Actions.
 - If a release check fails because of an app defect, fix and push it on `main`. The user can then update the release branch to the corrected commit. Use Actions to rerun transient failures on the same commit.

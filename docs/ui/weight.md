@@ -1,6 +1,6 @@
 # Weight
 
-**Reference revision** `8590e41` · **Figma reference** [Weight overview](https://www.figma.com/design/bGT7KPRSoMJ1iYkmHNmAnf?node-id=3-321)
+**Reference revision** `8590e41`
 
 ## Current UI
 
@@ -32,4 +32,4 @@ The checked-in **Compose Preview** renders the populated overview with sample re
 
 ## Design review
 
-For changes to this flow, draft the affected Material 3 states in Figma and review the smallest supported layout. Check Chinese labels, the 斤 unit, reachability of the adjustment and save controls, chart labels, and the transition between overview and history. Record the approved draft link here before implementing. Refresh the Current UI frame and the references for any new states after reviewing the release candidate.
+For changes to this flow, draft the affected Material 3 states in local HTML and review the smallest supported layout. Check Chinese labels, the 斤 unit, reachability of the adjustment and save controls, chart labels, and the transition between overview and history. Record the approved draft link here before implementing. Capture affected native states for the release HTML gallery after reviewing the release candidate.
