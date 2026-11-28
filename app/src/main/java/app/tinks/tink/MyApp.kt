@@ -125,6 +125,9 @@ fun MyApp(
     quickAddRequestId: Int = 0,
     openAddFromQuickSettings: Boolean = false,
     onQuickSettingsRequestConsumed: () -> Unit = {},
+    sharedYtUrl: String? = null,
+    ytShareRequestId: String? = null,
+    onYtShareConsumed: () -> Unit = {},
 ) {
     var savedRandomPage by rememberSaveable { mutableStateOf<String?>(null) }
     val backStack = remember {
@@ -205,6 +208,10 @@ fun MyApp(
                 event.onAction()
             }
         }
+    }
+
+    LaunchedEffect(ytShareRequestId) {
+        if (ytShareRequestId != null && sharedYtUrl != null) onNavigate(ScreenYt)
     }
 
     LaunchedEffect(openAddFromQuickSettings, quickAddRequestId) {
@@ -440,7 +447,7 @@ fun MyApp(
                         is ScreenLotteryHistoryStats -> LotteryHistoryStatsScreen(hiltViewModel())
                         is ScreenSalesforce -> SalesforceScreen(hiltViewModel())
                         is ScreenSecureWeb -> SecureWebScreen()
-                        is ScreenYt -> YtScreen(hiltViewModel())
+                        is ScreenYt -> YtScreen(hiltViewModel(), sharedYtUrl, ytShareRequestId, onYtShareConsumed)
                         is ScreenStoryList -> StoryListScreen(
                             hiltViewModel(),
                             onStoryClick = { story ->

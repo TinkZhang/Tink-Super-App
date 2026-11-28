@@ -14,6 +14,8 @@ import app.tinks.tink.book.ReadKeeperSyncScheduler
 import dagger.hilt.android.HiltAndroidApp
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlinx.coroutines.*
+import app.tinks.tink.yt.YtSubscriptions
 
 @HiltAndroidApp
 class MyApplication : Application(), Configuration.Provider {
@@ -22,6 +24,8 @@ class MyApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var readKeeperSyncScheduler: ReadKeeperSyncScheduler
+
+    @Inject lateinit var ytSubscriptions: YtSubscriptions
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
@@ -36,6 +40,7 @@ class MyApplication : Application(), Configuration.Provider {
         // 启动网络监听与同步
         syncManager.startObservingNetwork()
         syncManager.initialSync()
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { ytSubscriptions.restoreSchedules() }
         schedulePeriodicSync()
         readKeeperSyncScheduler.schedulePeriodic()
     }

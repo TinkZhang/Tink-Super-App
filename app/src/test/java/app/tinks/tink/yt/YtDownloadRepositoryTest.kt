@@ -104,6 +104,36 @@ class YtDownloadRepositoryTest {
         assertTrue(youtubeDownloadError(Exception("No space left on device")).contains("storage"))
     }
 
+    @Test fun backgroundQueueSchedulesOnlyAvailableSlotsAndDoesNotMarkWaitingRowsFailed() = runBlocking {
+        repeat(8) { index ->
+            db.downloads().insert(YtDownload(videoId = "video$index", kind = YtDownloadKind.AUDIO,
+                attempt = "attempt$index", standalone = false, background = true))
+        }
+        repository.scheduleBackgroundQueue()
+        assertEquals(4, scheduler.pending.size)
+        repository.reconcile()
+        assertTrue(db.downloads().all().all { it.status == YtDownloadStatus.QUEUED })
+        val done = db.downloads().all().first { it.id in scheduler.pending }
+        db.downloads().complete(done.id, done.attempt, "Done", "/file", 123)
+        scheduler.pending.remove(done.id)
+        repository.scheduleBackgroundQueue()
+        assertEquals(4, scheduler.pending.size)
+        assertFalse(done.id in scheduler.pending)
+        val cancelled = scheduler.pending.keys.first()
+        repository.cancel(cancelled)
+        assertEquals(4, scheduler.pending.size)
+        assertFalse(cancelled in scheduler.pending)
+        assertEquals(YtDownloadStatus.CANCELLED, db.downloads().get(cancelled)!!.status)
+    }
+
+    @Test fun individuallyAddingAPlaylistEpisodeMakesItAvailableUngroupedWithoutRedownloading() = runBlocking {
+        db.downloads().insert(YtDownload(videoId = "LbCHAQ7HKu4", kind = YtDownloadKind.AUDIO,
+            attempt = "playlist", standalone = false, background = true))
+        repository.download(URL, YtDownloadKind.AUDIO)
+        assertTrue(db.downloads().all().single().standalone)
+        assertTrue(scheduler.pending.isEmpty())
+    }
+
     companion object { const val URL = "https://youtu.be/LbCHAQ7HKu4?si=k3IuU5o_SqidYee5" }
 }
 

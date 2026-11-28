@@ -47,57 +47,8 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 @Composable
-fun YtScreen(viewModel: YtViewModel) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val owner = LocalLifecycleOwner.current
-    val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        viewModel.download()
-    }
-    DisposableEffect(owner, viewModel) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
-        }
-        owner.lifecycle.addObserver(observer)
-        onDispose { owner.lifecycle.removeObserver(observer) }
-    }
-    YtScreen(
-        state = state,
-        onUrlChange = viewModel::changeUrl,
-        onKindChange = viewModel::changeKind,
-        onDownload = {
-            // Transfer jobs still work if notifications are declined.
-            if (YouTubeVideoUrl.parse(state.url) != null &&
-                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-            ) {
-                notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
-            } else {
-                viewModel.download()
-            }
-        },
-        onRetry = viewModel::retry,
-        onCancel = viewModel::cancel,
-        onOpen = { item ->
-            scope.launch {
-                val file = withContext(Dispatchers.IO) { YtMediaFiles(context).completedFile(item) }
-                if (file == null) {
-                    viewModel.refresh()
-                    viewModel.showError("The downloaded file is missing. Tap Retry to download it again.")
-                } else {
-                    try {
-                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                        context.startActivity(Intent(Intent.ACTION_VIEW).apply {
-                            setDataAndType(uri, item.kind.mimeType)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        })
-                    } catch (_: ActivityNotFoundException) {
-                        viewModel.showError("Install an audio or video player to open this file.")
-                    }
-                }
-            }
-        },
-    )
+fun YtScreen(viewModel: YtViewModel, sharedUrl: String? = null, shareRequestId: String? = null, onShareConsumed: () -> Unit = {}) {
+    YtLibraryRoute(viewModel, sharedUrl = sharedUrl, shareRequestId = shareRequestId, onShareConsumed = onShareConsumed)
 }
 
 @Composable

@@ -64,3 +64,108 @@ private val sampleYtDownload = YtDownload(
     id = 1, videoId = "LbCHAQ7HKu4", kind = YtDownloadKind.AUDIO, attempt = "preview",
     title = "我又倒地了！影片深度分析 SGA", status = YtDownloadStatus.DOWNLOADING, progress = 42,
 )
+
+@PreviewTest
+@Preview(name = "podcast-empty", widthDp = 400, heightDp = 740)
+@Preview(name = "podcast-small", widthDp = 320, heightDp = 584)
+@Composable
+fun YtLibraryEmptyScreenshot() {
+    TinkTheme(dynamicColor = false) { Surface { YtLibraryContent(YtLibraryState()) } }
+}
+
+@PreviewTest
+@Preview(name = "podcast-playing", widthDp = 400, heightDp = 740)
+@Preview(name = "podcast-large-text", widthDp = 400, heightDp = 740, fontScale = 1.5f)
+@Composable
+fun YtLibraryPlayingScreenshot() {
+    val episode = sampleYtDownload.copy(status = YtDownloadStatus.READY, sizeBytes = 12_000_000)
+    TinkTheme(dynamicColor = false) { Surface { YtLibraryContent(
+        YtLibraryState(downloads = listOf(episode)),
+        YtPlaybackState(true, episode.id, episode.title, true, 65_000, 900_000, 1.5f, true)) } }
+}
+
+
+@PreviewTest
+@Preview(name = "subscription-listening-options", widthDp = 320, heightDp = 360)
+@Preview(name = "subscription-listening-large-text", widthDp = 400, heightDp = 500, fontScale = 1.5f)
+@Composable
+fun YtSubscriptionListeningScreenshot() {
+    TinkTheme(dynamicColor = false) { Surface {
+        androidx.compose.foundation.layout.Column {
+            SubscriptionListeningFields(true, {}, 1.5f, {})
+        }
+    } }
+}
+
+@PreviewTest
+@Preview(widthDp = 400, heightDp = 740)
+@Composable
+fun YtLabelledLibraryScreenshot() {
+    TinkTheme(dynamicColor = false) { Surface { YtLibraryContent(YtLibraryState(downloads = listOf(
+        sampleYtDownload.copy(status = YtDownloadStatus.READY, standalone = true, labels = "History\nInterviews")))) } }
+}
+
+@PreviewTest
+@Preview(name = "video-portrait", widthDp = 400, heightDp = 740)
+@Preview(name = "video-landscape", widthDp = 740, heightDp = 400)
+@Composable
+fun YtVideoPlayerScreenshot() {
+    TinkTheme(dynamicColor = false) { YtVideoContent(YtVideoState(title = "Downloaded video", available = true,
+        loading = false, playing = true, position = 30_000, duration = 120_000)) }
+}
+
+@PreviewTest
+@Preview(widthDp = 320, heightDp = 584)
+@Composable
+fun YtVideoMissingScreenshot() {
+    TinkTheme(dynamicColor = false) { YtVideoContent(YtVideoState(loading = false, error = "This downloaded video is missing. Return to Downloads and retry it.")) }
+}
+
+@PreviewTest
+@Preview(widthDp = 400, heightDp = 740)
+@Composable
+fun YtSubscriptionVideoLibraryScreenshot() {
+    TinkTheme(dynamicColor = false) { Surface { YtLibraryContent(YtLibraryState(
+        downloads = listOf(sampleYtDownload.copy(kind = YtDownloadKind.VIDEO, status = YtDownloadStatus.READY, standalone = false)),
+        subscriptions = listOf(YtSubscription("p", "Video playlist", format = YtSubscriptionFormat.VIDEO)),
+        entries = listOf(YtPlaylistEntry("p", sampleYtDownload.videoId, sampleYtDownload.title, 0, kind = YtDownloadKind.VIDEO)))) } }
+}
+
+@PreviewTest
+@Preview(widthDp = 400, heightDp = 180)
+@Composable
+fun YtSubscriptionFormatsScreenshot() {
+    TinkTheme(dynamicColor = false) { Surface { androidx.compose.foundation.layout.Column { SubscriptionFormatFields(YtSubscriptionFormat.VIDEO) {} } } }
+}
+
+@PreviewTest
+@Preview(widthDp = 740, heightDp = 400)
+@Composable
+fun YtFullscreenVideoScreenshot() {
+    TinkTheme(dynamicColor = false) { YtVideoContent(YtVideoState(title = "Video", loading = false, available = true), fullscreen = true) }
+}
+
+@PreviewTest
+@Preview(widthDp = 400, heightDp = 140)
+@Composable
+fun YtOneTimeImportScreenshot() {
+    TinkTheme(dynamicColor = false) { Surface { androidx.compose.foundation.layout.Column { SubscriptionImportMode(true) {} } } }
+}
+
+@PreviewTest
+@Preview(widthDp = 400, heightDp = 740)
+@Composable
+fun YtSharedLinkDialogScreenshot() {
+    TinkTheme(dynamicColor = false) { AddListeningDialog(initialUrl = "https://www.youtube.com/watch?v=LbCHAQ7HKu4", onDismiss = {}, onAdd = { _, _, _, _, _, _, _, _, _, _ -> }) }
+}
+
+@PreviewTest
+@Preview(name = "library-dates-small", widthDp = 320, heightDp = 640)
+@Preview(name = "library-dates-large-font", widthDp = 400, heightDp = 740, fontScale = 1.5f)
+@Composable
+fun YtLibraryDatesScreenshot() {
+    TinkTheme(dynamicColor = false) { Surface { YtLibraryContent(YtLibraryState(
+        downloads = listOf(sampleYtDownload.copy(status = YtDownloadStatus.READY, standalone = false, downloadedAt = 1791676800000)),
+        subscriptions = listOf(YtSubscription("p", "A longer playlist title using the full width of the Library")),
+        entries = listOf(YtPlaylistEntry("p", sampleYtDownload.videoId, sampleYtDownload.title, 0)))) } }
+}

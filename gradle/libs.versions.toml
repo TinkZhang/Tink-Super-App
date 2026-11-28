@@ -1,4 +1,5 @@
 [versions]
+media3 = "1.11.0"
 youtubedlAndroid = "0.18.1"
 agp = "9.2.1"
 hiltAndroid = "2.59.2"
@@ -43,6 +44,8 @@ okhttp = "5.4.0"
 [libraries]
 mlkit-digital-ink = { module = "com.google.mlkit:digital-ink-recognition", version.ref = "mlkitDigitalInk" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesTest" }
+media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
+media3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 youtubedl-android = { module = "io.github.junkfood02.youtubedl-android:library", version.ref = "youtubedlAndroid" }
 youtubedl-ffmpeg = { module = "io.github.junkfood02.youtubedl-android:ffmpeg", version.ref = "youtubedlAndroid" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }

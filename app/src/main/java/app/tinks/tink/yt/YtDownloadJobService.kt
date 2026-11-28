@@ -39,15 +39,18 @@ class AndroidYtDownloadScheduler @Inject constructor(
     private val scheduler get() = context.getSystemService(JobScheduler::class.java).forNamespace(YT_JOB_NAMESPACE)
 
     override fun schedule(download: YtDownload): Boolean {
+        YtDownloadLog.info(download.id, download.attempt, "schedule.start", YtDownloadLog.network(context))
         val extras = PersistableBundle().apply { putString(YT_ATTEMPT, download.attempt) }
-        return scheduler.schedule(
+        val result = scheduler.schedule(
             JobInfo.Builder(download.id, ComponentName(context, YtDownloadJobService::class.java))
-                .setUserInitiated(true)
+                .setUserInitiated(!download.background)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setRequiresStorageNotLow(true)
                 .setExtras(extras)
                 .build()
-        ) == JobScheduler.RESULT_SUCCESS
+        )
+        YtDownloadLog.info(download.id, download.attempt, "schedule.result", "result=$result success=${result == JobScheduler.RESULT_SUCCESS}")
+        return result == JobScheduler.RESULT_SUCCESS
     }
 
     override fun cancel(id: Int) = scheduler.cancel(id)
@@ -60,11 +63,14 @@ class AndroidYtDownloadScheduler @Inject constructor(
 @AndroidEntryPoint
 class YtDownloadJobService : JobService() {
     @Inject lateinit var runner: YtDownloadRunner
+    @Inject lateinit var repository: YtDownloadRepository
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val running = ConcurrentHashMap<String, Job>()
 
     override fun onStartJob(params: JobParameters): Boolean {
         val attempt = params.extras.getString(YT_ATTEMPT) ?: return false
+        YtDownloadLog.info(params.jobId, attempt, "job.start",
+            "userInitiated=${params.isUserInitiatedJob} assignedNetwork=${params.network != null} ${YtDownloadLog.network(this)}")
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL, "YT downloads", NotificationManager.IMPORTANCE_LOW)
         )
@@ -76,7 +82,9 @@ class YtDownloadJobService : JobService() {
                     getSystemService(NotificationManager::class.java).notify(
                         notificationId(params.jobId), notification(params.jobId, progress, processing))
                 }
+                YtDownloadLog.info(params.jobId, attempt, "job.finished")
                 jobFinished(params, false)
+                repository.scheduleBackgroundQueue()
             } finally {
                 running.remove(attempt)
             }
@@ -87,6 +95,8 @@ class YtDownloadJobService : JobService() {
     }
 
     override fun onStopJob(params: JobParameters): Boolean {
+        YtDownloadLog.info(params.jobId, params.extras.getString(YT_ATTEMPT), "job.stopped",
+            "stopReason=${params.stopReason} reschedule=${params.stopReason != JobParameters.STOP_REASON_USER} ${YtDownloadLog.network(this)}")
         params.extras.getString(YT_ATTEMPT)?.let { attempt ->
             running.remove(attempt)?.cancel()
         }
@@ -95,6 +105,7 @@ class YtDownloadJobService : JobService() {
     }
 
     override fun onDestroy() {
+        running.keys.forEach { YtDownloadLog.info(-1, it, "service.destroyed", "active job cancelled") }
         scope.cancel()
         super.onDestroy()
     }

@@ -8,6 +8,10 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RUN_USER_INITIATED_JOBS" />
 
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
     <queries>
         <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
         <package android:name="com.positron_it.zlib" />
@@ -25,6 +29,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Tink"
         android:networkSecurityConfig="@xml/network_security_config">
+        <activity android:name=".yt.YtVideoActivity" android:exported="false" android:configChanges="orientation|screenSize|smallestScreenSize" />
+        <service android:name=".yt.YtPlaybackService" android:exported="false" android:foregroundServiceType="mediaPlayback">
+            <intent-filter><action android:name="androidx.media3.session.MediaSessionService" /></intent-filter>
+        </service>
         <service
             android:name=".yt.YtDownloadJobService"
             android:permission="android.permission.BIND_JOB_SERVICE"
@@ -42,9 +50,15 @@
 
         <activity
             android:name=".MainActivity"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"
             android:exported="true"
             android:theme="@style/Theme.Tink">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

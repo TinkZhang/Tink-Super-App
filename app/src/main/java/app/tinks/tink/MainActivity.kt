@@ -26,12 +26,17 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var sharedYtUrl by mutableStateOf<String?>(null)
+    private var ytShareRequestId by mutableStateOf<String?>(null)
     private var quickAddRequestId by mutableIntStateOf(0)
     private var openAddFromQuickSettings by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        handleLaunchIntent(intent)
+        if (savedInstanceState == null) handleLaunchIntent(intent) else {
+            sharedYtUrl = savedInstanceState.getString("yt-share-url")
+            ytShareRequestId = savedInstanceState.getString("yt-share-id")
+        }
         enableEdgeToEdge()
         setContent {
             TinkTheme() {
@@ -44,6 +49,9 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // 启动主应用结构
                     MyApp(
+                        sharedYtUrl = sharedYtUrl,
+                        ytShareRequestId = ytShareRequestId,
+                        onYtShareConsumed = { sharedYtUrl = null; ytShareRequestId = null },
                         quickAddRequestId = quickAddRequestId,
                         openAddFromQuickSettings = openAddFromQuickSettings,
                         onQuickSettingsRequestConsumed = {
@@ -61,6 +69,12 @@ class MainActivity : ComponentActivity() {
         handleLaunchIntent(intent)
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("yt-share-url", sharedYtUrl)
+        outState.putString("yt-share-id", ytShareRequestId)
+        super.onSaveInstanceState(outState)
+    }
+
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
@@ -70,6 +84,15 @@ class MainActivity : ComponentActivity() {
 
     private fun handleLaunchIntent(intent: Intent?) {
         when (intent?.action) {
+            Intent.ACTION_SEND -> {
+                val url = app.tinks.tink.yt.youtubeUrlFromShare(intent)
+                if (url != null) {
+                    sharedYtUrl = url
+                    ytShareRequestId = java.util.UUID.randomUUID().toString()
+                } else android.widget.Toast.makeText(this, "Share a YouTube video or playlist link to Tink.", android.widget.Toast.LENGTH_LONG).show()
+                intent.action = null
+                intent.removeExtra(Intent.EXTRA_TEXT)
+            }
             ACTION_ADD_TIME_ENTRY_FROM_TILE -> {
                 quickAddRequestId += 1
                 openAddFromQuickSettings = true

@@ -40,11 +40,29 @@ data class YtDownload(
     val filePath: String? = null,
     val sizeBytes: Long = 0,
     val error: String? = null,
+    @androidx.room.ColumnInfo(defaultValue = "1") val standalone: Boolean = true,
+    @androidx.room.ColumnInfo(defaultValue = "0") val background: Boolean = false,
+    @androidx.room.ColumnInfo(defaultValue = "0") val positionMs: Long = 0,
+    @androidx.room.ColumnInfo(defaultValue = "0") val played: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
+    @androidx.room.ColumnInfo(defaultValue = "''") val labels: String = "",
+    val downloadedAt: Long? = null,
 )
 
 @Dao
 interface YtDownloadDao {
+    @Query("UPDATE yt_download SET labels = :labels WHERE id = :id AND standalone = 1")
+    suspend fun setLabels(id: Int, labels: String): Int
+
+    @Query("DELETE FROM yt_download WHERE id = :id")
+    suspend fun delete(id: Int)
+
+    @Query("UPDATE yt_download SET standalone = 1 WHERE videoId = :videoId AND kind = :kind")
+    suspend fun makeStandalone(videoId: String, kind: YtDownloadKind)
+
+    @Query("UPDATE yt_download SET positionMs = :position, played = :played WHERE id = :id")
+    suspend fun playback(id: Int, position: Long, played: Boolean)
+
     @Query("SELECT * FROM yt_download ORDER BY createdAt DESC, id DESC")
     fun observeAll(): Flow<List<YtDownload>>
 
@@ -61,7 +79,7 @@ interface YtDownloadDao {
     suspend fun insert(download: YtDownload): Long
 
     @Query("""UPDATE yt_download SET attempt = :attempt, status = 'QUEUED', progress = 0,
-        error = NULL, filePath = NULL, sizeBytes = 0 WHERE id = :id AND status IN ('FAILED', 'CANCELLED')""")
+        error = NULL, filePath = NULL, sizeBytes = 0, downloadedAt = NULL WHERE id = :id AND status IN ('FAILED', 'CANCELLED')""")
     suspend fun retry(id: Int, attempt: String): Int
 
     // Every worker write is conditional: a stopped or superseded attempt cannot overwrite a retry.
@@ -70,18 +88,19 @@ interface YtDownloadDao {
     suspend fun updateActive(id: Int, attempt: String, status: YtDownloadStatus, progress: Int, error: String? = null): Int
 
     @Query("""UPDATE yt_download SET status = 'READY', progress = 100, title = :title,
-        filePath = :path, sizeBytes = :size, error = NULL
+        filePath = :path, sizeBytes = :size, error = NULL, downloadedAt = :downloadedAt
         WHERE id = :id AND attempt = :attempt AND status IN ('QUEUED', 'DOWNLOADING', 'PROCESSING')""")
-    suspend fun complete(id: Int, attempt: String, title: String, path: String, size: Long): Int
+    suspend fun complete(id: Int, attempt: String, title: String, path: String, size: Long, downloadedAt: Long = System.currentTimeMillis()): Int
 
     @Query("""UPDATE yt_download SET status = 'FAILED', filePath = NULL, sizeBytes = 0,
         error = 'The downloaded file is missing. Retry to download it again.' WHERE id = :id AND status = 'READY'""")
     suspend fun markMissing(id: Int)
 }
 
-@Database(entities = [YtDownload::class], version = 1, exportSchema = false)
+@Database(entities = [YtDownload::class, YtSubscription::class, YtPlaylistEntry::class, YtVideoDate::class], version = 9, exportSchema = false)
 abstract class YtDatabase : RoomDatabase() {
     abstract fun downloads(): YtDownloadDao
+    abstract fun subscriptions(): YtSubscriptionDao
 }
 
 @Module
@@ -89,7 +108,10 @@ abstract class YtDatabase : RoomDatabase() {
 object YtModule {
     @Provides @Singleton
     fun database(@ApplicationContext context: Context): YtDatabase =
-        Room.databaseBuilder(context, YtDatabase::class.java, "yt-downloads.db").build()
+        Room.databaseBuilder(context, YtDatabase::class.java, "yt-downloads.db").addMigrations(YT_MIGRATION_1_2, YT_MIGRATION_2_3, YT_MIGRATION_3_4, YT_MIGRATION_4_5, YT_MIGRATION_5_6, YT_MIGRATION_6_7, YT_MIGRATION_7_8, YT_MIGRATION_8_9).build()
+
+    @Provides
+    fun subscriptions(database: YtDatabase): YtSubscriptionDao = database.subscriptions()
 
     @Provides
     fun downloads(database: YtDatabase): YtDownloadDao = database.downloads()
@@ -102,4 +124,10 @@ object YtModule {
 
     @Provides
     fun engine(engine: YoutubeDlEngine): YtDownloadEngine = engine
+}
+
+val YT_MIGRATION_8_9 = object : androidx.room.migration.Migration(8, 9) {
+    override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE yt_download ADD COLUMN downloadedAt INTEGER")
+    }
 }
