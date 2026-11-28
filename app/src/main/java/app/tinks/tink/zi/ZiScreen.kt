@@ -48,12 +48,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
+import app.tinks.tink.zi.game.ZiTestGameEntryButton
+
 @Composable
 fun ZiScreen(
     viewModel: ZiViewModel,
     onReadList: () -> Unit,
     onWrittenList: () -> Unit,
     onAddWritten: () -> Unit,
+    onOpenTestGame: () -> Unit,
     onStoryListNavigation: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -66,6 +69,7 @@ fun ZiScreen(
         onReadList = onReadList,
         onWrittenList = onWrittenList,
         onAddWritten = onAddWritten,
+        onOpenTestGame = onOpenTestGame,
         onRetryWritten = viewModel::refreshWritten,
         onStoryListNavigation = onStoryListNavigation,
     )
@@ -80,6 +84,7 @@ internal fun ZiDashboard(
     onReadList: () -> Unit = {},
     onWrittenList: () -> Unit = {},
     onAddWritten: () -> Unit = {},
+    onOpenTestGame: () -> Unit = {},
     onRetryWritten: () -> Unit = {},
     onStoryListNavigation: () -> Unit = {},
 ) {
@@ -131,6 +136,12 @@ internal fun ZiDashboard(
                         if (written.failed) {
                             TextButton(onClick = onRetryWritten) { Text("会写汉字加载失败，点击重试") }
                         }
+                        ZiTestGameEntryButton(
+                            readableCount = uiState.learntZiNum.takeUnless {
+                                uiState.allZis.isEmpty() && (uiState.isLoading || uiState.isNetworkError)
+                            },
+                            onClick = onOpenTestGame,
+                        )
                     }
 
                     if (uiState.reviewList.isNotEmpty()) {

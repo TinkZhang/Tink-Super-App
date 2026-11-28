@@ -11,6 +11,13 @@ import app.tinks.tink.zi.ZiDashboard
 import app.tinks.tink.zi.ZiHandwritingScreen
 import app.tinks.tink.zi.ZiUiState
 import app.tinks.tink.zi.Zi
+import app.tinks.tink.zi.game.ZiFallingTile
+import app.tinks.tink.zi.game.ZiGameLevels
+import app.tinks.tink.zi.game.ZiGamePhase
+import app.tinks.tink.zi.game.ZiGameScreen
+import app.tinks.tink.zi.game.ZiGameUiState
+import app.tinks.tink.zi.game.ZiMissedChar
+import app.tinks.tink.zi.game.ZiVoiceModelState
 import com.android.tools.screenshot.PreviewTest
 import kotlinx.datetime.LocalDate
 
@@ -49,5 +56,74 @@ fun ZiHandwritingCandidatePreview() {
                 ),
             )
         }
+    }
+}
+
+@PreviewTest
+@Preview(widthDp = 320, heightDp = 640, locale = "zh")
+@Composable
+fun ZiGameLobbyPreview() {
+    TinkTheme(dynamicColor = false) {
+        ZiGameScreen(
+            state = ZiGameUiState(
+                phase = ZiGamePhase.Lobby,
+                selectedStage = ZiGameLevels.stageForNumber(3),
+                highestUnlockedStage = 10,
+                stageStars = mapOf(1 to 3, 2 to 2, 3 to 3),
+                bestScore = 1850,
+                readablePoolSize = 128,
+                totalCharsInStage = 20,
+                isLoadingPool = false,
+                hasMicPermission = true,
+                modelState = ZiVoiceModelState.Ready,
+            ),
+        )
+    }
+}
+
+@PreviewTest
+@Preview(widthDp = 320, heightDp = 640, locale = "zh")
+@Composable
+fun ZiGamePlayingPreview() {
+    TinkTheme(dynamicColor = false) {
+        ZiGameScreen(
+            state = ZiGameUiState(
+                phase = ZiGamePhase.Playing,
+                selectedStage = ZiGameLevels.stageForNumber(6),
+                totalCharsInStage = 20,
+                completedCount = 4,
+                hitCount = 4,
+                score = 460,
+                combo = 4,
+                isListening = true,
+                micLevel = 0.55f,
+                currentTile = ZiFallingTile(zi = "木", pinyin = "mù", xFraction = 0.5f, yFraction = 0.42f),
+            ),
+        )
+    }
+}
+
+@PreviewTest
+@Preview(widthDp = 320, heightDp = 640, locale = "zh")
+@Composable
+fun ZiGameResultPreview() {
+    TinkTheme(dynamicColor = false) {
+        ZiGameScreen(
+            state = ZiGameUiState(
+                phase = ZiGamePhase.Result,
+                selectedStage = ZiGameLevels.stageForNumber(9),
+                highestUnlockedStage = 10,
+                newlyUnlockedStage = ZiGameLevels.stageForNumber(10),
+                totalCharsInStage = 20,
+                completedCount = 20,
+                hitCount = 18,
+                score = 1920,
+                maxCombo = 9,
+                missedChars = listOf(
+                    ZiMissedChar("森", "sēn", selectedForReview = true),
+                    ZiMissedChar("桥", "qiáo", selectedForReview = true),
+                ),
+            ),
+        )
     }
 }

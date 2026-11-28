@@ -96,6 +96,7 @@ import app.tinks.tink.navigation.ScreenWeight
 import app.tinks.tink.navigation.ScreenWeightHistory
 import app.tinks.tink.navigation.ScreenWrittenZi
 import app.tinks.tink.navigation.ScreenZi
+import app.tinks.tink.navigation.ScreenZiGame
 import app.tinks.tink.navigation.ScreenZiHandwriting
 import app.tinks.tink.navigation.ScreenYt
 import app.tinks.tink.yt.YtScreen
@@ -114,6 +115,8 @@ import app.tinks.tink.weight.WeightHistoryScreen
 import app.tinks.tink.weight.WeightScreen
 import app.tinks.tink.zi.ZiHandwritingRoute
 import app.tinks.tink.zi.ZiScreen
+import app.tinks.tink.zi.ZiViewModel
+import app.tinks.tink.zi.game.ZiGameRoute
 import app.tinks.tink.zi.zilist.LearntZiListScreen
 import app.tinks.tink.zi.zilist.WrittenZiListScreen
 import kotlinx.coroutines.launch
@@ -282,16 +285,16 @@ fun MyApp(
             }
         },
         drawerState = drawerState,
-        gesturesEnabled = currentKey !is ScreenSecureWeb && currentKey != ScreenRandomPlay
+        gesturesEnabled = currentKey !is ScreenSecureWeb && currentKey != ScreenRandomPlay && currentKey != ScreenZiGame
     ) {
         Scaffold(
             modifier = modifier.fillMaxSize(),
-            contentWindowInsets = if (currentKey == ScreenRandomPlay || currentKey == ScreenRandomWheelEditor) WindowInsets(0, 0, 0, 0) else androidx.compose.material3.ScaffoldDefaults.contentWindowInsets,
+            contentWindowInsets = if (currentKey == ScreenRandomPlay || currentKey == ScreenRandomWheelEditor || currentKey == ScreenZiGame) WindowInsets(0, 0, 0, 0) else androidx.compose.material3.ScaffoldDefaults.contentWindowInsets,
             snackbarHost = {
-                if (currentKey != ScreenRandomPlay) SnackbarHost(hostState = snackbarHostState)
+                if (currentKey != ScreenRandomPlay && currentKey != ScreenZiGame) SnackbarHost(hostState = snackbarHostState)
             },
             topBar = {
-                if (currentKey !is ScreenBooks && currentKey !is ScreenDiaryLoom && currentKey != ScreenConnect && currentKey != ScreenRandomPlay && currentKey != ScreenRandomWheelEditor) {
+                if (currentKey !is ScreenBooks && currentKey !is ScreenDiaryLoom && currentKey != ScreenConnect && currentKey != ScreenRandomPlay && currentKey != ScreenRandomWheelEditor && currentKey != ScreenZiGame) {
                     TopAppBar(
                     title = {
                         if (currentKey is ScreenLeeter) {
@@ -403,8 +406,19 @@ fun MyApp(
                             onReadList = { backStack.add(ScreenLearntZi) },
                             onWrittenList = { backStack.add(ScreenWrittenZi) },
                             onAddWritten = { backStack.add(ScreenZiHandwriting()) },
+                            onOpenTestGame = { backStack.add(ScreenZiGame) },
                             onStoryListNavigation = { backStack.add(ScreenStoryList) }
                         )
+                        is ScreenZiGame -> {
+                            val ziViewModel = hiltViewModel<ZiViewModel>()
+                            ZiGameRoute(
+                                viewModel = hiltViewModel(),
+                                onExit = { syncedMissed ->
+                                    if (syncedMissed) ziViewModel.refreshAllData()
+                                    if (backStack.lastOrNull() == ScreenZiGame) navigateBack()
+                                },
+                            )
+                        }
                         is ScreenLearntZi -> LearntZiListScreen(hiltViewModel())
                         ScreenWrittenZi -> WrittenZiListScreen(hiltViewModel())
                         is ScreenZiHandwriting -> ZiHandwritingRoute(
@@ -488,6 +502,7 @@ private fun MyNavKey.drawerTestTag(): String = when (this) {
     ScreenLearntZi -> "drawer_destination_learnt_zi"
     ScreenWrittenZi -> "drawer_destination_written_zi"
     is ScreenZiHandwriting -> "drawer_destination_zi_handwriting"
+    ScreenZiGame -> "drawer_destination_zi_game"
     ScreenStoryList -> "drawer_destination_story_list"
     is ScreenStoryDetail -> "drawer_destination_story_detail"
     ScreenWeightHistory -> "drawer_destination_weight_history"

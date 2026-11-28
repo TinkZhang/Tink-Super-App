@@ -71,6 +71,11 @@ data class ScreenZiHandwriting(val boardId: String = UUID.randomUUID().toString(
     override val icon = Icons.Filled.Edit
 }
 
+data object ScreenZiGame : MyNavKey {
+    override val label = "汉字掉落测试"
+    override val icon = Icons.Filled.Translate
+}
+
 data object ScreenMerriam: MyNavKey {
     override val label = "M-W Builder"
     override val icon = Icons.Filled.Bookmark

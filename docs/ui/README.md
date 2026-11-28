@@ -49,6 +49,7 @@ Use this source index and the native release gallery to understand the implement
 | --- | --- |
 | 识字 dashboard | [ZiScreen.kt](../../app/src/main/java/app/tinks/tink/zi/ZiScreen.kt) |
 | 识字 · add characters | [AddZiDialog.kt](../../app/src/main/java/app/tinks/tink/zi/AddZiDialog.kt) |
+| 识字 · falling test game | [ZiGameScreen.kt](../../app/src/main/java/app/tinks/tink/zi/game/ZiGameScreen.kt) |
 | Learned characters | [LearntZiListScreen.kt](../../app/src/main/java/app/tinks/tink/zi/zilist/LearntZiListScreen.kt) |
 | Story list | [StoryListScreen.kt](../../app/src/main/java/app/tinks/tink/story/StoryListScreen.kt) |
 | Story detail | [StoryDetailScreen.kt](../../app/src/main/java/app/tinks/tink/story/StoryDetailScreen.kt) |

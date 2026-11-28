@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>识字模块 · 一年级汉字掉落测试游戏 UI 原型 v2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif);
+    background: var(--background, #f6f7f9);
+    color: var(--foreground, #171717);
+    padding: 16px;
+    line-height: 1.5;
+  }
+
+  .studio-layout {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .phone-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .phone-bezel {
+    width: 344px;
+    background: #14161f;
+    border-radius: 36px;
+    padding: 12px;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28), inset 0 0 0 2px #2c3147;
+    position: relative;
+  }
+
+  .phone-notch {
+    width: 96px;
+    height: 18px;
+    background: #14161f;
+    border-radius: 0 0 12px 12px;
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .phone-notch::after {
+    content: "";
+    width: 38px;
+    height: 4px;
+    background: #2b3042;
+    border-radius: 4px;
+  }
+
+  .phone-screen {
+    width: 320px;
+    height: 640px;
+    border-radius: 26px;
+    overflow: hidden;
+    position: relative;
+    background: #0d1024;
+    user-select: none;
+  }
+
+  .viewport-badge {
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 11px;
+    color: var(--muted-foreground, #64748b);
+    background: var(--muted, #e5e7eb);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+  /* Right Inspector */
+  .inspector-panel {
+    flex: 1;
+    min-width: 280px;
+    max-width: 580px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .panel-card {
+    background: var(--card, #ffffff);
+    color: var(--card-foreground, #171717);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: var(--radius, 12px);
+    padding: 14px 16px;
+  }
+
+  .panel-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .status-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--secondary, #f1f5f9);
+    color: var(--secondary-foreground, #334155);
+  }
+
+  .state-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .state-btn {
+    appearance: none;
+    border: 1px solid var(--border, #cbd5e1);
+    background: var(--background, #f8fafc);
+    color: var(--foreground, #1e293b);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .state-btn:hover {
+    background: var(--accent, #e2e8f0);
+    color: var(--accent-foreground, #0f172a);
+  }
+  .state-btn.active {
+    background: var(--primary, #2563eb);
+    color: var(--primary-foreground, #ffffff);
+    border-color: var(--primary, #2563eb);
+  }
+
+  .sim-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .sim-btn {
+    appearance: none;
+    border: 1px solid var(--border, #cbd5e1);
+    background: var(--secondary, #f1f5f9);
+    color: var(--secondary-foreground, #1e293b);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .sim-btn.good { background: #16a34a; color: #fff; border-color: #15803d; }
+  .sim-btn.warn { background: #ea580c; color: #fff; border-color: #c2410c; }
+  .sim-btn.bad  { background: #dc2626; color: #fff; border-color: #b91c1c; }
+
+  .pinyin-tester {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .pinyin-input {
+    flex: 1;
+    border: 1px solid var(--input, #cbd5e1);
+    background: var(--background, #ffffff);
+    color: var(--foreground, #171717);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 12px;
+    outline: none;
+  }
+
+  .hint-list {
+    font-size: 12px;
+    color: var(--muted-foreground, #475569);
+    padding-left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .hint-list strong { color: var(--foreground, #0f172a); }
+
+  /* =========================================================
+     SCREEN 1: SYNCED Material 3 ZiScreen (会读 + 会写 + 测试 + 复习 + 故事)
+     ========================================================= */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+  }
+  .screen.active { display: flex; }
+
+  .m3-screen {
+    background: #fef7ff;
+    color: #1d1b20;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Roboto", sans-serif;
+  }
+
+  .m3-topbar {
+    height: 58px;
+    padding: 22px 12px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fef7ff;
+    flex-shrink: 0;
+  }
+  .m3-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .m3-icon-btn {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #49454f;
+  }
+
+  .m3-body {
+    flex: 1;
+    padding: 6px 14px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+    overflow-y: auto;
+  }
+
+  .m3-top-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .m3-stat-card {
+    border-radius: 20px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .m3-stat-card.read {
+    background: #eaddff;
+    color: #21005d;
+  }
+  .m3-stat-card.written {
+    background: #ffd8e4;
+    color: #31111d;
+  }
+
+  .m3-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .m3-stat-card.read .m3-stat-icon { color: #6750a4; }
+  .m3-stat-card.written .m3-stat-icon { color: #7d5260; }
+
+  .m3-stat-meta { flex: 1; }
+  .m3-stat-title { font-size: 13px; font-weight: 600; opacity: 0.9; }
+  .m3-stat-count { font-size: 26px; font-weight: 800; line-height: 1.1; }
+
+  .m3-add-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    flex-shrink: 0;
+  }
+  .m3-stat-card.read .m3-add-circle { background: #6750a4; }
+  .m3-stat-card.written .m3-add-circle { background: #7d5260; }
+
+  /* NEW Pixel-accented Test Entry Button */
+  .zi-test-entry-btn {
+    width: 100%;
+    border: 3px solid #1e1b4b;
+    background: linear-gradient(180deg, #312e81 0%, #1e1b4b 100%);
+    color: #fef08a;
+    border-radius: 14px;
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 0 #0f172a;
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-align: left;
+  }
+  .zi-test-entry-btn:hover { filter: brightness(1.08); }
+  .zi-test-entry-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #0f172a;
+  }
+  .zi-test-entry-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .zi-pixel-badge {
+    width: 34px;
+    height: 34px;
+    background: #f59e0b;
+    border: 2px solid #fef08a;
+    box-shadow: inset -2px -2px 0 #b45309, inset 2px 2px 0 #fde68a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 900;
+    color: #1e1b4b;
+    flex-shrink: 0;
+  }
+  .zi-test-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #ffffff;
+  }
+  .zi-test-sub {
+    font-size: 11px;
+    color: #c7d2fe;
+    margin-top: 1px;
+  }
+  .zi-go-pill {
+    background: #22c55e;
+    color: #052e16;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    font-weight: 900;
+    padding: 4px 8px;
+    border: 2px solid #bbf7d0;
+    box-shadow: 0 2px 0 #14532d;
+    flex-shrink: 0;
+  }
+
+  .m3-review-card {
+    background: #f3edf7;
+    border-radius: 20px;
+    padding: 10px 12px;
+  }
+  .m3-review-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1d1b20;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .m3-review-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+  }
+  .m3-review-tile {
+    background: #ffffff;
+    border: 1px solid #cac4d0;
+    border-radius: 10px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1d1b20;
+  }
+  .m3-review-tile.new-missed {
+    border-color: #ef4444;
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  .m3-story-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .m3-btn-outline, .m3-btn-tonal {
+    height: 44px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .m3-btn-outline {
+    border: 1px solid #79747e;
+    background: transparent;
+    color: #6750a4;
+  }
+  .m3-btn-tonal {
+    border: none;
+    background: #e8def8;
+    color: #1d192b;
+  }
+
+  /* =========================================================
+     PIXEL ART GAME THEME (Scoped strictly to .pixel-theme)
+     ========================================================= */
+  .pixel-theme {
+    background: #0d1024;
+    color: #f8fafc;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, "PingFang SC", monospace;
+    image-rendering: pixelated;
+  }
+
+  .pixel-theme::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.0) 0px,
+      rgba(255,255,255,0.0) 2px,
+      rgba(0,0,0,0.13) 3px,
+      rgba(0,0,0,0.13) 4px
+    );
+    pointer-events: none;
+    z-index: 30;
+  }
+
+  .px-box {
+    background: #171c3a;
+    border: 3px solid #6366f1;
+    box-shadow: inset -3px -3px 0 #0b0e21, inset 3px 3px 0 #2e366b, 0 4px 0 #070914;
+  }
+
+  .px-btn {
+    appearance: none;
+    font-family: inherit;
+    font-weight: 800;
+    border: 3px solid #fef08a;
+    background: #eab308;
+    color: #1e1b4b;
+    padding: 10px 12px;
+    cursor: pointer;
+    box-shadow: inset -3px -3px 0 #a16207, inset 3px 3px 0 #fef9c3, 0 4px 0 #070914;
+    transition: transform 0.08s;
+  }
+  .px-btn:active { transform: translateY(2px); }
+  .px-btn.green {
+    background: #22c55e;
+    border-color: #bbf7d0;
+    color: #052e16;
+    box-shadow: inset -3px -3px 0 #15803d, inset 3px 3px 0 #dcfce7, 0 4px 0 #070914;
+  }
+  .px-btn.rose {
+    background: #f43f5e;
+    border-color: #fecdd3;
+    color: #ffffff;
+    box-shadow: inset -3px -3px 0 #be123c, inset 3px 3px 0 #fda4af, 0 4px 0 #070914;
+  }
+  .px-btn.blue {
+    background: #3b82f6;
+    border-color: #bfdbfe;
+    color: #ffffff;
+    box-shadow: inset -3px -3px 0 #1d4ed8, inset 3px 3px 0 #93c5fd, 0 4px 0 #070914;
+  }
+  .px-btn.ghost {
+    background: #1e2448;
+    border-color: #64748b;
+    color: #e2e8f0;
+    box-shadow: inset -2px -2px 0 #0f1329, inset 2px 2px 0 #334155, 0 3px 0 #070914;
+  }
+  .px-btn.small {
+    padding: 5px 9px;
+    font-size: 11px;
+    border-width: 2px;
+  }
+  .px-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* ---- SCREEN 2: LOBBY / MODEL READY ---- */
+  .lobby-wrap {
+    flex: 1;
+    padding: 34px 15px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(99,102,241,0.28) 0%, transparent 45%),
+      radial-gradient(circle at 80% 30%, rgba(236,72,153,0.18) 0%, transparent 40%),
+      linear-gradient(180deg, #0b0e23 0%, #151a3d 65%, #1e293b 100%);
+  }
+
+  .lobby-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .pixel-hero { text-align: center; margin-top: 4px; }
+  .hero-tag {
+    display: inline-block;
+    background: #ec4899;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border: 2px solid #fbcfe8;
+    margin-bottom: 6px;
+  }
+  .hero-title {
+    font-size: 23px;
+    font-weight: 900;
+    color: #fef08a;
+    text-shadow: 0 3px 0 #b45309, 0 6px 0 #090c1c;
+    letter-spacing: 2px;
+  }
+  .hero-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+  .hero-preview-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 12px 0 6px;
+  }
+  .mini-tile {
+    width: 44px;
+    height: 44px;
+    background: #1e293b;
+    border: 3px solid #38bdf8;
+    box-shadow: inset -2px -2px 0 #0f172a, 0 4px 0 #090c1c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 900;
+    color: #ffffff;
+    font-family: "PingFang SC", "Kaiti SC", serif;
+  }
+  .mini-tile.boom {
+    border-color: #facc15;
+    background: #422006;
+    color: #fef08a;
+    transform: translateY(-6px);
+  }
+
+  .setting-group {
+    padding: 10px 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    gap: 6px;
+  }
+  .setting-label { color: #cbd5e1; font-weight: 700; }
+  .seg-group { display: flex; gap: 4px; }
+  .seg-opt {
+    border: 2px solid #475569;
+    background: #0f172a;
+    color: #94a3b8;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 7px;
+    cursor: pointer;
+  }
+  .seg-opt.selected {
+    background: #38bdf8;
+    border-color: #bae6fd;
+    color: #082f49;
+  }
+
+  .engine-status-card {
+    padding: 8px 10px;
+    font-size: 11px;
+    background: #0f172a;
+    border: 2px solid #22c55e;
+    color: #86efac;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .engine-status-card.downloading {
+    border-color: #38bdf8;
+    color: #bae6fd;
+  }
+  .engine-status-card.denied {
+    border-color: #ef4444;
+    color: #fca5a5;
+    background: #2a0f14;
+  }
+  .engine-status-card.low-pool {
+    border-color: #f59e0b;
+    color: #fde68a;
+    background: #271b08;
+  }
+  .engine-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .dl-track {
+    height: 8px;
+    background: #090c1c;
+    border: 2px solid #38bdf8;
+    padding: 1px;
+    display: none;
+  }
+  .dl-track.show { display: block; }
+  .dl-fill {
+    height: 100%;
+    width: 64%;
+    background: repeating-linear-gradient(90deg, #38bdf8 0px, #38bdf8 6px, #0284c7 6px, #0284c7 8px);
+  }
+
+  .start-cta { width: 100%; font-size: 15px; padding: 12px; text-align: center; }
+
+  /* ---- SCREEN 3: GAMEPLAY ---- */
+  .game-hud {
+    padding: 32px 10px 8px;
+    background: #121633;
+    border-bottom: 3px solid #334155;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 10;
+  }
+  .hud-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .hud-score-box { display: flex; align-items: baseline; gap: 6px; }
+  .hud-score-lbl { font-size: 10px; color: #94a3b8; }
+  .hud-score-val { font-size: 17px; font-weight: 900; color: #facc15; text-shadow: 0 2px 0 #713f12; }
+  .hud-combo {
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 6px;
+    background: #f97316;
+    color: #fff;
+    border: 2px solid #fed7aa;
+    visibility: hidden;
+  }
+  .hud-combo.show { visibility: visible; }
+
+  .hud-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: #cbd5e1;
+  }
+  .px-progress-track {
+    flex: 1;
+    height: 10px;
+    background: #090c1c;
+    border: 2px solid #475569;
+    padding: 1px;
+  }
+  .px-progress-fill {
+    height: 100%;
+    width: 10%;
+    background: repeating-linear-gradient(90deg, #38bdf8 0px, #38bdf8 6px, #0ea5e9 6px, #0ea5e9 8px);
+    transition: width 0.25s;
+  }
+
+  .canvas-stage { flex: 1; position: relative; overflow: hidden; background: #0b0f27; }
+  #gameCanvas { display: block; width: 320px; height: 416px; image-rendering: pixelated; }
+
+  .mic-dock {
+    height: 124px;
+    background: #121633;
+    border-top: 3px solid #38bdf8;
+    padding: 8px 12px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 10;
+  }
+
+  .asr-bubble {
+    background: #090d20;
+    border: 2px solid #334155;
+    padding: 5px 8px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    min-height: 28px;
+  }
+  .asr-text { color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .asr-tag {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 5px;
+    background: #1e293b;
+    color: #38bdf8;
+    flex-shrink: 0;
+  }
+  .asr-tag.hit { background: #14532d; color: #86efac; }
+  .asr-tag.miss { background: #450a0a; color: #fca5a5; }
+
+  .mic-wave-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .mic-orb {
+    width: 42px;
+    height: 42px;
+    background: #ef4444;
+    border: 3px solid #fecaca;
+    box-shadow: inset -3px -3px 0 #991b1b, 0 3px 0 #070914;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    animation: micPulse 1.2s infinite steps(2);
+  }
+  .mic-orb.muted {
+    background: #475569;
+    border-color: #94a3b8;
+    box-shadow: inset -3px -3px 0 #1e293b, 0 3px 0 #070914;
+    animation: none;
+  }
+  @keyframes micPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.22); }
+  }
+
+  .wave-bars {
+    flex: 1;
+    height: 32px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 3px;
+    padding: 0 4px;
+  }
+  .wave-bar { flex: 1; background: #38bdf8; height: 6px; transition: height 0.08s steps(3); }
+
+  /* ---- PAUSE MODAL ---- */
+  .px-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 8, 22, 0.82);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 25;
+  }
+  .px-modal-backdrop.show { display: flex; }
+  .px-modal { width: 100%; padding: 16px; text-align: center; display: flex; flex-direction: column; gap: 10px; }
+  .px-modal h3 { font-size: 18px; color: #fef08a; letter-spacing: 2px; }
+  .px-modal p { font-size: 11px; color: #94a3b8; }
+
+  /* ---- SCREEN 4: RESULT + 错字联动 ---- */
+  .result-wrap {
+    flex: 1;
+    padding: 34px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: linear-gradient(180deg, #111637 0%, #0b0f25 100%);
+    overflow-y: auto;
+  }
+  .stars-row { display: flex; justify-content: center; gap: 10px; font-size: 26px; }
+  .star-on { color: #facc15; text-shadow: 0 3px 0 #a16207; }
+  .star-off { color: #334155; }
+  .result-title { text-align: center; font-size: 19px; font-weight: 900; color: #fef08a; text-shadow: 0 3px 0 #92400e; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat-cell { background: #0d1229; border: 2px solid #334155; padding: 7px 4px; text-align: center; }
+  .stat-num { font-size: 17px; font-weight: 900; color: #38bdf8; }
+  .stat-num.gold { color: #facc15; }
+  .stat-num.green { color: #4ade80; }
+  .stat-lbl { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+  .missed-panel { padding: 10px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .missed-head { font-size: 11px; font-weight: 800; color: #fca5a5; display: flex; justify-content: space-between; align-items: center; }
+  .missed-sub { font-size: 10px; color: #94a3b8; }
+  .missed-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .missed-chip {
+    background: #1e1b4b;
+    border: 2px solid #f43f5e;
+    padding: 5px 9px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s, border-color 0.15s;
+  }
+  .missed-chip.unchecked {
+    border-color: #475569;
+    background: #0f172a;
+    opacity: 0.55;
+  }
+  .missed-check { font-size: 11px; font-weight: 900; color: #fda4af; }
+  .missed-zi { font-size: 19px; font-weight: 900; color: #fff; font-family: "PingFang SC", "Kaiti SC", serif; }
+  .missed-py { font-size: 11px; color: #fda4af; }
+
+  .sync-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sync-note {
+    font-size: 10px;
+    color: #86efac;
+    text-align: center;
+    min-height: 14px;
+  }
+  .result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+</style>
+</head>
+<body>
+
+<div class="studio-layout">
+  <!-- LEFT: PHONE MOCKUP -->
+  <div class="phone-column">
+    <div class="phone-bezel">
+      <div class="phone-notch"></div>
+      <div class="phone-screen" id="phoneScreen">
+
+        <!-- ==================== SCREEN 1: 识字主页 (已对齐最新 ZiScreen.kt) ==================== -->
+        <div class="screen m3-screen active" id="screen-zi-home">
+          <div class="m3-topbar">
+            <div class="m3-topbar-left">
+              <span class="m3-icon-btn">☰</span>
+              <span>识字</span>
+            </div>
+            <span class="m3-icon-btn">⋮</span>
+          </div>
+          <div class="m3-body">
+            <div class="m3-top-group">
+              <div class="m3-stat-card read">
+                <div class="m3-stat-icon">📖</div>
+                <div class="m3-stat-meta">
+                  <div class="m3-stat-title">会读汉字</div>
+                  <div class="m3-stat-count" id="homeReadCount">128</div>
+                </div>
+                <div class="m3-add-circle">＋</div>
+              </div>
+
+              <div class="m3-stat-card written">
+                <div class="m3-stat-icon">✎</div>
+                <div class="m3-stat-meta">
+                  <div class="m3-stat-title">会写汉字</div>
+                  <div class="m3-stat-count">42</div>
+                </div>
+                <div class="m3-add-circle">＋</div>
+              </div>
+
+              <!-- NEW TEST GAME ENTRY BUTTON -->
+              <button class="zi-test-entry-btn" id="btnEnterGameFromHome" type="button">
+                <div class="zi-test-entry-left">
+                  <div class="zi-pixel-badge">字</div>
+                  <div>
+                    <div class="zi-test-title">汉字掉落测试</div>
+                    <div class="zi-test-sub">离线语音读字 · 像素烟花 · 20字一关</div>
+                  </div>
+                </div>
+                <span class="zi-go-pill">测试 ▶</span>
+              </button>
+            </div>
+
+            <div class="m3-review-card">
+              <div class="m3-review-title">
+                <span>复习汉字</span>
+                <span style="font-size:11px;color:#6750a4;font-weight:600;" id="homeReviewHint">熟练度 &lt; 5</span>
+              </div>
+              <div class="m3-review-grid" id="homeReviewGrid">
+                <div class="m3-review-tile">星</div>
+                <div class="m3-review-tile">鸟</div>
+                <div class="m3-review-tile">云</div>
+                <div class="m3-review-tile">花</div>
+                <div class="m3-review-tile">雨</div>
+                <div class="m3-review-tile">风</div>
+              </div>
+            </div>
+
+            <div class="m3-story-row">
+              <div class="m3-btn-outline">≡ 故事列表</div>
+              <div class="m3-btn-tonal">✦ 生成故事</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== SCREEN 2: 游戏准备 / 模型下载 / 权限页 ==================== -->
+        <div class="screen pixel-theme" id="screen-lobby">
+          <div class="lobby-wrap">
+            <div>
+              <div class="lobby-header">
+                <button class="px-btn ghost small" id="btnBackToHome" type="button">◀ 返回</button>
+                <span style="font-size:11px;color:#94a3b8;">最高分: <strong style="color:#facc15;" id="lobbyBestScore">1650</strong></span>
+              </div>
+
+              <div class="pixel-hero">
+                <div class="hero-tag">一年级语音识字挑战</div>
+                <div class="hero-title">汉字星空防线</div>
+                <div class="hero-sub">大声读出掉落的汉字 · 炸出像素烟花！</div>
+              </div>
+
+              <div class="hero-preview-row">
+                <div class="mini-tile">山</div>
+                <div class="mini-tile boom">火</div>
+                <div class="mini-tile">月</div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:9px;">
+              <div class="px-box setting-group">
+                <div class="setting-row">
+                  <span class="setting-label">题库来源</span>
+                  <span style="color:#38bdf8;font-weight:800;" id="poolSummaryText">会读汉字 128字 → 随机20字</span>
+                </div>
+                <div class="setting-row">
+                  <span class="setting-label">掉落速度</span>
+                  <div class="seg-group" id="speedSeg">
+                    <button class="seg-opt selected" data-speed="slow" type="button">慢速(推荐)</button>
+                    <button class="seg-opt" data-speed="normal" type="button">标准</button>
+                    <button class="seg-opt" data-speed="fast" type="button">挑战</button>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <span class="setting-label">判定方式</span>
+                  <span style="color:#86efac;font-weight:700;">宽松拼音 · 支持组词读</span>
+                </div>
+              </div>
+
+              <div class="engine-status-card" id="lobbyEngineCard">
+                <div class="engine-top">
+                  <span id="lobbyEngineText">🎤 离线语音引擎已就绪 (免Google服务)</span>
+                  <button class="px-btn ghost small" id="btnLobbyEngineAction" type="button" style="display:none;">去授权</button>
+                </div>
+                <div class="dl-track" id="modelDlTrack"><div class="dl-fill" id="modelDlFill"></div></div>
+              </div>
+
+              <button class="px-btn green start-cta" id="btnStartGame" type="button">▶ 开始闯关 (20字)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== SCREEN 3: 游戏进行中 ==================== -->
+        <div class="screen pixel-theme" id="screen-play">
+          <div class="game-hud">
+            <div class="hud-top">
+              <button class="px-btn ghost small" id="btnPauseGame" type="button">❚❚</button>
+              <div class="hud-score-box">
+                <span class="hud-score-lbl">SCORE</span>
+                <span class="hud-score-val" id="hudScore">0000</span>
+              </div>
+              <span class="hud-combo" id="hudCombo">x2 COMBO</span>
+            </div>
+            <div class="hud-progress-row">
+              <span>进度 <strong id="hudProgressText" style="color:#fff;">1/20</strong></span>
+              <div class="px-progress-track">
+                <div class="px-progress-fill" id="hudProgressFill"></div>
+              </div>
+              <span style="color:#4ade80;">✓<span id="hudHitCount">0</span></span>
+            </div>
+          </div>
+
+          <div class="canvas-stage">
+            <canvas id="gameCanvas" width="320" height="416"></canvas>
+          </div>
+
+          <div class="mic-dock">
+            <div class="asr-bubble">
+              <span class="asr-text" id="asrLiveText">正在听你读字... 可以读单字或组词哦！</span>
+              <span class="asr-tag" id="asrStatusTag">LISTENING</span>
+            </div>
+            <div class="mic-wave-row">
+              <button class="mic-orb" id="btnMicToggle" type="button" title="点击模拟麦克风开关">🎤</button>
+              <div class="wave-bars" id="waveBars"></div>
+              <button class="px-btn green small" id="btnQuickCorrect" type="button">读对了</button>
+            </div>
+          </div>
+
+          <!-- PAUSE OVERLAY -->
+          <div class="px-modal-backdrop" id="pauseModal">
+            <div class="px-box px-modal">
+              <h3>PAUSED</h3>
+              <p>麦克风监听与掉落已暂停</p>
+              <button class="px-btn green" id="btnResumeGame" type="button">▶ 继续闯关</button>
+              <button class="px-btn blue" id="btnRestartFromPause" type="button">↻ 重新开始本关</button>
+              <button class="px-btn ghost" id="btnQuitToLobby" type="button">◀ 返回准备页</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== SCREEN 4: 通关结算 + 错字联动 ==================== -->
+        <div class="screen pixel-theme" id="screen-result">
+          <div class="result-wrap">
+            <div class="stars-row" id="resultStars">
+              <span class="star-on">★</span>
+              <span class="star-on">★</span>
+              <span class="star-on">★</span>
+            </div>
+            <div class="result-title" id="resultHeadline">太棒了！闯关成功！</div>
+
+            <div class="stat-grid">
+              <div class="stat-cell">
+                <div class="stat-num gold" id="resScore">1850</div>
+                <div class="stat-lbl">本关积分</div>
+              </div>
+              <div class="stat-cell">
+                <div class="stat-num green" id="resAcc">90%</div>
+                <div class="stat-lbl">读对比例</div>
+              </div>
+              <div class="stat-cell">
+                <div class="stat-num" id="resCombo">x9</div>
+                <div class="stat-lbl">最高连击</div>
+              </div>
+            </div>
+
+            <div class="px-box missed-panel">
+              <div class="missed-head">
+                <span>未读出的字 · 错字联动</span>
+                <span id="resMissedCount">2 字</span>
+              </div>
+              <div class="missed-sub" id="resMissedSub">点击汉字可取消勾选（排除误判），确认后将移入「复习汉字」</div>
+              <div class="missed-chips" id="resMissedList"></div>
+            </div>
+
+            <div class="sync-bar">
+              <button class="px-btn rose" id="btnSyncMissed" type="button">📥 将 2 个错字加入「复习汉字」</button>
+              <div class="sync-note" id="syncNote"></div>
+            </div>
+
+            <div class="result-actions">
+              <button class="px-btn green" id="btnPlayAgain" type="button">↻ 再玩一关</button>
+              <button class="px-btn ghost" id="btnResultToHome" type="button">◀ 回到识字</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="viewport-badge">320 × 640 Portrait · 一年级版 v2</div>
+  </div>
+
+  <!-- RIGHT: INTERACTIVE INSPECTOR -->
+  <div class="inspector-panel">
+    <div class="panel-card">
+      <div class="panel-title">
+        <span>界面与状态切换 (Screen &amp; State Switcher)</span>
+        <span class="status-pill">v2 · Ready for Approval</span>
+      </div>
+      <div class="state-grid">
+        <button class="state-btn active" data-goto="zi-home" type="button">1. 识字主页 (已对齐最新版)</button>
+        <button class="state-btn" data-goto="lobby" type="button">2. 游戏准备页 (慢速推荐)</button>
+        <button class="state-btn" data-goto="model-dl" type="button">3. 首次下载离线语音包</button>
+        <button class="state-btn" data-goto="play" type="button">4. 游戏中 (可实时试玩)</button>
+        <button class="state-btn" data-goto="pause" type="button">5. 暂停弹窗</button>
+        <button class="state-btn" data-goto="result" type="button">6. 结算 &amp; 错字联动复习</button>
+        <button class="state-btn" data-goto="mic-denied" type="button">7. 异常态: 麦克风未授权</button>
+        <button class="state-btn" data-goto="low-pool" type="button">8. 边界态: 字库不足20字</button>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-title">
+        <span>试玩模拟器（演示单字 / 组词 / 同音字命中）</span>
+        <span class="status-pill" id="currentTargetBadge">当前目标: —</span>
+      </div>
+      <div class="sim-row">
+        <button class="sim-btn good" id="simHitBtn" type="button">🎆 读单字命中</button>
+        <button class="sim-btn warn" id="simPhraseBtn" type="button">💬 组词读命中 (如“木头”)</button>
+        <button class="sim-btn bad" id="simWrongBtn" type="button">❌ 模拟读错</button>
+        <button class="sim-btn" id="simDropBtn" type="button">🧱 模拟落地错字</button>
+      </div>
+      <div class="pinyin-tester">
+        <input class="pinyin-input" id="pinyinInput" type="text" placeholder="输入拼音(mu)、同音字(目)或组词(木头)，回车测试">
+        <button class="sim-btn" id="pinyinSubmitBtn" type="button">模拟说话</button>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-title"><span>v2 针对你的确认做的 4 项定制</span></div>
+      <ul class="hint-list">
+        <li><strong>对齐最新识字主页</strong>：保留最新版的「会读汉字」「会写汉字」双卡片与底部「故事列表 / 生成故事」，新增像素风「汉字掉落测试」入口。</li>
+        <li><strong>小学一年级友好默认</strong>：默认<strong>慢速掉落（~11 秒/字）</strong> + <strong>宽松拼音（忽略声调）+ 允许组词读</strong>，一次只落 1 个大字，20 字全部测完结算不中途打断。</li>
+        <li><strong>Xiaomi 13 零 Google 依赖离线方案</strong>：采用端侧 <strong>Sherpa-ONNX 中文流式模型（~25MB INT8）</strong>，首次进入按需下载一次，之后完全离线极速识别，不依赖 Google 语音服务。</li>
+        <li><strong>错字联动复习</strong>：在「6. 结算页」试试点击<strong>「加入复习汉字」</strong>，再点「回到识字」，即可看到错字实时同步进「复习汉字」卡片（复用现有 <code>PUT /zi/</code> 将熟练度从 5 降为 3）！</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const SAMPLE_POOL = [
+    { zi: '木', py: 'mu',  mark: 'mù',   phrase: '木头', homophone: '目' },
+    { zi: '山', py: 'shan',mark: 'shān', phrase: '大山', homophone: '衫' },
+    { zi: '水', py: 'shui',mark: 'shuǐ', phrase: '喝水', homophone: '水' },
+    { zi: '火', py: 'huo', mark: 'huǒ',  phrase: '大火', homophone: '伙' },
+    { zi: '月', py: 'yue', mark: 'yuè',  phrase: '月亮', homophone: '乐' },
+    { zi: '日', py: 'ri',  mark: 'rì',   phrase: '日出', homophone: '日' },
+    { zi: '森', py: 'sen', mark: 'sēn',  phrase: '森林', homophone: '森' },
+    { zi: '林', py: 'lin', mark: 'lín',  phrase: '树林', homophone: '临' },
+    { zi: '花', py: 'hua', mark: 'huā',  phrase: '花朵', homophone: '华' },
+    { zi: '云', py: 'yun', mark: 'yún',  phrase: '白云', homophone: '匀' },
+    { zi: '雨', py: 'yu',  mark: 'yǔ',   phrase: '下雨', homophone: '语' },
+    { zi: '风', py: 'feng',mark: 'fēng', phrase: '大风', homophone: '峰' },
+    { zi: '星', py: 'xing',mark: 'xīng', phrase: '星星', homophone: '兴' },
+    { zi: '鸟', py: 'niao',mark: 'niǎo', phrase: '小鸟', homophone: '鸟' },
+    { zi: '桥', py: 'qiao',mark: 'qiáo', phrase: '小桥', homophone: '乔' },
+    { zi: '石', py: 'shi', mark: 'shí',  phrase: '石头', homophone: '时' },
+    { zi: '田', py: 'tian',mark: 'tián', phrase: '田地', homophone: '甜' },
+    { zi: '土', py: 'tu',  mark: 'tǔ',   phrase: '泥土', homophone: '吐' },
+    { zi: '竹', py: 'zhu', mark: 'zhú',  phrase: '竹子', homophone: '逐' },
+    { zi: '马', py: 'ma',  mark: 'mǎ',   phrase: '小马', homophone: '码' }
+  ];
+
+  const CHAR_TO_PY = {};
+  SAMPLE_POOL.forEach(item => {
+    CHAR_TO_PY[item.zi] = item.py;
+    CHAR_TO_PY[item.homophone] = item.py;
+  });
+
+  const SPEEDS = { slow: 28, normal: 42, fast: 60 }; // slow ~= 11s per char for 1st graders
+  const GROUND_Y = 382;
+  const TILE_SIZE = 76;
+
+  const state = {
+    activeScreen: 'zi-home',
+    speed: 'slow',
+    lobbyMode: 'ready', // 'ready' | 'downloading' | 'mic-denied' | 'low-pool'
+    micActive: true,
+    paused: false,
+    running: false,
+    queue: [],
+    currentIndex: 0,
+    score: 0,
+    bestScore: 1650,
+    combo: 0,
+    maxCombo: 0,
+    hits: 0,
+    missed: [],
+    selectedMissed: new Set(),
+    missedSynced: false,
+    syncedToHome: [],
+    currentTile: null,
+    particles: [],
+    floatTexts: [],
+    stars: [],
+    clouds: [],
+    shakeTime: 0,
+    groundFlash: 0,
+    spawnDelay: 0,
+    lastTs: 0
+  };
+
+  const screens = {
+    'zi-home': document.getElementById('screen-zi-home'),
+    'lobby': document.getElementById('screen-lobby'),
+    'play': document.getElementById('screen-play'),
+    'result': document.getElementById('screen-result')
+  };
+  const pauseModal = document.getElementById('pauseModal');
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const hudScore = document.getElementById('hudScore');
+  const hudCombo = document.getElementById('hudCombo');
+  const hudProgressText = document.getElementById('hudProgressText');
+  const hudProgressFill = document.getElementById('hudProgressFill');
+  const hudHitCount = document.getElementById('hudHitCount');
+  const asrLiveText = document.getElementById('asrLiveText');
+  const asrStatusTag = document.getElementById('asrStatusTag');
+  const currentTargetBadge = document.getElementById('currentTargetBadge');
+  const waveBarsEl = document.getElementById('waveBars');
+  const btnMicToggle = document.getElementById('btnMicToggle');
+
+  const waveBars = [];
+  for (let i = 0; i < 14; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'wave-bar';
+    waveBarsEl.appendChild(bar);
+    waveBars.push(bar);
+  }
+
+  for (let i = 0; i < 40; i++) {
+    state.stars.push({
+      x: Math.floor(Math.random() * 160) * 2,
+      y: Math.floor(Math.random() * 170) * 2,
+      size: Math.random() > 0.78 ? 4 : 2,
+      phase: Math.random() * Math.PI * 2,
+      color: ['#ffffff', '#bae6fd', '#fef08a', '#c7d2fe'][i % 4]
+    });
+  }
+  state.clouds = [
+    { x: 24, y: 58, w: 54, speed: 6 },
+    { x: 204, y: 120, w: 68, speed: 4.5 },
+    { x: 96, y: 210, w: 48, speed: 5.5 }
+  ];
+
+  function updateInspectorButtons(modeKey) {
+    document.querySelectorAll('.state-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.goto === modeKey);
+    });
+  }
+
+  function showScreen(name, inspectorKey) {
+    Object.entries(screens).forEach(([k, el]) => el.classList.toggle('active', k === name));
+    state.activeScreen = name;
+    pauseModal.classList.remove('show');
+    if (name !== 'play') {
+      state.running = false;
+      state.paused = false;
+    }
+    updateInspectorButtons(inspectorKey || name);
+    updateTargetBadge();
+  }
+
+  function renderHomeReview() {
+    const readCountEl = document.getElementById('homeReadCount');
+    const grid = document.getElementById('homeReviewGrid');
+    const hint = document.getElementById('homeReviewHint');
+    readCountEl.textContent = String(128 - state.syncedToHome.length);
+    const base = ['星', '鸟', '云', '花', '雨', '风'];
+    const merged = [...state.syncedToHome, ...base.filter(c => !state.syncedToHome.includes(c))].slice(0, 6);
+    hint.textContent = state.syncedToHome.length > 0 ? `已联动新增 ${state.syncedToHome.length} 字` : '熟练度 < 5';
+    grid.innerHTML = merged
+      .map(c => `<div class="m3-review-tile${state.syncedToHome.includes(c) ? ' new-missed' : ''}">${c}</div>`)
+      .join('');
+  }
+
+  function renderLobbyBanner() {
+    const card = document.getElementById('lobbyEngineCard');
+    const txt = document.getElementById('lobbyEngineText');
+    const act = document.getElementById('btnLobbyEngineAction');
+    const track = document.getElementById('modelDlTrack');
+    const poolTxt = document.getElementById('poolSummaryText');
+    const startBtn = document.getElementById('btnStartGame');
+
+    card.className = 'engine-status-card';
+    act.style.display = 'none';
+    track.classList.remove('show');
+    startBtn.disabled = false;
+
+    if (state.lobbyMode === 'downloading') {
+      poolTxt.textContent = '会读汉字 128字 → 随机20字';
+      card.classList.add('downloading');
+      txt.textContent = '⬇ 首次下载离线中文语音包 (16/25 MB)...';
+      track.classList.add('show');
+      act.style.display = 'inline-block';
+      act.textContent = '完成模拟';
+      startBtn.disabled = true;
+      startBtn.textContent = '⏳ 语音包准备中...';
+    } else if (state.lobbyMode === 'mic-denied') {
+      poolTxt.textContent = '会读汉字 128字 → 随机20字';
+      card.classList.add('denied');
+      txt.textContent = '🚫 需要麦克风权限才能听懂小朋友读字';
+      act.style.display = 'inline-block';
+      act.textContent = '去授权';
+      startBtn.textContent = '🔒 授权麦克风后开始';
+    } else if (state.lobbyMode === 'low-pool') {
+      poolTxt.textContent = '会读汉字仅 6 字 → 本关测 6 字';
+      card.classList.add('low-pool');
+      txt.textContent = '⚠ 会读汉字不足 20 个，本关先测 6 字';
+      startBtn.textContent = '▶ 开始闯关 (6字)';
+    } else {
+      poolTxt.textContent = '会读汉字 128字 → 随机20字';
+      txt.textContent = '🎤 离线语音引擎已就绪 (免Google服务)';
+      startBtn.textContent = '▶ 开始闯关 (20字)';
+    }
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function startNewGame() {
+    if (state.lobbyMode === 'downloading') return;
+    if (state.lobbyMode === 'mic-denied') {
+      state.lobbyMode = 'ready';
+      renderLobbyBanner();
+    }
+    const basePool = state.lobbyMode === 'low-pool' ? SAMPLE_POOL.slice(0, 6) : SAMPLE_POOL;
+    state.queue = shuffle(basePool);
+    state.currentIndex = 0;
+    state.score = 0;
+    state.combo = 0;
+    state.maxCombo = 0;
+    state.hits = 0;
+    state.missed = [];
+    state.particles = [];
+    state.floatTexts = [];
+    state.currentTile = null;
+    state.spawnDelay = 0.25;
+    state.paused = false;
+    state.running = true;
+    state.micActive = true;
+    btnMicToggle.classList.remove('muted');
+    setAsrFeedback('正在听你读字... 可以读单字或组词哦！', 'LISTENING', '');
+    showScreen('play', 'play');
+    updateHud();
+    spawnNextTile();
+  }
+
+  function spawnNextTile() {
+    if (state.currentIndex >= state.queue.length) {
+      finishGame();
+      return;
+    }
+    const item = state.queue[state.currentIndex];
+    const minX = 36;
+    const maxX = canvas.width - TILE_SIZE - 36;
+    const x = Math.floor((minX + Math.random() * (maxX - minX)) / 2) * 2;
+    state.currentTile = { item, x, y: -TILE_SIZE - 4, vy: SPEEDS[state.speed], wobble: 0 };
+    updateHud();
+    updateTargetBadge();
+  }
+
+  function updateTargetBadge() {
+    if (state.activeScreen === 'play' && state.currentTile) {
+      const it = state.currentTile.item;
+      currentTargetBadge.textContent = `当前目标: ${it.zi} (${it.mark} / ${it.phrase})`;
+    } else {
+      currentTargetBadge.textContent = '当前目标: —';
+    }
+  }
+
+  function updateHud() {
+    const total = state.queue.length || 20;
+    const shownIdx = Math.min(state.currentIndex + (state.currentTile ? 1 : 0), total);
+    hudScore.textContent = String(state.score).padStart(4, '0');
+    hudProgressText.textContent = `${shownIdx}/${total}`;
+    hudProgressFill.style.width = `${Math.round((state.currentIndex / total) * 100)}%`;
+    hudHitCount.textContent = String(state.hits);
+    if (state.combo >= 2) {
+      hudCombo.textContent = `x${state.combo} COMBO`;
+      hudCombo.classList.add('show');
+    } else {
+      hudCombo.classList.remove('show');
+    }
+  }
+
+  function setAsrFeedback(text, tag, cls) {
+    asrLiveText.textContent = text;
+    asrStatusTag.textContent = tag;
+    asrStatusTag.className = 'asr-tag' + (cls ? ' ' + cls : '');
+  }
+
+  function triggerFireworks(cx, cy) {
+    const palette = ['#facc15', '#fb7185', '#38bdf8', '#4ade80', '#c084fc', '#ffffff', '#fb923c'];
+    for (let i = 0; i < 38; i++) {
+      const angle = (Math.PI * 2 * i) / 38 + (Math.random() - 0.5) * 0.25;
+      const spd = 65 + Math.random() * 145;
+      state.particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * spd, vy: Math.sin(angle) * spd - 35,
+        size: Math.random() > 0.4 ? 6 : 4,
+        color: palette[Math.floor(Math.random() * palette.length)],
+        life: 0.65 + Math.random() * 0.45, maxLife: 1.0, gravity: 220
+      });
+    }
+  }
+
+  function triggerGroundCrash(cx, cy) {
+    const colors = ['#ef4444', '#f97316', '#94a3b8', '#475569'];
+    for (let i = 0; i < 16; i++) {
+      state.particles.push({
+        x: cx + (Math.random() - 0.5) * 40, y: cy,
+        vx: (Math.random() - 0.5) * 110, vy: -40 - Math.random() * 90,
+        size: 5, color: colors[i % colors.length],
+        life: 0.45 + Math.random() * 0.25, maxLife: 0.7, gravity: 280
+      });
+    }
+  }
+
+  function handleCorrectSpeech(spokenDisplay) {
+    if (!state.running || state.paused || !state.currentTile) return;
+    const tile = state.currentTile;
+    const cx = tile.x + TILE_SIZE / 2;
+    const cy = tile.y + TILE_SIZE / 2;
+
+    state.combo += 1;
+    if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+    state.hits += 1;
+    const gained = 100 + Math.min((state.combo - 1) * 10, 50);
+    state.score += gained;
+
+    triggerFireworks(cx, cy);
+    state.shakeTime = 0.14;
+    state.floatTexts.push({
+      x: cx, y: cy - 10,
+      text: `+${gained}` + (state.combo >= 3 ? ` 🔥x${state.combo}` : ''),
+      color: '#fef08a', life: 1.0
+    });
+    setAsrFeedback(`听到「${spokenDisplay}」→ 读对 ${tile.item.zi} (${tile.item.mark})!`, 'HIT ✓', 'hit');
+
+    state.currentTile = null;
+    state.currentIndex += 1;
+    state.spawnDelay = 0.55;
+    updateHud();
+    updateTargetBadge();
+  }
+
+  function handleWrongSpeech(spokenDisplay) {
+    if (!state.running || state.paused || !state.currentTile) return;
+    state.currentTile.wobble = 0.35;
+    setAsrFeedback(`听到「${spokenDisplay}」不对哦，再大声读一次`, 'RETRY', 'miss');
+  }
+
+  function handleTileMissed() {
+    if (!state.currentTile) return;
+    const tile = state.currentTile;
+    const cx = tile.x + TILE_SIZE / 2;
+    triggerGroundCrash(cx, GROUND_Y - 4);
+    state.groundFlash = 0.35;
+    state.shakeTime = 0.2;
+    state.combo = 0;
+    state.missed.push(tile.item);
+    state.floatTexts.push({
+      x: cx, y: GROUND_Y - 38,
+      text: `${tile.item.zi} · ${tile.item.mark}`,
+      color: '#fda4af', life: 1.3
+    });
+    setAsrFeedback(`落地啦！读音是 ${tile.item.zi} (${tile.item.mark})`, 'MISSED', 'miss');
+    state.currentTile = null;
+    state.currentIndex += 1;
+    state.spawnDelay = 0.7;
+    updateHud();
+    updateTargetBadge();
+  }
+
+  function finishGame() {
+    state.running = false;
+    if (state.score > state.bestScore) {
+      state.bestScore = state.score;
+      document.getElementById('lobbyBestScore').textContent = String(state.bestScore);
+    }
+    const total = state.queue.length || 20;
+    const acc = Math.round((state.hits / total) * 100);
+    const stars = acc >= 90 ? 3 : acc >= 65 ? 2 : 1;
+    renderResultScreen(state.score, acc, state.maxCombo, stars, state.missed);
+    showScreen('result', 'result');
+  }
+
+  function renderResultScreen(score, acc, maxCombo, stars, missedList) {
+    state.missed = missedList;
+    state.selectedMissed = new Set(missedList.map(m => m.zi));
+    state.missedSynced = false;
+
+    document.getElementById('resScore').textContent = String(score);
+    document.getElementById('resAcc').textContent = `${acc}%`;
+    document.getElementById('resCombo').textContent = `x${maxCombo}`;
+    document.getElementById('resultHeadline').textContent =
+      stars === 3 ? '太棒了！闯关成功！' : stars === 2 ? '读得很不错哦！' : '完成啦！继续加油！';
+    document.getElementById('resultStars').innerHTML = [1, 2, 3]
+      .map(i => `<span class="${i <= stars ? 'star-on' : 'star-off'}">★</span>`).join('');
+
+    renderMissedChips();
+  }
+
+  function renderMissedChips() {
+    const missedWrap = document.getElementById('resMissedList');
+    const countEl = document.getElementById('resMissedCount');
+    const subEl = document.getElementById('resMissedSub');
+    const syncBtn = document.getElementById('btnSyncMissed');
+    const syncNote = document.getElementById('syncNote');
+
+    countEl.textContent = `${state.missed.length} 字`;
+    if (state.missed.length === 0) {
+      subEl.textContent = '本关没有错字，全部保持在「会读汉字」中！';
+      missedWrap.innerHTML = '<div style="font-size:12px;color:#86efac;padding:6px 0;">🎉 20 个字全部一次读对，太厉害了！</div>';
+      syncBtn.style.display = 'none';
+      syncNote.textContent = '';
+      return;
+    }
+
+    subEl.textContent = '默认全选错字，点字可取消勾选（排除环境噪音误判）';
+    missedWrap.innerHTML = state.missed.map(it => {
+      const checked = state.selectedMissed.has(it.zi);
+      return `<button type="button" class="missed-chip${checked ? '' : ' unchecked'}" data-zi="${it.zi}">
+        <span class="missed-check">${checked ? '☑' : '☐'}</span>
+        <span class="missed-zi">${it.zi}</span>
+        <span class="missed-py">${it.mark}</span>
+      </button>`;
+    }).join('');
+
+    missedWrap.querySelectorAll('.missed-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (state.missedSynced) return;
+        const z = chip.dataset.zi;
+        if (state.selectedMissed.has(z)) state.selectedMissed.delete(z);
+        else state.selectedMissed.add(z);
+        renderMissedChips();
+      });
+    });
+
+    syncBtn.style.display = 'block';
+    const selCount = state.selectedMissed.size;
+    if (state.missedSynced) {
+      syncBtn.disabled = true;
+      syncBtn.className = 'px-btn green';
+      syncBtn.textContent = `✓ 已将 ${selCount} 个错字加入「复习汉字」`;
+      syncNote.textContent = '已同步后端 (熟练度 5→3)，点「回到识字」可查看';
+    } else if (selCount === 0) {
+      syncBtn.disabled = true;
+      syncBtn.className = 'px-btn ghost';
+      syncBtn.textContent = '未勾选需要复习的错字';
+      syncNote.textContent = '';
+    } else {
+      syncBtn.disabled = false;
+      syncBtn.className = 'px-btn rose';
+      syncBtn.textContent = `📥 将 ${selCount} 个错字加入「复习汉字」`;
+      syncNote.textContent = '';
+    }
+  }
+
+  function drawPixelCloud(c) {
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.14)';
+    const x = Math.floor(c.x / 2) * 2;
+    const y = Math.floor(c.y / 2) * 2;
+    ctx.fillRect(x + 8, y, c.w - 16, 8);
+    ctx.fillRect(x, y + 6, c.w, 10);
+    ctx.fillRect(x + 6, y + 14, c.w - 12, 4);
+  }
+
+  function drawGround() {
+    ctx.fillStyle = state.groundFlash > 0 ? '#ef4444' : 'rgba(248, 113, 113, 0.45)';
+    for (let x = 0; x < canvas.width; x += 12) ctx.fillRect(x, GROUND_Y - 2, 6, 2);
+    ctx.fillStyle = state.groundFlash > 0 ? '#f87171' : '#22c55e';
+    ctx.fillRect(0, GROUND_Y, canvas.width, 6);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, GROUND_Y + 6, canvas.width, canvas.height - GROUND_Y - 6);
+    ctx.fillStyle = '#475569';
+    for (let row = 0; row < 2; row++) {
+      const by = GROUND_Y + 10 + row * 12;
+      const offset = row % 2 === 0 ? 0 : 14;
+      for (let x = -14; x < canvas.width; x += 28) ctx.fillRect(x + offset, by, 24, 9);
+    }
+  }
+
+  function drawFallingTile(tile, nowSec) {
+    const progress = Math.max(0, (tile.y + TILE_SIZE) / GROUND_Y);
+    const danger = progress > 0.72;
+    const blinkRed = danger && Math.floor(nowSec * 10) % 2 === 0;
+    const offsetX = tile.wobble > 0 ? Math.sin(tile.wobble * 48) * 5 : (danger ? Math.sin(nowSec * 36) * 2 : 0);
+    const x = Math.floor((tile.x + offsetX) / 2) * 2;
+    const y = Math.floor(tile.y / 2) * 2;
+    const s = TILE_SIZE;
+
+    ctx.fillStyle = danger ? 'rgba(248,113,113,0.45)' : 'rgba(56,189,248,0.35)';
+    ctx.fillRect(x + 12, y - 10, 2, 8);
+    ctx.fillRect(x + s - 14, y - 14, 2, 12);
+    ctx.fillRect(x + s / 2 - 1, y - 18, 2, 14);
+
+    ctx.fillStyle = '#050712';
+    ctx.fillRect(x + 4, y + 6, s, s);
+
+    const borderCol = blinkRed ? '#ef4444' : danger ? '#f97316' : '#38bdf8';
+    const innerCol = blinkRed ? '#450a0a' : danger ? '#2a160c' : '#172042';
+    const hiCol = blinkRed ? '#fca5a5' : danger ? '#fdba74' : '#bae6fd';
+
+    ctx.fillStyle = borderCol;
+    ctx.fillRect(x, y, s, s);
+    ctx.fillStyle = '#0b0f27';
+    ctx.fillRect(x, y, 4, 4); ctx.fillRect(x + s - 4, y, 4, 4);
+    ctx.fillRect(x, y + s - 4, 4, 4); ctx.fillRect(x + s - 4, y + s - 4, 4, 4);
+
+    ctx.fillStyle = innerCol;
+    ctx.fillRect(x + 4, y + 4, s - 8, s - 8);
+    ctx.fillStyle = hiCol;
+    ctx.fillRect(x + 6, y + 6, s - 12, 2);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 44px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(tile.item.zi, x + s / 2, y + s / 2 + 2);
+  }
+
+  function loop(ts) {
+    if (!state.lastTs) state.lastTs = ts;
+    const dt = Math.min((ts - state.lastTs) / 1000, 0.05);
+    state.lastTs = ts;
+    const nowSec = ts / 1000;
+
+    if (state.activeScreen === 'play') {
+      waveBars.forEach((bar, idx) => {
+        if (!state.micActive || state.paused) {
+          bar.style.height = '4px'; bar.style.background = '#475569';
+        } else {
+          const wave = Math.abs(Math.sin(nowSec * 7 + idx * 0.65)) * 20 + 6 + Math.random() * 6;
+          bar.style.height = `${Math.floor(wave)}px`;
+          bar.style.background = idx % 3 === 0 ? '#4ade80' : '#38bdf8';
+        }
+      });
+
+      if (state.running && !state.paused) {
+        state.clouds.forEach(c => { c.x += c.speed * dt; if (c.x > canvas.width + 10) c.x = -c.w - 10; });
+        if (state.shakeTime > 0) state.shakeTime = Math.max(0, state.shakeTime - dt);
+        if (state.groundFlash > 0) state.groundFlash = Math.max(0, state.groundFlash - dt);
+
+        if (state.currentTile) {
+          state.currentTile.y += state.currentTile.vy * dt;
+          if (state.currentTile.wobble > 0) state.currentTile.wobble = Math.max(0, state.currentTile.wobble - dt);
+          if (state.currentTile.y + TILE_SIZE >= GROUND_Y) handleTileMissed();
+        } else if (state.spawnDelay > 0) {
+          state.spawnDelay -= dt;
+          if (state.spawnDelay <= 0) spawnNextTile();
+        }
+
+        for (let i = state.particles.length - 1; i >= 0; i--) {
+          const p = state.particles[i];
+          p.life -= dt;
+          if (p.life <= 0) { state.particles.splice(i, 1); continue; }
+          p.vy += p.gravity * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+        }
+        for (let i = state.floatTexts.length - 1; i >= 0; i--) {
+          const f = state.floatTexts[i];
+          f.life -= dt; f.y -= 34 * dt;
+          if (f.life <= 0) state.floatTexts.splice(i, 1);
+        }
+      }
+
+      ctx.save();
+      if (state.shakeTime > 0) ctx.translate((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
+      const skyBands = ['#090c1f', '#0d122d', '#11183c', '#16204c'];
+      const bandH = Math.ceil(GROUND_Y / skyBands.length);
+      skyBands.forEach((col, i) => { ctx.fillStyle = col; ctx.fillRect(0, i * bandH, canvas.width, bandH); });
+      state.stars.forEach(s => {
+        ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(nowSec * 2 + s.phase));
+        ctx.fillStyle = s.color; ctx.fillRect(s.x, s.y, s.size, s.size);
+      });
+      ctx.globalAlpha = 1;
+      state.clouds.forEach(drawPixelCloud);
+      drawGround();
+      if (state.currentTile) drawFallingTile(state.currentTile, nowSec);
+      state.particles.forEach(p => {
+        ctx.globalAlpha = Math.max(0, Math.min(1, p.life / p.maxLife));
+        ctx.fillStyle = p.color;
+        ctx.fillRect(Math.floor(p.x / 2) * 2, Math.floor(p.y / 2) * 2, p.size, p.size);
+      });
+      ctx.globalAlpha = 1;
+      state.floatTexts.forEach(f => {
+        ctx.globalAlpha = Math.max(0, Math.min(1, f.life));
+        ctx.font = 'bold 16px ui-monospace, monospace'; ctx.textAlign = 'center';
+        ctx.fillStyle = '#090c1c'; ctx.fillText(f.text, f.x + 2, f.y + 2);
+        ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y);
+      });
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function testSpokenInput(raw) {
+    const val = raw.trim().toLowerCase();
+    if (!val) return;
+    if (state.activeScreen !== 'play') startNewGame();
+    if (!state.currentTile) return;
+    const target = state.currentTile.item;
+    let matched = false;
+    for (const ch of val) {
+      if (ch === target.zi || CHAR_TO_PY[ch] === target.py) matched = true;
+    }
+    if (val.replace(/[1-4]/g, '') === target.py || val === target.mark) matched = true;
+    if (matched) handleCorrectSpeech(raw.trim());
+    else handleWrongSpeech(raw.trim());
+  }
+
+  // Events
+  document.getElementById('btnEnterGameFromHome').addEventListener('click', () => {
+    state.lobbyMode = 'ready'; renderLobbyBanner(); showScreen('lobby', 'lobby');
+  });
+  document.getElementById('btnBackToHome').addEventListener('click', () => showScreen('zi-home', 'zi-home'));
+  document.getElementById('btnLobbyEngineAction').addEventListener('click', () => {
+    state.lobbyMode = 'ready'; renderLobbyBanner(); updateInspectorButtons('lobby');
+  });
+  document.getElementById('btnStartGame').addEventListener('click', startNewGame);
+
+  document.getElementById('btnPauseGame').addEventListener('click', () => {
+    state.paused = true; pauseModal.classList.add('show'); updateInspectorButtons('pause');
+  });
+  document.getElementById('btnResumeGame').addEventListener('click', () => {
+    state.paused = false; pauseModal.classList.remove('show'); updateInspectorButtons('play');
+  });
+  document.getElementById('btnRestartFromPause').addEventListener('click', startNewGame);
+  document.getElementById('btnQuitToLobby').addEventListener('click', () => {
+    state.lobbyMode = 'ready'; renderLobbyBanner(); showScreen('lobby', 'lobby');
+  });
+  document.getElementById('btnMicToggle').addEventListener('click', () => {
+    state.micActive = !state.micActive;
+    btnMicToggle.classList.toggle('muted', !state.micActive);
+    setAsrFeedback(state.micActive ? '正在听你读字... 可以读单字或组词哦！' : '麦克风已暂停', state.micActive ? 'LISTENING' : 'MUTED', '');
+  });
+  document.getElementById('btnQuickCorrect').addEventListener('click', () => {
+    if (state.currentTile) handleCorrectSpeech(state.currentTile.item.zi);
+  });
+
+  document.getElementById('btnSyncMissed').addEventListener('click', () => {
+    const picked = Array.from(state.selectedMissed);
+    if (picked.length === 0) return;
+    state.missedSynced = true;
+    picked.forEach(c => { if (!state.syncedToHome.includes(c)) state.syncedToHome.unshift(c); });
+    renderHomeReview();
+    renderMissedChips();
+  });
+
+  document.getElementById('btnPlayAgain').addEventListener('click', startNewGame);
+  document.getElementById('btnResultToHome').addEventListener('click', () => {
+    renderHomeReview(); showScreen('zi-home', 'zi-home');
+  });
+
+  document.querySelectorAll('#speedSeg .seg-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.speed = btn.dataset.speed;
+      document.querySelectorAll('#speedSeg .seg-opt').forEach(b => b.classList.toggle('selected', b === btn));
+    });
+  });
+
+  document.querySelectorAll('.state-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.goto;
+      if (target === 'zi-home') { renderHomeReview(); showScreen('zi-home', 'zi-home'); }
+      else if (target === 'lobby') { state.lobbyMode = 'ready'; renderLobbyBanner(); showScreen('lobby', 'lobby'); }
+      else if (target === 'model-dl') { state.lobbyMode = 'downloading'; renderLobbyBanner(); showScreen('lobby', 'model-dl'); }
+      else if (target === 'mic-denied') { state.lobbyMode = 'mic-denied'; renderLobbyBanner(); showScreen('lobby', 'mic-denied'); }
+      else if (target === 'low-pool') { state.lobbyMode = 'low-pool'; renderLobbyBanner(); showScreen('lobby', 'low-pool'); }
+      else if (target === 'play') { startNewGame(); }
+      else if (target === 'pause') { if (state.activeScreen !== 'play') startNewGame(); state.paused = true; pauseModal.classList.add('show'); updateInspectorButtons('pause'); }
+      else if (target === 'result') { renderResultScreen(1850, 90, 9, 3, [SAMPLE_POOL[6], SAMPLE_POOL[14]]); showScreen('result', 'result'); }
+    });
+  });
+
+  document.getElementById('simHitBtn').addEventListener('click', () => {
+    if (state.activeScreen !== 'play') startNewGame();
+    if (state.currentTile) handleCorrectSpeech(state.currentTile.item.zi);
+  });
+  document.getElementById('simPhraseBtn').addEventListener('click', () => {
+    if (state.activeScreen !== 'play') startNewGame();
+    if (state.currentTile) handleCorrectSpeech(state.currentTile.item.phrase);
+  });
+  document.getElementById('simWrongBtn').addEventListener('click', () => {
+    if (state.activeScreen !== 'play') startNewGame();
+    handleWrongSpeech('大 (dà)');
+  });
+  document.getElementById('simDropBtn').addEventListener('click', () => {
+    if (state.activeScreen !== 'play') startNewGame();
+    if (state.currentTile) { state.currentTile.y = GROUND_Y - TILE_SIZE; handleTileMissed(); }
+  });
+
+  const pyInput = document.getElementById('pinyinInput');
+  document.getElementById('pinyinSubmitBtn').addEventListener('click', () => { testSpokenInput(pyInput.value); pyInput.value = ''; });
+  pyInput.addEventListener('keydown', e => { if (e.key === 'Enter') { testSpokenInput(pyInput.value); pyInput.value = ''; } });
+
+  renderHomeReview();
+  renderLobbyBanner();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

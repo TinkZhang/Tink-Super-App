@@ -54,5 +54,6 @@ class NavigationHierarchyTest {
         assertEquals(ScreenZi, ScreenLearntZi.topDestination())
         assertEquals(ScreenZi, ScreenWrittenZi.topDestination())
         assertEquals(ScreenZi, ScreenZiHandwriting("test-board").topDestination())
+        assertEquals(ScreenZi, ScreenZiGame.topDestination())
     }
 }

@@ -36,6 +36,7 @@ class ZiScreenTest {
                     onReadList = { actions += "read list" },
                     onWrittenList = { actions += "written list" },
                     onAddWritten = { actions += "add written" },
+                    onOpenTestGame = { actions += "open test game" },
                 )
             }
         }
@@ -43,7 +44,8 @@ class ZiScreenTest {
         compose.onNodeWithTag("zi_add_read").performClick()
         compose.onNodeWithTag("zi_written_card").performClick()
         compose.onNodeWithTag("zi_add_written").performClick()
-        assertEquals(listOf("read list", "add read", "written list", "add written"), actions)
+        compose.onNodeWithTag("zi_test_game_button").performClick()
+        assertEquals(listOf("read list", "add read", "written list", "add written", "open test game"), actions)
     }
 
     @Test
@@ -65,14 +67,16 @@ class ZiScreenTest {
         val page = compose.onNodeWithTag("zi_dashboard").getUnclippedBoundsInRoot()
         val read = compose.onNodeWithTag("zi_read_card").getUnclippedBoundsInRoot()
         val written = compose.onNodeWithTag("zi_written_card").getUnclippedBoundsInRoot()
+        val testButton = compose.onNodeWithTag("zi_test_game_button").getUnclippedBoundsInRoot()
         val review = compose.onNodeWithTag("zi_review_card").getUnclippedBoundsInRoot()
         val stories = compose.onNodeWithTag("zi_story_actions").getUnclippedBoundsInRoot()
 
         assertEquals(16f, (read.left - page.left).value, 1f)
         assertEquals(16f, (page.right - read.right).value, 1f)
         assertEquals(16f, (written.top - read.bottom).value, 1f)
+        assertEquals(16f, (testButton.top - written.bottom).value, 1f)
         assertEquals(32f, (page.bottom - stories.bottom).value, 1f)
-        assertEquals((review.top - written.bottom).value, (stories.top - review.bottom).value, 1f)
+        assertEquals((review.top - testButton.bottom).value, (stories.top - review.bottom).value, 1f)
     }
 
     @Test fun candidateResultsDoNotMoveTheSelectedCharactersHeading() {

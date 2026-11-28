@@ -7,6 +7,7 @@ fun MyNavKey.topDestination(): MyNavKey = when (this) {
     ScreenLearntZi,
     ScreenWrittenZi,
     is ScreenZiHandwriting,
+    ScreenZiGame,
     ScreenStoryList,
     is ScreenStoryDetail -> ScreenZi
     ScreenSettings -> ScreenSettings

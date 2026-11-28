@@ -40,6 +40,8 @@ jacoco = "0.8.15"
 screenshot = "0.0.1-alpha15"
 retrofit = "3.0.0"
 okhttp = "5.4.0"
+sherpaOnnx = "2.0.3"
+pinyin4j = "2.5.1"
 
 [libraries]
 mlkit-digital-ink = { module = "com.google.mlkit:digital-ink-recognition", version.ref = "mlkitDigitalInk" }
@@ -100,6 +102,7 @@ androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", versi
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshot" }
+pinyin4j = { module = "com.belerweb:pinyin4j", version.ref = "pinyin4j" }
 
 
 [plugins]

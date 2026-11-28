@@ -170,6 +170,8 @@ tasks.register<JacocoReport>("jacocoDebugUnitTestReport") {
 dependencies {
     implementation(libs.mlkit.digital.ink)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.pinyin4j)
+    implementation("com.k2fsa.sherpa:sherpa-onnx:${libs.versions.sherpaOnnx.get()}@aar")
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
     implementation(libs.youtubedl.android)
